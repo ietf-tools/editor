@@ -1,17 +1,23 @@
 <template>
-  <q-page class="flex flex-center">
-    <img
-      alt="Quasar logo"
-      src="~assets/quasar-logo-vertical.svg"
-      style="width: 200px; height: 200px"
-    >
+  <q-page class="row items-stretch">
+    <div class="col-12" ref="monacoContainer"></div>
   </q-page>
 </template>
 
-<script>
-import { defineComponent } from 'vue'
+<script setup>
+import { onMounted, ref } from 'vue'
+import * as monaco from 'monaco-editor'
 
-export default defineComponent({
-  name: 'IndexPage'
+const monacoContainer = ref(null)
+
+onMounted(() => {
+  setTimeout(() => {
+    monaco.editor.create(monacoContainer.value, {
+      value: "function hello() {\n\talert('Hello world!');\n}",
+      language: 'javascript',
+      theme: 'vs-dark',
+      scrollBeyondLastLine: false
+    })
+  }, 500)
 })
 </script>

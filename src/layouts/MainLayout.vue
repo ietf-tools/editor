@@ -1,21 +1,26 @@
 <template>
-  <q-layout view="lHh Lpr lFf">
-    <q-header elevated>
-      <q-toolbar>
+  <q-layout view="hHh lpr fFf">
+    <q-header>
+      <q-toolbar class="q-electron-drag">
         <q-btn
           flat
           dense
           round
           icon="menu"
           aria-label="Menu"
-          @click="toggleLeftDrawer"
         />
 
         <q-toolbar-title>
-          Quasar App
+          IETF Editor
         </q-toolbar-title>
 
-        <div>Quasar v{{ $q.version }}</div>
+        <div>Prototype</div>
+
+        <q-space />
+
+        <q-btn dense flat icon="minimize" @click="minimize" />
+        <q-btn dense flat icon="crop_square" @click="toggleMaximize" />
+        <q-btn dense flat icon="close" @click="closeApp" />
       </q-toolbar>
     </q-header>
 
@@ -23,6 +28,9 @@
       v-model="leftDrawerOpen"
       show-if-above
       bordered
+      mini
+      persistent
+      class="bg-grey-9 text-white"
     >
       <q-list>
         <q-item-label
@@ -51,46 +59,40 @@ import EssentialLink from 'components/EssentialLink.vue'
 
 const linksList = [
   {
-    title: 'Docs',
-    caption: 'quasar.dev',
+    title: 'Test',
+    caption: 'testing',
     icon: 'school',
-    link: 'https://quasar.dev'
+    link: 'https://ietf.org'
   },
   {
-    title: 'Github',
-    caption: 'github.com/quasarframework',
+    title: 'Test',
+    caption: 'testing',
     icon: 'code',
-    link: 'https://github.com/quasarframework'
+    link: 'https://ietf.org'
   },
   {
-    title: 'Discord Chat Channel',
-    caption: 'chat.quasar.dev',
+    title: 'Test',
+    caption: 'testing',
     icon: 'chat',
-    link: 'https://chat.quasar.dev'
+    link: 'https://ietf.org'
   },
   {
-    title: 'Forum',
-    caption: 'forum.quasar.dev',
+    title: 'Test',
+    caption: 'testing',
     icon: 'record_voice_over',
-    link: 'https://forum.quasar.dev'
+    link: 'https://ietf.org'
   },
   {
-    title: 'Twitter',
-    caption: '@quasarframework',
+    title: 'Test',
+    caption: 'testing',
     icon: 'rss_feed',
-    link: 'https://twitter.quasar.dev'
+    link: 'https://ietf.org'
   },
   {
-    title: 'Facebook',
-    caption: '@QuasarFramework',
+    title: 'Test',
+    caption: 'testing',
     icon: 'public',
-    link: 'https://facebook.quasar.dev'
-  },
-  {
-    title: 'Quasar Awesome',
-    caption: 'Community Quasar projects',
-    icon: 'favorite',
-    link: 'https://awesome.quasar.dev'
+    link: 'https://ietf.org'
   }
 ]
 
@@ -104,12 +106,27 @@ export default defineComponent({
   setup () {
     const leftDrawerOpen = ref(false)
 
+    function minimize () {
+      window.myWindowAPI?.minimize()
+    }
+
+    function toggleMaximize () {
+      window.myWindowAPI?.toggleMaximize()
+    }
+
+    function closeApp () {
+      window.myWindowAPI?.close()
+    }
+
     return {
       essentialLinks: linksList,
       leftDrawerOpen,
       toggleLeftDrawer () {
         leftDrawerOpen.value = !leftDrawerOpen.value
-      }
+      },
+      minimize,
+      toggleMaximize,
+      closeApp
     }
   }
 })

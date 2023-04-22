@@ -1,4 +1,5 @@
 import { app, BrowserWindow, nativeTheme } from 'electron'
+import { initialize, enable } from '@electron/remote/main'
 import path from 'path'
 import os from 'os'
 
@@ -14,32 +15,37 @@ try {
 let mainWindow
 
 function createWindow () {
+  initialize()
   /**
    * Initial window options
    */
   mainWindow = new BrowserWindow({
     icon: path.resolve(__dirname, 'icons/icon.png'), // tray icon
-    width: 1000,
-    height: 600,
+    width: 1400,
+    height: 850,
     useContentSize: true,
+    frame: false,
     webPreferences: {
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
-      preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD)
+      preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
+      sandbox: false
     }
   })
 
+  enable(mainWindow.webContents)
+
   mainWindow.loadURL(process.env.APP_URL)
 
-  if (process.env.DEBUGGING) {
-    // if on DEV or Production with debug enabled
-    mainWindow.webContents.openDevTools()
-  } else {
-    // we're on production; no access to devtools pls
-    mainWindow.webContents.on('devtools-opened', () => {
-      mainWindow.webContents.closeDevTools()
-    })
-  }
+  // if (process.env.DEBUGGING) {
+  //   // if on DEV or Production with debug enabled
+  //   mainWindow.webContents.openDevTools()
+  // } else {
+  //   // we're on production; no access to devtools pls
+  //   mainWindow.webContents.on('devtools-opened', () => {
+  //     mainWindow.webContents.closeDevTools()
+  //   })
+  // }
 
   mainWindow.on('closed', () => {
     mainWindow = null
