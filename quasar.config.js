@@ -47,7 +47,7 @@ module.exports = configure(function (/* ctx */) {
       // 'roboto-font-latin-ext', // this or either 'roboto-font', NEVER both!
 
       'roboto-font', // optional, you are not bound to it
-      'material-icons' // optional, you are not bound to it
+      'mdi-v7' // optional, you are not bound to it
     ],
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
@@ -100,7 +100,7 @@ module.exports = configure(function (/* ctx */) {
     framework: {
       config: {},
 
-      // iconSet: 'material-icons', // Quasar icon set
+      iconSet: 'mdi-v7', // Quasar icon set
       // lang: 'en-US', // Quasar language pack
 
       // For special cases outside of where the auto-import strategy can have an impact
@@ -187,14 +187,23 @@ module.exports = configure(function (/* ctx */) {
       packager: {
         // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
 
+        appCopyright: 'IETF Trust',
+        arch: ['x64', 'arm64'],
+        executableName: 'editor',
+        name: 'ietf-editor',
+        overwrite: true,
+        platform: ['darwin', 'linux', 'win32'],
+
         // OS X / Mac App Store
         // appBundleId: '',
-        // appCategoryType: '',
+        appCategoryType: 'public.app-category.productivity',
         // osxSign: '',
         // protocol: 'myapp://path',
 
         // Windows only
-        // win32metadata: { ... }
+        win32metadata: {
+          CompanyName: 'IETF'
+        }
       },
 
       builder: {

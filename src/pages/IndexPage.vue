@@ -13,10 +13,18 @@ const monacoContainer = ref(null)
 onMounted(() => {
   setTimeout(() => {
     monaco.editor.create(monacoContainer.value, {
-      value: "function hello() {\n\talert('Hello world!');\n}",
-      language: 'javascript',
+      automaticLayout: true,
+      cursorBlinking: 'blink',
+      fontSize: 16,
+      formatOnType: true,
+      language: 'markdown',
+      lineNumbersMinChars: 4,
+      padding: { top: 10, bottom: 10 },
+      scrollBeyondLastLine: false,
+      tabSize: 2,
       theme: 'vs-dark',
-      scrollBeyondLastLine: false
+      value: '# Segment Routing Path MTU in BGP\n\nThis Internet-Draft is submitted in full conformance with the provisions of BCP 78 and BCP 79.',
+      wordWrap: 'on'
     })
   }, 500)
 })

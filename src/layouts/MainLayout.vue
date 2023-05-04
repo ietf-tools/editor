@@ -1,56 +1,36 @@
-<template>
-  <q-layout view="hHh lpr fFf">
-    <q-header>
-      <q-toolbar class="q-electron-drag">
-        <q-btn
-          flat
-          dense
-          round
-          icon="menu"
-          aria-label="Menu"
-        />
-
-        <q-toolbar-title>
-          IETF Editor
-        </q-toolbar-title>
-
-        <div>Prototype</div>
-
-        <q-space />
-
-        <q-btn dense flat icon="minimize" @click="minimize" />
-        <q-btn dense flat icon="crop_square" @click="toggleMaximize" />
-        <q-btn dense flat icon="close" @click="closeApp" />
-      </q-toolbar>
-    </q-header>
-
-    <q-drawer
-      v-model="leftDrawerOpen"
-      show-if-above
-      bordered
-      mini
-      persistent
-      class="bg-grey-9 text-white"
-    >
-      <q-list>
-        <q-item-label
-          header
-        >
-          Essential Links
-        </q-item-label>
-
-        <EssentialLink
-          v-for="link in essentialLinks"
-          :key="link.title"
-          v-bind="link"
-        />
-      </q-list>
-    </q-drawer>
-
-    <q-page-container>
-      <router-view />
-    </q-page-container>
-  </q-layout>
+<template lang="pug">
+q-layout(view='hHh lpr fFf')
+  q-header(elevated='')
+    q-bar.bg-light-blue-10.q-electron-drag
+      q-icon(name='img:https://static.ietf.org/logos/ietf-inverted.svg' size='xl')
+      q-toolbar-title: span.text-body2: strong IETF Editor
+      span.text-caption.text-light-blue-2 Prototype
+      q-space
+      q-btn(dense flat icon='mdi-minus' @click='minimize' padding='xs sm')
+      q-btn(dense flat icon='mdi-checkbox-blank-outline' @click='toggleMaximize' padding='xs sm')
+      q-btn(dense flat icon='mdi-window-close' @click='closeApp' padding='xs sm')
+    q-bar.bg-light-blue-9
+      q-btn(padding="xs sm" flat no-caps)
+        span.text-body2 File
+      q-btn(padding="xs sm" flat no-caps)
+        span.text-body2 Edit
+      q-btn(padding="xs sm" flat no-caps)
+        span.text-body2 Selection
+      q-btn(padding="xs sm" flat no-caps)
+        span.text-body2 View
+      q-btn(padding="xs sm" flat no-caps)
+        span.text-body2 Preferences
+      q-btn(padding="xs sm" flat no-caps)
+        span.text-body2 Help
+  q-drawer.bg-grey-9.text-white(v-model='leftDrawerOpen' show-if-above bordered mini persistent)
+    q-list
+      q-item-label(header) Essential Links
+      essential-link(v-for='link in essentialLinks' :key='link.title' v-bind='link')
+  q-footer
+    q-bar.bg-light-blue-10
+      span.text-caption.text-light-blue-2 Markdown
+  q-page-container
+    router-view
 </template>
 
 <script>
@@ -61,37 +41,37 @@ const linksList = [
   {
     title: 'Test',
     caption: 'testing',
-    icon: 'school',
+    icon: 'mdi-file-document-edit-outline',
     link: 'https://ietf.org'
   },
   {
     title: 'Test',
     caption: 'testing',
-    icon: 'code',
+    icon: 'mdi-magnify',
     link: 'https://ietf.org'
   },
   {
     title: 'Test',
     caption: 'testing',
-    icon: 'chat',
+    icon: 'mdi-source-branch',
     link: 'https://ietf.org'
   },
   {
     title: 'Test',
     caption: 'testing',
-    icon: 'record_voice_over',
+    icon: 'mdi-wan',
     link: 'https://ietf.org'
   },
   {
     title: 'Test',
     caption: 'testing',
-    icon: 'rss_feed',
+    icon: 'mdi-account-multiple',
     link: 'https://ietf.org'
   },
   {
     title: 'Test',
     caption: 'testing',
-    icon: 'public',
+    icon: 'mdi-comment-check-outline',
     link: 'https://ietf.org'
   }
 ]
