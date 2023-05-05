@@ -24,6 +24,7 @@
     "@quasar/app-vite": "^1.0.0",
     "autoprefixer": "^10.4.2",
     "electron": "^24.1.2",
+    "electron-builder": "^22.14.13",
     "electron-packager": "^15.5.2",
     "eslint": "^8.10.0",
     "eslint-config-standard": "^17.0.0",
@@ -35,7 +36,7 @@
     "pug": "^3.0.2"
   },
   "engines": {
-    "node": "^18 || ^16 || ^14.19",
+    "node": "^18",
     "npm": ">= 6.13.4",
     "yarn": ">= 1.21.1"
   }

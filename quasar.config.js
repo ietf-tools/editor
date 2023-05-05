@@ -182,7 +182,7 @@ module.exports = configure(function (/* ctx */) {
 
       inspectPort: 5858,
 
-      bundler: 'packager', // 'packager' or 'builder'
+      bundler: 'builder', // 'packager' or 'builder'
 
       packager: {
         // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
@@ -192,7 +192,7 @@ module.exports = configure(function (/* ctx */) {
         executableName: 'editor',
         name: 'ietf-editor',
         overwrite: true,
-        platform: ['darwin', 'linux', 'win32'],
+        // platform: ['darwin', 'linux', 'win32'],
 
         // OS X / Mac App Store
         // appBundleId: '',
@@ -209,7 +209,22 @@ module.exports = configure(function (/* ctx */) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'editor'
+        appId: 'com.electron.ietf-editor',
+        // eslint-disable-next-line no-template-curly-in-string
+        artifactName: 'ietf-editor-${os}-${arch}-${version}.${ext}',
+        executableName: 'ietf-editor',
+        copyright: 'Copyright © 2023 The IETF Trust',
+        mac: {
+          category: 'public.app-category.productivity',
+          target: 'dmg',
+          darkModeSupport: true
+        },
+        win: {
+          target: 'portable'
+        },
+        linux: {
+          target: 'tar.gz'
+        }
       }
     },
 
