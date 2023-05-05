@@ -12,7 +12,7 @@ jobs:
     name: Prepare Release
     runs-on: ubuntu-latest
     outputs:
-      pkg_version: ${{ steps.buildvars.outputs.pkg_version }}
+      pkg_version: ${{ steps.buildvars.semver.nextStrict }}
 
     steps:   
     - uses: actions/checkout@v3
@@ -33,8 +33,8 @@ jobs:
         prerelease: true
         draft: false
         commit: ${{ github.sha }}
-        tag: ${{ steps.semver.outputs.pkg_version }}
-        name: ${{ steps.semver.outputs.pkg_version }}
+        tag: ${{ steps.semver.outputs.nextStrict }}
+        name: ${{ steps.semver.outputs.nextStrict }}
         body: '*pending*'
         token: ${{ secrets.GITHUB_TOKEN }}
         
@@ -52,8 +52,8 @@ jobs:
       with:
         allowUpdates: true
         commit: ${{ github.sha }}
-        tag: ${{ steps.semver.outputs.pkg_version }}
-        name: ${{ steps.semver.outputs.pkg_version }}
+        tag: ${{ steps.semver.outputs.nextStrict }}
+        name: ${{ steps.semver.outputs.nextStrict }}
         body: ${{ steps.changelog.outputs.changelog }}
         token: ${{ secrets.GITHUB_TOKEN }}
 
