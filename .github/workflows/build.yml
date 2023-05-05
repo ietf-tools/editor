@@ -54,7 +54,7 @@ jobs:
         commit: ${{ github.sha }}
         tag: ${{ steps.semver.outputs.nextStrict }}
         name: ${{ steps.semver.outputs.nextStrict }}
-        body: ${{ steps.changelog.outputs.changelog }}
+        body: ${{ steps.changelog.outputs.changes }}
         token: ${{ secrets.GITHUB_TOKEN }}
 
   # -----------------------------------------------------------------
@@ -74,11 +74,7 @@ jobs:
             ext: tar.gz
           - os: macos-latest
             platform: darwin
-            arch: x64
-            ext: dmg
-          - os: macos-latest
-            platform: darwin
-            arch: arm64
+            arch: universal
             ext: dmg
           - os: windows-latest
             platform: win32
@@ -116,7 +112,7 @@ jobs:
   # -----------------------------------------------------------------
   release:
     name: Publish Release
-    needs: [build]
+    needs: [prepare, build]
     runs-on: ubuntu-latest
     env:
       PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
