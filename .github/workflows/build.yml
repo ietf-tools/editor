@@ -27,6 +27,17 @@ jobs:
         branch: main
         skipInvalidTags: true
         
+    - name: Create Draft Release
+      uses: ncipollo/release-action@v1.12.0
+      with:
+        prerelease: true
+        draft: false
+        commit: ${{ github.sha }}
+        tag: ${{ steps.semver.outputs.pkg_version }}
+        name: ${{ steps.semver.outputs.pkg_version }}
+        body: '*pending*'
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
     - name: Generate CHANGELOG
       id: changelog
       uses: Requarks/changelog-action@v1
@@ -39,8 +50,7 @@ jobs:
     - name: Create Draft Release
       uses: ncipollo/release-action@v1.12.0
       with:
-        prerelease: true
-        draft: false
+        allowUpdates: true
         commit: ${{ github.sha }}
         tag: ${{ steps.semver.outputs.pkg_version }}
         name: ${{ steps.semver.outputs.pkg_version }}
