@@ -1,0 +1,121 @@
+name: Build and Release
+run-name: Build ${{ github.run_number }} of branch ${{ github.ref_name }} by @${{ github.actor }}
+
+on:
+  workflow_dispatch:
+
+jobs:
+  # -----------------------------------------------------------------
+  # PREPARE
+  # -----------------------------------------------------------------
+  prepare:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      pkg_version: ${{ steps.buildvars.outputs.pkg_version }}
+
+    steps:   
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Get Next Version
+      id: semver
+      uses: ietf-tools/semver-action@v1
+      with:
+        token: ${{ github.token }}
+        branch: main
+        skipInvalidTags: true
+        
+    - name: Generate CHANGELOG
+      id: changelog
+      uses: Requarks/changelog-action@v1
+      with:
+        token: ${{ github.token }}
+        fromTag: ${{ steps.semver.outputs.nextStrict }}
+        toTag: ${{ steps.semver.outputs.current }}
+        writeToFile: false
+        
+    - name: Create Draft Release
+      uses: ncipollo/release-action@v1.12.0
+      with:
+        prerelease: true
+        draft: false
+        commit: ${{ github.sha }}
+        tag: ${{ steps.semver.outputs.pkg_version }}
+        name: ${{ steps.semver.outputs.pkg_version }}
+        body: ${{ steps.changelog.outputs.changelog }}
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+  # -----------------------------------------------------------------
+  # BUILD
+  # -----------------------------------------------------------------
+  build:
+    name: Build
+    needs: [prepare]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+          - os: macos-latest
+            platform: darwin
+            arch: x64
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+          - os: windows-latest
+            platform: win32
+            arch: x64
+    env:
+      PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
+    
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Run all tests
+      run: |
+        echo "Installing dependencies..."
+        npm ci
+        echo "Build package..."
+        npx quasar build -m electron -T ${{ matrix.platform }} --arch ${{ matrix.arch }}
+        
+    - name: Create Release
+      uses: ncipollo/release-action@v1.12.0
+      with:
+        allowUpdates: true
+        omitBody: true
+        tag: ${{ env.PKG_VERSION }}
+        name: ${{ env.PKG_VERSION }}
+        artifacts: "dist/electron/Packaged/*.exe,dist/electron/Packaged/*.dmg,dist/electron/Packaged/*.tar.gz"
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+  # -----------------------------------------------------------------
+  # RELEASE
+  # -----------------------------------------------------------------
+  release:
+    name: Publish Release
+    needs: [build]
+    runs-on: ubuntu-latest
+    env:
+      PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
+
+    steps:        
+    - name: Update Release
+      uses: ncipollo/release-action@v1.12.0
+      with:
+        allowUpdates: true
+        makeLatest: true
+        prerelease: false
+        omitBody: true
+        draft: false
+        tag: ${{ env.PKG_VERSION }}
+        name: ${{ env.PKG_VERSION }}
+        token: ${{ secrets.GITHUB_TOKEN }}
