@@ -74,14 +74,14 @@ module.exports = configure(function (/* ctx */) {
       // distDir
 
       extendViteConf (viteConf) {
-        viteConf.build.rollupOptions = {
-          external: ['monaco-editor'],
-          output: {
-            globals: {
-              'monaco-editor': 'monaco-editor'
-            }
-          }
-        }
+        // viteConf.build.rollupOptions = {
+        //   external: ['monaco-editor'],
+        //   output: {
+        //     globals: {
+        //       'monaco-editor': 'monaco-editor'
+        //     }
+        //   }
+        // }
       }
       // viteVuePluginOptions: {},
 
