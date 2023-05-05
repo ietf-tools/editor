@@ -12,7 +12,7 @@ jobs:
     name: Prepare Release
     runs-on: ubuntu-latest
     outputs:
-      pkg_version: ${{ steps.buildvars.semver.nextStrict }}
+      pkg_version: ${{ steps.semver.outputs.nextStrict }}
 
     steps:   
     - uses: actions/checkout@v3
@@ -47,7 +47,7 @@ jobs:
         toTag: ${{ steps.semver.outputs.current }}
         writeToFile: false
         
-    - name: Create Draft Release
+    - name: Update Release Body
       uses: ncipollo/release-action@v1.12.0
       with:
         allowUpdates: true
@@ -90,14 +90,14 @@ jobs:
       with:
         node-version: '18'
 
-    - name: Run all tests
+    - name: Build package
       run: |
         echo "Installing dependencies..."
         npm ci
         echo "Build package..."
         npx quasar build -m electron -T ${{ matrix.platform }} --arch ${{ matrix.arch }}
         
-    - name: Create Release
+    - name: Add Package to Release
       uses: ncipollo/release-action@v1.12.0
       with:
         allowUpdates: true
@@ -118,7 +118,7 @@ jobs:
       PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
 
     steps:        
-    - name: Update Release
+    - name: Finalize Release
       uses: ncipollo/release-action@v1.12.0
       with:
         allowUpdates: true
