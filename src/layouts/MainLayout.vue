@@ -7,9 +7,10 @@ q-layout(view='hHh lpr fFf')
       q-icon.q-mr-sm(name='mdi-circle' size='.5em' color='positive')
       span.text-caption.text-light-blue-2 Connected
       q-space
-      q-btn(dense flat icon='mdi-minus' @click='minimize' padding='xs sm')
-      q-btn(dense flat icon='mdi-checkbox-blank-outline' @click='toggleMaximize' padding='xs sm')
-      q-btn(dense flat icon='mdi-window-close' @click='closeApp' padding='xs sm')
+      template(v-if='isElectron')
+        q-btn(dense flat icon='mdi-minus' @click='minimize' padding='xs sm')
+        q-btn(dense flat icon='mdi-checkbox-blank-outline' @click='toggleMaximize' padding='xs sm')
+        q-btn(dense flat icon='mdi-window-close' @click='closeApp' padding='xs sm')
     main-toolbar
   q-drawer.bg-grey-9.text-white(v-model='leftDrawerOpen' show-if-above bordered mini persistent)
     q-list
@@ -26,6 +27,8 @@ q-layout(view='hHh lpr fFf')
 import { ref } from 'vue'
 import MainToolbar from 'components/MainToolbar.vue'
 import EssentialLink from 'components/EssentialLink.vue'
+
+/* eslint-disable space-before-function-paren */
 
 const linksList = [
   {
@@ -68,15 +71,17 @@ const linksList = [
 
 const leftDrawerOpen = ref(false)
 
-function minimize () {
+function minimize() {
   window.myWindowAPI?.minimize()
 }
 
-function toggleMaximize () {
+function toggleMaximize() {
   window.myWindowAPI?.toggleMaximize()
 }
 
-function closeApp () {
+function closeApp() {
   window.myWindowAPI?.close()
 }
+
+const isElectron = process.env.MODE === 'electron'
 </script>

@@ -9,6 +9,7 @@
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js
 
 const { configure } = require('quasar/wrappers')
+const curYear = new Date().getFullYear()
 
 module.exports = configure(function (/* ctx */) {
   return {
@@ -57,7 +58,7 @@ module.exports = configure(function (/* ctx */) {
         node: 'node18'
       },
 
-      vueRouterMode: 'hash', // available values: 'hash', 'history'
+      vueRouterMode: 'history', // available values: 'hash', 'history'
       // vueRouterBase,
       // vueDevtools,
       // vueOptionsAPI: false,
@@ -82,7 +83,7 @@ module.exports = configure(function (/* ctx */) {
         //     }
         //   }
         // }
-      },
+      }
       // viteVuePluginOptions: {},
 
       // vitePlugins: [
@@ -165,16 +166,6 @@ module.exports = configure(function (/* ctx */) {
       // extendPWACustomSWConf (esbuildConf) {}
     },
 
-    // Full list of options: https://v2.quasar.dev/quasar-cli/developing-cordova-apps/configuring-cordova
-    cordova: {
-      // noIosLegacyBuildFlag: true, // uncomment only if you know what you are doing
-    },
-
-    // Full list of options: https://v2.quasar.dev/quasar-cli/developing-capacitor-apps/configuring-capacitor
-    capacitor: {
-      hideSplashscreen: true
-    },
-
     // Full list of options: https://v2.quasar.dev/quasar-cli/developing-electron-apps/configuring-electron
     electron: {
       // extendElectronMainConf (esbuildConf)
@@ -189,8 +180,8 @@ module.exports = configure(function (/* ctx */) {
 
         appCopyright: 'IETF Trust',
         arch: ['x64', 'arm64'],
-        executableName: 'editor',
-        name: 'ietf-editor',
+        executableName: 'draftforge',
+        name: 'ietf-draftforge',
         overwrite: true,
         // platform: ['darwin', 'linux', 'win32'],
 
@@ -209,11 +200,11 @@ module.exports = configure(function (/* ctx */) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'com.electron.ietf-editor',
+        appId: 'com.electron.ietf-draftforge',
         // eslint-disable-next-line no-template-curly-in-string
-        artifactName: 'ietf-editor-${os}-${arch}-${version}.${ext}',
-        executableName: 'ietf-editor',
-        copyright: 'Copyright © 2023 The IETF Trust',
+        artifactName: 'ietf-draftforge-${os}-${arch}-${version}.${ext}',
+        executableName: 'ietf-draftforge',
+        copyright: `Copyright © 2023-${curYear} The IETF Trust`,
         mac: {
           category: 'public.app-category.productivity',
           target: 'dmg',
@@ -226,16 +217,6 @@ module.exports = configure(function (/* ctx */) {
           target: 'tar.gz'
         }
       }
-    },
-
-    // Full list of options: https://v2.quasar.dev/quasar-cli-vite/developing-browser-extensions/configuring-bex
-    bex: {
-      contentScripts: [
-        'my-content-script'
-      ]
-
-      // extendBexScriptsConf (esbuildConf) {}
-      // extendBexManifestJson (json) {}
     }
   }
 })
