@@ -35,5 +35,10 @@
     "dist",
     ".quasar",
     "node_modules"
-  ]
+  ],
+  "vueCompilerOptions": {
+    "plugins": [
+      "@vue/language-plugin-pug"
+    ]
+  }
 }

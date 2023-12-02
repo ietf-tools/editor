@@ -14,8 +14,8 @@ jobs:
     outputs:
       pkg_version: ${{ steps.semver.outputs.nextStrict }}
 
-    steps:   
-    - uses: actions/checkout@v3
+    steps:
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -26,7 +26,7 @@ jobs:
         token: ${{ github.token }}
         branch: main
         skipInvalidTags: true
-        
+
     - name: Create Draft Release
       uses: ncipollo/release-action@v1.12.0
       with:
@@ -37,7 +37,7 @@ jobs:
         name: ${{ steps.semver.outputs.nextStrict }}
         body: '*pending*'
         token: ${{ secrets.GITHUB_TOKEN }}
-        
+
     - name: Generate CHANGELOG
       id: changelog
       uses: Requarks/changelog-action@v1
@@ -46,7 +46,7 @@ jobs:
         fromTag: ${{ steps.semver.outputs.nextStrict }}
         toTag: ${{ steps.semver.outputs.current }}
         writeToFile: false
-        
+
     - name: Update Release Body
       uses: ncipollo/release-action@v1.12.0
       with:
@@ -74,7 +74,11 @@ jobs:
             ext: tar.gz
           - os: macos-latest
             platform: darwin
-            arch: universal
+            arch: x64
+            ext: dmg
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
             ext: dmg
           - os: windows-latest
             platform: win32
@@ -82,13 +86,17 @@ jobs:
             ext: exe
     env:
       PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
-    
-    steps:
-    - uses: actions/checkout@v3
 
-    - uses: actions/setup-node@v3
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
+
+    - name: Set Version
+      run: |
+        node -e "const fs = require('node:fs'); const pkg = require('./package.json'); pkg.version = '${{ env.PKG_VERSION }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
 
     - name: Build package
       run: |
@@ -96,7 +104,7 @@ jobs:
         npm ci
         echo "Build package..."
         npx quasar build -m electron -T ${{ matrix.platform }} --arch ${{ matrix.arch }} -P never
-        
+
     - name: Add Package to Release
       uses: ncipollo/release-action@v1.12.0
       with:
@@ -106,7 +114,7 @@ jobs:
         name: ${{ env.PKG_VERSION }}
         artifacts: "dist/electron/Packaged/*.${{ matrix.ext }}"
         token: ${{ secrets.GITHUB_TOKEN }}
-        
+
   # -----------------------------------------------------------------
   # RELEASE
   # -----------------------------------------------------------------
@@ -117,7 +125,7 @@ jobs:
     env:
       PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
 
-    steps:        
+    steps:
     - name: Finalize Release
       uses: ncipollo/release-action@v1.12.0
       with:

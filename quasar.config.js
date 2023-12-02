@@ -82,12 +82,13 @@ module.exports = configure(function (/* ctx */) {
         //     }
         //   }
         // }
-      }
+      },
       // viteVuePluginOptions: {},
 
       // vitePlugins: [
       //   [ 'package-name', { ..options.. } ]
       // ]
+      vitePlugins: ['@vue/language-plugin-pug']
     },
 
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#devServer
