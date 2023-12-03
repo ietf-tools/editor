@@ -1,6 +1,7 @@
 <template>
   <q-page class="row items-stretch">
-    <div class="col-12" ref="monacoContainer"></div>
+    <div class="col-12 col-lg-6" ref="monacoContainer"></div>
+    <div class="col-12 col-lg-6">Preview</div>
   </q-page>
 </template>
 
