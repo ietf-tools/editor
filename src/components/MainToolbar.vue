@@ -2,7 +2,7 @@
 q-bar.bg-light-blue-9
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 File
-    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up' auto-close)
+    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up')
       q-list(dense padding)
         q-item(clickable)
           q-item-section(side)
@@ -73,7 +73,7 @@ q-bar.bg-light-blue-9
           q-item-section Exit
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 Edit
-    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up' auto-close)
+    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up')
       q-list(dense padding)
         q-item(clickable)
           q-item-section(side)
@@ -217,7 +217,7 @@ q-bar.bg-light-blue-9
           q-item-section.text-caption(side caption) {{cmdKey}}+Shift+L
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 View
-    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up' auto-close)
+    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up')
       q-list(dense padding)
         q-item(clickable)
           q-item-section(side)
