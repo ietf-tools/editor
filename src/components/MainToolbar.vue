@@ -2,8 +2,8 @@
 q-bar.bg-light-blue-9
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 File
-    q-menu(transition-show='jump-down' transition-hide='jump-up')
-      q-list(dense auto-close padding)
+    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up' auto-close)
+      q-list(dense padding)
         q-item(clickable)
           q-item-section(side)
             q-icon(name='mdi-text-box-plus-outline')
@@ -20,8 +20,8 @@ q-bar.bg-light-blue-9
           q-item-section Open Recent
           q-item-section(side)
             q-icon(name='mdi-menu-right')
-          q-menu(anchor='top end' self='top start')
-            q-list(dense auto-close padding)
+          q-menu.translucent-menu(anchor='top end' self='top start')
+            q-list(dense padding)
               q-item(disabled)
                 q-item-section No Recent Drafts
         q-separator.q-my-sm
@@ -45,8 +45,8 @@ q-bar.bg-light-blue-9
           q-item-section Export
           q-item-section(side)
             q-icon(name='mdi-menu-right')
-          q-menu(anchor='top end' self='top start')
-            q-list(dense auto-close padding)
+          q-menu.translucent-menu(anchor='top end' self='top start')
+            q-list(dense padding)
               q-item(clickable)
                 q-item-section All
               q-item(clickable)
@@ -73,8 +73,8 @@ q-bar.bg-light-blue-9
           q-item-section Exit
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 Edit
-    q-menu(transition-show='jump-down' transition-hide='jump-up')
-      q-list(dense auto-close padding)
+    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up' auto-close)
+      q-list(dense padding)
         q-item(clickable)
           q-item-section(side)
             q-icon(name='mdi-undo-variant')
@@ -108,8 +108,8 @@ q-bar.bg-light-blue-9
           q-item-section Find
           q-item-section(side)
             q-icon(name='mdi-menu-right')
-          q-menu(anchor='top end' self='top start')
-            q-list(dense auto-close padding)
+          q-menu.translucent-menu(anchor='top end' self='top start')
+            q-list(dense padding)
               q-item(clickable)
                 q-item-section Find
                 q-item-section(side caption) {{cmdKey}}+F
@@ -131,8 +131,8 @@ q-bar.bg-light-blue-9
           q-item-section Spelling & Grammar
           q-item-section(side)
             q-icon(name='mdi-menu-right')
-          q-menu(anchor='top end' self='top start')
-            q-list(dense auto-close padding)
+          q-menu.translucent-menu(anchor='top end' self='top start')
+            q-list(dense padding)
               q-item(clickable)
                 q-item-section Check Spelling
               q-item(clickable)
@@ -143,8 +143,8 @@ q-bar.bg-light-blue-9
                 q-item-section Check for Duplicates
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 Selection
-    q-menu(transition-show='jump-down' transition-hide='jump-up')
-      q-list(dense auto-close padding)
+    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up' auto-close)
+      q-list(dense padding)
         q-item(clickable)
           q-item-section(side)
             q-icon(name='mdi-select-all')
@@ -217,8 +217,8 @@ q-bar.bg-light-blue-9
           q-item-section.text-caption(side caption) {{cmdKey}}+Shift+L
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 View
-    q-menu(transition-show='jump-down' transition-hide='jump-up')
-      q-list(dense auto-close padding)
+    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up' auto-close)
+      q-list(dense padding)
         q-item(clickable)
           q-item-section(side)
             q-icon(name='mdi-form-select')
@@ -246,8 +246,8 @@ q-bar.bg-light-blue-9
           q-item-section Preview Output
           q-item-section(side)
             q-icon(name='mdi-menu-right')
-          q-menu(anchor='top end' self='top start')
-            q-list(dense auto-close padding)
+          q-menu.translucent-menu(anchor='top end' self='top start')
+            q-list(dense padding)
               q-item(clickable)
                 q-item-section HTML
                 q-item-section(side)
@@ -262,8 +262,8 @@ q-bar.bg-light-blue-9
           q-item-section.text-caption(side caption) Alt+Z
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 Insert
-    q-menu(transition-show='jump-down' transition-hide='jump-up')
-      q-list(dense auto-close padding)
+    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up' auto-close)
+      q-list(dense padding)
         q-item(clickable)
           q-item-section(side)
             q-icon(name='mdi-tag-plus-outline')
@@ -278,8 +278,8 @@ q-bar.bg-light-blue-9
           q-item-section Create Table
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 Tools
-    q-menu(transition-show='jump-down' transition-hide='jump-up')
-      q-list(dense auto-close padding)
+    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up' auto-close)
+      q-list(dense padding)
         q-item(clickable)
           q-item-section(side)
             q-icon(name='mdi-bicycle-penny-farthing')
@@ -310,36 +310,36 @@ q-bar.bg-light-blue-9
           q-item-section Check SVG
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 Help
-    q-menu(transition-show='jump-down' transition-hide='jump-up')
-      q-list(dense auto-close padding)
-        q-item(clickable)
+    q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up' auto-close)
+      q-list(dense padding)
+        q-item(clickable href="https://authors.ietf.org/" target="_blank")
           q-item-section(side)
             q-icon(name='mdi-book-open-page-variant-outline')
           q-item-section Documentation
-        q-item(clickable)
+        q-item(clickable href="https://authors.ietf.org/en/rfcxml-vocabulary" target="_blank")
           q-item-section(side)
             q-icon(name='mdi-bookshelf')
           q-item-section RFCXML Vocabulary
         q-separator.q-my-sm
-        q-item(clickable)
+        q-item(clickable href="https://github.com/ietf-tools/editor/releases" target="_blank")
           q-item-section(side)
             q-icon(name='mdi-list-box-outline')
           q-item-section Release Notes
-        q-item(clickable)
+        q-item(clickable href="https://github.com/ietf-tools/editor/issues" target="_blank")
           q-item-section(side)
             q-icon(name='mdi-bug-outline')
           q-item-section Report Issue
-        q-item(clickable)
+        q-item(clickable href="https://github.com/ietf-tools/editor/blob/main/LICENSE" target="_blank")
           q-item-section(side)
             q-icon(name='mdi-scale-balance')
           q-item-section View License
         q-separator.q-my-sm
-        q-item(clickable)
+        q-item(clickable disabled)
           q-item-section(side)
             q-icon(name='mdi-lan-pending')
           q-item-section Check for Updates...
         q-separator.q-my-sm
-        q-item(clickable)
+        q-item(clickable @click='helpAbout')
           q-item-section(side)
             q-icon(name='mdi-information-outline')
           q-item-section About
@@ -350,7 +350,17 @@ q-bar.bg-light-blue-9
 </template>
 
 <script setup>
+import { defineAsyncComponent } from 'vue'
 import { useQuasar } from 'quasar'
+
 const $q = useQuasar()
 const cmdKey = $q.platform.is.mac ? 'Cmd' : 'Ctrl'
+
+// HELP
+
+function helpAbout () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('components/AboutDialog.vue'))
+  })
+}
 </script>

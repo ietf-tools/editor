@@ -63,7 +63,7 @@ jobs:
   # BUILD PWA
   # -----------------------------------------------------------------
   build-pwa:
-    name: Build Electron
+    name: Build PWA
     needs: [prepare]
     runs-on: ubuntu-latest
     permissions:
@@ -116,7 +116,7 @@ jobs:
   # DEPLOY PWA
   # -----------------------------------------------------------------
   deploy-pwa:
-    name: Deploy to Sandbox
+    name: Deploy PWA to Sandbox
     needs: [prepare, build-pwa]
     runs-on: [self-hosted, dev-server]
     env:

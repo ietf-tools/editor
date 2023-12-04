@@ -3,3 +3,18 @@
 body {
   background-color: $dark-page;
 }
+
+.translucent-menu {
+  @at-root .body--light & {
+    background-color: rgba(255,255,255,.8);
+  }
+  @at-root .body--dark & {
+    background-color: rgba($dark,.7);
+  }
+
+  backdrop-filter: blur(10px) saturate(180%);
+
+  > .q-card {
+    background-color: transparent !important;
+  }
+}
