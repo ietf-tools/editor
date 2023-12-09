@@ -2,7 +2,7 @@
   "name": "draftforge",
   "version": "0.0.1",
   "description": "IETF DraftForge",
-  "productName": "IETF DraftForge",
+  "productName": "DraftForge",
   "author": "IETF Tools",
   "private": true,
   "scripts": {

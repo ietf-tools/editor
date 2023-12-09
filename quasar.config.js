@@ -188,7 +188,7 @@ module.exports = configure(function (/* ctx */) {
 
         appCopyright: 'IETF Trust',
         arch: ['x64', 'arm64'],
-        executableName: 'draftforge',
+        // executableName: 'draftforge',
         name: 'ietf-draftforge',
         overwrite: true,
         // platform: ['darwin', 'linux', 'win32'],
@@ -208,10 +208,10 @@ module.exports = configure(function (/* ctx */) {
       builder: {
         // https://www.electron.build/configuration/configuration
 
-        appId: 'com.electron.ietf-draftforge',
+        appId: 'org.ietf.draftforge',
         // eslint-disable-next-line no-template-curly-in-string
         artifactName: 'ietf-draftforge-${os}-${arch}-${version}.${ext}',
-        executableName: 'ietf-draftforge',
+        // executableName: 'draftforge',
         copyright: `Copyright © 2023-${curYear} The IETF Trust`,
         mac: {
           category: 'public.app-category.productivity',
