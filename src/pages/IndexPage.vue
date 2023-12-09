@@ -1,13 +1,32 @@
-<template>
-  <q-page class="row items-stretch">
-    <div class="col-12 col-lg-6" ref="monacoContainer"></div>
-    <div class="col-12 col-lg-6">Preview</div>
-  </q-page>
+<template lang="pug">
+q-page.row.items-stretch
+  .col-12.col-lg-6(ref="monacoContainer")
+  .col-12.col-lg-6.bg-dark-5
+    .q-ma-lg Preview
+    q-btn(
+      @click='validateContent'
+      label='Check Nits'
+      push
+      color='teal'
+      )
 </template>
 
 <script setup>
 import { onMounted, ref } from 'vue'
 import * as monaco from 'monaco-editor'
+import { debounce } from 'lodash-es'
+import { DateTime } from 'luxon'
+import { checkNits } from '@ietf-tools/idnits'
+
+import { useAppStore } from 'stores/app'
+import { useEditorStore } from 'stores/editor'
+
+// STORES
+
+const appStore = useAppStore()
+const editorStore = useEditorStore()
+
+// MONACO
 
 const monacoContainer = ref(null)
 let editor = null
@@ -78,9 +97,24 @@ monaco.languages.setMonarchTokensProvider('xmlrfc', {
 })
 
 onMounted(async () => {
-  const baseDocReq = await fetch('https://raw.githubusercontent.com/ietf-tools/idnits/v3/tests/fixtures/draft-template-standard.xml')
+  // const baseDocReq = await fetch('https://raw.githubusercontent.com/ietf-tools/idnits/v3/tests/fixtures/draft-template-standard.xml')
+  const baseDocReq = await fetch('https://www.ietf.org/archive/id/draft-ietf-ccamp-mw-topo-yang-08.xml')
   const baseDoc = await baseDocReq.text()
   setTimeout(() => {
+    // -> Define Monaco Theme
+    monaco.editor.defineTheme('ietf', {
+      base: 'vs-dark',
+      inherit: true,
+      rules: [],
+      colors: {
+        'editor.background': '#070a0d',
+        'editor.lineHighlightBackground': '#0d1117',
+        'editorLineNumber.foreground': '#546e7a',
+        'editorGutter.background': '#0d1117'
+      }
+    })
+
+    // -> Initialize Monaco editor
     editor = monaco.editor.create(monacoContainer.value, {
       automaticLayout: true,
       cursorBlinking: 'blink',
@@ -91,11 +125,20 @@ onMounted(async () => {
       padding: { top: 10, bottom: 10 },
       scrollBeyondLastLine: false,
       tabSize: 2,
-      theme: 'vs-dark',
+      theme: 'ietf',
       value: baseDoc,
       wordWrap: 'on'
     })
 
+    // -> Handle content change
+    editor.onDidChangeModelContent(debounce(ev => {
+      editorStore.$patch({
+        lastChangeTimestamp: DateTime.utc(),
+        content: editor.getValue()
+      })
+    }, 500))
+
+    // Code Lens
     const commandId = editor.addCommand(
       0,
       function () {
@@ -130,6 +173,18 @@ onMounted(async () => {
         return codeLens
       }
     })
+
+    // -> Post init
+    editor.focus()
   }, 500)
 })
+
+async function validateContent () {
+  const enc = new TextEncoder()
+  const result = await checkNits(enc.encode(editorStore.content).buffer, 'draft-ietf-ccamp-mw-topo-yang-08.xml', {
+    mode: 'normal',
+    offline: !appStore.isElectron
+  })
+  console.info(result)
+}
 </script>

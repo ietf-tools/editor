@@ -1,7 +1,23 @@
-import { app, BrowserWindow, nativeTheme } from 'electron'
+import { app, BrowserWindow, nativeTheme, screen } from 'electron'
 import { initialize, enable } from '@electron/remote/main'
 import path from 'path'
 import os from 'os'
+
+/**
+ * Merge new header with existing headers, handling lowercase header duplicates
+ *
+ * @param {Object} headers Existing headers
+ * @param {string} key New Header Key, in normal ccase
+ * @param {string} value New Header Value
+ */
+function mergeWithHeaders (headers = {}, key, value) {
+  const lowerKey = key.toLowerCase()
+  if (lowerKey in headers) {
+    headers[lowerKey] = value
+  } else {
+    headers[key] = value
+  }
+}
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
@@ -16,15 +32,22 @@ let mainWindow
 
 function createWindow () {
   initialize()
+
+  // -> Get primary screen dimensions
+  const primaryDisplay = screen.getPrimaryDisplay()
+  const { width, height } = primaryDisplay.workAreaSize
+
   /**
    * Initial window options
    */
   mainWindow = new BrowserWindow({
     icon: path.resolve(__dirname, 'icons/icon.png'), // tray icon
-    width: 1400,
-    height: 850,
-    useContentSize: true,
-    frame: false,
+    width: Math.round(width * 0.9),
+    height: Math.round(height * 0.9),
+    // useContentSize: true,
+    center: true,
+    frame: true,
+    backgroundMaterial: 'acrylic',
     webPreferences: {
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
@@ -32,9 +55,22 @@ function createWindow () {
       sandbox: false
     }
   })
+  mainWindow.setMenu(null)
 
   enable(mainWindow.webContents)
 
+  // -> Disable CORS
+  mainWindow.webContents.session.webRequest.onBeforeSendHeaders(({ requestHeaders }, clb) => {
+    mergeWithHeaders(requestHeaders, 'Access-Control-Allow-Origin', ['*'])
+    clb({ requestHeaders })
+  })
+  mainWindow.webContents.session.webRequest.onHeadersReceived(({ requestHeaders }, clb) => {
+    mergeWithHeaders(requestHeaders, 'Access-Control-Allow-Headers', ['*'])
+    mergeWithHeaders(requestHeaders, 'Access-Control-Allow-Origin', ['*'])
+    clb({ requestHeaders })
+  })
+
+  // -> Load start URL
   mainWindow.loadURL(process.env.APP_URL)
 
   // if (process.env.DEBUGGING) {
@@ -55,9 +91,9 @@ function createWindow () {
 app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
-  if (platform !== 'darwin') {
-    app.quit()
-  }
+  // if (platform !== 'darwin') {
+  app.quit()
+  // }
 })
 
 app.on('activate', () => {

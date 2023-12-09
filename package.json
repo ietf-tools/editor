@@ -13,7 +13,11 @@
   },
   "dependencies": {
     "@electron/remote": "2.1.0",
+    "@ietf-tools/idnits": "3.0.0-alpha.33",
     "@quasar/extras": "1.16.9",
+    "lodash-es": "4.17.21",
+    "luxon": "3.4.4",
+    "mitt": "3.0.1",
     "monaco-editor": "0.44.0",
     "pinia": "2.1.7",
     "quasar": "2.14.1",

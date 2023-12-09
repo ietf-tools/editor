@@ -1,7 +1,7 @@
 // app global css in SCSS form
 
 body {
-  background-color: $dark-page;
+  background-color: transparent;
 }
 
 .translucent-menu {
@@ -17,4 +17,17 @@ body {
   > .q-card {
     background-color: transparent !important;
   }
+}
+
+.bg-dark-4 {
+  background-color: lighten(#0d1117, 5%);
+}
+.bg-dark-5 {
+  background-color: #0d1117;
+}
+.bg-dark-6 {
+  background-color: #070a0d;
+}
+.bg-dark-7 {
+  background-color: darken(#070a0d, 5%);
 }

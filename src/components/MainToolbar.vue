@@ -1,5 +1,5 @@
 <template lang="pug">
-q-bar.bg-light-blue-9
+q-bar.toolbar-main
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 File
     q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up')
@@ -66,11 +66,12 @@ q-bar.bg-light-blue-9
           q-item-section(side)
             q-icon(name='mdi-cog-outline')
           q-item-section Preferences
-        q-separator.q-my-sm
-        q-item(clickable)
-          q-item-section(side)
-            q-icon(name='mdi-exit-run')
-          q-item-section Exit
+        template(v-if='appStore.isElectron || appStore.isPWA')
+          q-separator.q-my-sm
+          q-item(clickable @click='fileExit')
+            q-item-section(side)
+              q-icon(name='mdi-exit-run')
+            q-item-section Exit
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 Edit
     q-menu.translucent-menu(transition-show='jump-down' transition-hide='jump-up')
@@ -223,22 +224,24 @@ q-bar.bg-light-blue-9
           q-item-section(side)
             q-icon(name='mdi-form-select')
           q-item-section Command Palette...
-          q-item-section.text-caption(side caption) {{cmdKey}}+Shift+P
-        q-separator.q-my-sm
-        q-item(clickable)
-          q-item-section(side)
-            q-icon(name='mdi-magnify-plus-outline')
-          q-item-section Zoom In
-          q-item-section.text-caption(side caption) {{cmdKey}}+=
-        q-item(clickable)
-          q-item-section(side)
-            q-icon(name='mdi-magnify-minus-outline')
-          q-item-section Zoom Out
-          q-item-section.text-caption(side caption) {{cmdKey}}+-
-        q-item(clickable)
-          q-item-section(side)
-            q-icon(name='mdi-magnify-close')
-          q-item-section Reset Zoom
+          q-item-section.text-caption(side caption) F1
+        template(v-if='appStore.isElectron')
+          q-separator.q-my-sm
+          q-item(clickable)
+            q-item-section(side)
+              q-icon(name='mdi-magnify-plus-outline')
+            q-item-section Zoom In
+            q-item-section.text-caption(side caption) {{cmdKey}}+=
+          q-item(clickable)
+            q-item-section(side)
+              q-icon(name='mdi-magnify-minus-outline')
+            q-item-section Zoom Out
+            q-item-section.text-caption(side caption) {{cmdKey}}+-
+          q-item(clickable)
+            q-item-section(side)
+              q-icon(name='mdi-magnify-close')
+            q-item-section Reset Zoom
+            q-item-section.text-caption(side caption) {{cmdKey}}+0
         q-separator.q-my-sm
         q-item(clickable)
           q-item-section(side)
@@ -353,8 +356,24 @@ q-bar.bg-light-blue-9
 import { defineAsyncComponent } from 'vue'
 import { useQuasar } from 'quasar'
 
+import { useAppStore } from 'stores/app'
+
 const $q = useQuasar()
 const cmdKey = $q.platform.is.mac ? 'Cmd' : 'Ctrl'
+
+// STORES
+
+const appStore = useAppStore()
+
+// FILE
+
+function fileExit () {
+  if (process.env.MODE === 'electron') {
+    window.myWindowAPI?.close()
+  } else {
+    window.close()
+  }
+}
 
 // HELP
 
@@ -364,3 +383,9 @@ function helpAbout () {
   })
 }
 </script>
+
+<style lang="scss">
+.toolbar-main {
+  background: radial-gradient(ellipse at bottom, $light-blue-9, $light-blue-10)
+}
+</style>

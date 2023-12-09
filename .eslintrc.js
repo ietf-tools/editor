@@ -48,7 +48,8 @@ module.exports = {
     __QUASAR_SSR_PWA__: 'readonly',
     process: 'readonly',
     Capacitor: 'readonly',
-    chrome: 'readonly'
+    chrome: 'readonly',
+    EVENT_BUS: 'readonly'
   },
 
   // add your custom rules here
