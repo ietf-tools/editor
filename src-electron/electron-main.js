@@ -60,7 +60,7 @@ function createWindow () {
     }
   })
 
-  registerMenu()
+  registerMenu(mainWindow)
   // mainWindow.setMenu(null)
 
   enable(mainWindow.webContents)
@@ -79,9 +79,10 @@ function createWindow () {
   // -> Load start URL
   mainWindow.loadURL(process.env.APP_URL)
 
-  // if (process.env.DEBUGGING) {
-  //   // if on DEV or Production with debug enabled
-  //   mainWindow.webContents.openDevTools()
+  if (process.env.DEBUGGING) {
+    // if on DEV or Production with debug enabled
+    mainWindow.webContents.openDevTools()
+  }
   // } else {
   //   // we're on production; no access to devtools pls
   //   mainWindow.webContents.on('devtools-opened', () => {

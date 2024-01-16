@@ -1,22 +1,11 @@
-import { contextBridge } from 'electron'
-import { BrowserWindow } from '@electron/remote'
+import { contextBridge, ipcRenderer } from 'electron'
 
-contextBridge.exposeInMainWorld('myWindowAPI', {
-  minimize () {
-    BrowserWindow.getFocusedWindow().minimize()
+contextBridge.exposeInMainWorld('menuEmitter', {
+  emit (channel, data) {
+    ipcRenderer.send(channel, data)
   },
 
-  toggleMaximize () {
-    const win = BrowserWindow.getFocusedWindow()
-
-    if (win.isMaximized()) {
-      win.unmaximize()
-    } else {
-      win.maximize()
-    }
-  },
-
-  close () {
-    BrowserWindow.getFocusedWindow().close()
+  subscribe (channel, callback) {
+    ipcRenderer.on(channel, callback)
   }
 })

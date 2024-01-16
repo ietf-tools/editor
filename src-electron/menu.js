@@ -1,36 +1,9 @@
-import { globalShortcut, Menu } from 'electron'
+import { Menu, shell } from 'electron'
 import os from 'os'
 
-function FileNewDraft () {
-
-}
-function FileOpen () {
-
-}
-function FileSave () {
-
-}
-function FileSaveAs () {
-
-}
-function FileMoveTo () {
-
-}
-function FilePreferences () {
-
-}
-
-export function registerMenu () {
+export function registerMenu (mainWindow) {
   const platform = process.platform || os.platform()
   const isMac = platform === 'darwin'
-
-  /**
-   * Global Shortcuts
-   */
-  globalShortcut.register('CommandOrControl+N', FileNewDraft)
-  globalShortcut.register('CommandOrControl+O', FileOpen)
-  globalShortcut.register('CommandOrControl+S', FileSave)
-  globalShortcut.register('CommandOrControl+Shift+S', FileSaveAs)
 
   /**
    * Menu Template
@@ -42,13 +15,11 @@ export function registerMenu () {
       submenu: [
         {
           label: 'New Draft...',
-          accelerator: 'CommandOrControl+N',
-          click: FileNewDraft
+          accelerator: 'CommandOrControl+N'
         },
         {
           label: 'Open...',
-          accelerator: 'CommandOrControl+O',
-          click: FileOpen
+          accelerator: 'CommandOrControl+O'
         },
         {
           label: 'Open Recent',
@@ -61,17 +32,14 @@ export function registerMenu () {
         },
         {
           label: 'Save',
-          accelerator: 'CommandOrControl+S',
-          click: FileSave
+          accelerator: 'CommandOrControl+S'
         },
         {
           label: 'Save As...',
-          accelerator: 'CommandOrControl+Shift+S',
-          click: FileSaveAs
+          accelerator: 'CommandOrControl+Shift+S'
         },
         {
-          label: 'Move To...',
-          click: FileMoveTo
+          label: 'Move To...'
         },
         {
           label: 'Export',
@@ -103,8 +71,7 @@ export function registerMenu () {
           type: 'separator'
         },
         {
-          label: 'Preferences',
-          click: FilePreferences
+          label: 'Preferences'
         },
         {
           type: 'separator'
@@ -325,13 +292,22 @@ export function registerMenu () {
         },
         { type: 'separator' },
         {
-          label: 'Release Notes'
+          label: 'Release Notes',
+          click () {
+            shell.openExternal('https://github.com/ietf-tools/editor/releases')
+          }
         },
         {
-          label: 'Report Issue'
+          label: 'Report Issue',
+          click () {
+            shell.openExternal('https://github.com/ietf-tools/editor/issues')
+          }
         },
         {
-          label: 'View License'
+          label: 'View License',
+          click () {
+            shell.openExternal('https://github.com/ietf-tools/editor/blob/main/LICENSE')
+          }
         },
         { type: 'separator' },
         {
@@ -354,7 +330,10 @@ export function registerMenu () {
         },
         { type: 'separator' },
         {
-          label: 'About'
+          label: 'About',
+          click () {
+            mainWindow.webContents.send('menuAction', 'helpAbout')
+          }
         }
       ]
     }
