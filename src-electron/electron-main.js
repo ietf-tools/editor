@@ -3,6 +3,8 @@ import { initialize, enable } from '@electron/remote/main'
 import path from 'path'
 import os from 'os'
 
+import { registerMenu } from './menu'
+
 /**
  * Merge new header with existing headers, handling lowercase header duplicates
  *
@@ -48,6 +50,8 @@ function createWindow () {
     center: true,
     frame: true,
     backgroundMaterial: 'acrylic',
+    vibrancy: 'under-window',
+    darkTheme: true,
     webPreferences: {
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
@@ -55,7 +59,9 @@ function createWindow () {
       sandbox: false
     }
   })
-  mainWindow.setMenu(null)
+
+  registerMenu()
+  // mainWindow.setMenu(null)
 
   enable(mainWindow.webContents)
 
