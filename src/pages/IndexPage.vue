@@ -180,11 +180,136 @@ onMounted(async () => {
 
   window.menuEmitter.subscribe('editorAction', (evt, action) => {
     switch (action) {
+      case 'addCursorAbove': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.insertCursorAbove')
+        })
+        break
+      }
+      case 'addCursorBelow': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.insertCursorBelow')
+        })
+        break
+      }
+      case 'addCursorsToLineEnds': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.insertCursorAtEndOfEachLineSelected')
+        })
+        break
+      }
+      case 'addNextOccurence': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.addSelectionToNextFindMatch')
+        })
+        break
+      }
+      case 'addPreviousOccurence': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.addSelectionToPreviousFindMatch')
+        })
+        break
+      }
       case 'commandPalette': {
         editor.focus()
         setTimeout(() => {
           editor.trigger('menu', 'editor.action.quickCommand')
         })
+        break
+      }
+      case 'copyLineDown': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.copyLinesDownAction')
+        })
+        break
+      }
+      case 'copyLineUp': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.copyLinesUpAction')
+        })
+        break
+      }
+      case 'duplicateSelection': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.duplicateSelection')
+        })
+        break
+      }
+      case 'expandSelection': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.smartSelect.expand')
+        })
+        break
+      }
+      case 'find': {
+        editor.trigger('menu', 'actions.find')
+        break
+      }
+      case 'findAndReplace': {
+        editor.trigger('menu', 'editor.action.startFindReplaceAction')
+        break
+      }
+      case 'findNext': {
+        editor.trigger('menu', 'editor.action.nextMatchFindAction')
+        break
+      }
+      case 'findPrevious': {
+        editor.trigger('menu', 'editor.action.previousMatchFindAction')
+        break
+      }
+      case 'moveLineDown': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.moveLinesDownAction')
+        })
+        break
+      }
+      case 'moveLineUp': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.moveLinesUpAction')
+        })
+        break
+      }
+      case 'redo': {
+        editor.trigger('menu', 'redo')
+        editor.focus()
+        break
+      }
+      case 'selectAll': {
+        editor.focus()
+        setTimeout(() => {
+          const range = editor.getModel().getFullModelRange()
+          editor.setSelection(range)
+        })
+        break
+      }
+      case 'selectAllOccurences': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.selectHighlights')
+        })
+        break
+      }
+      case 'shrinkSelection': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.smartSelect.shrink')
+        })
+        break
+      }
+      case 'undo': {
+        editor.trigger('menu', 'undo')
+        editor.focus()
         break
       }
       case 'wordWrap': {

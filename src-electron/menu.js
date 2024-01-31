@@ -85,8 +85,18 @@ export function registerMenu (mainWindow) {
       label: 'Edit',
       role: 'editMenu',
       submenu: [
-        { role: 'undo' },
-        { role: 'redo' },
+        {
+          role: 'undo',
+          click () {
+            mainWindow.webContents.send('editorAction', 'undo')
+          }
+        },
+        {
+          role: 'redo',
+          click () {
+            mainWindow.webContents.send('editorAction', 'redo')
+          }
+        },
         { type: 'separator' },
         { role: 'cut' },
         { role: 'copy' },
@@ -97,17 +107,29 @@ export function registerMenu (mainWindow) {
           submenu: [
             {
               label: 'Find',
-              accelerator: 'CommandOrControl+F'
+              accelerator: 'CommandOrControl+F',
+              click () {
+                mainWindow.webContents.send('editorAction', 'find')
+              }
             },
             {
               label: 'Find and Replace',
-              accelerator: 'CommandOrControl+H'
+              accelerator: 'CommandOrControl+H',
+              click () {
+                mainWindow.webContents.send('editorAction', 'findAndReplace')
+              }
             },
             {
-              label: 'Find Next'
+              label: 'Find Next',
+              click () {
+                mainWindow.webContents.send('editorAction', 'findNext')
+              }
             },
             {
-              label: 'Find Previous'
+              label: 'Find Previous',
+              click () {
+                mainWindow.webContents.send('editorAction', 'findPrevious')
+              }
             },
             {
               label: 'Find BCP14 Keywords'
@@ -142,59 +164,101 @@ export function registerMenu (mainWindow) {
       submenu: [
         {
           label: 'Select All',
-          accelerator: 'CommandOrControl+A'
+          accelerator: 'CommandOrControl+A',
+          click () {
+            mainWindow.webContents.send('editorAction', 'selectAll')
+          }
         },
         {
           label: 'Expand Selection',
-          accelerator: 'Shift+Alt+Right'
+          accelerator: 'Shift+Alt+Right',
+          click () {
+            mainWindow.webContents.send('editorAction', 'expandSelection')
+          }
         },
         {
           label: 'Shrink Selection',
-          accelerator: 'Shift+Alt+Left'
+          accelerator: 'Shift+Alt+Left',
+          click () {
+            mainWindow.webContents.send('editorAction', 'shrinkSelection')
+          }
         },
         { type: 'separator' },
         {
           label: 'Copy Line Up',
-          accelerator: 'Shift+Alt+Up'
+          accelerator: 'Shift+Alt+Up',
+          click () {
+            mainWindow.webContents.send('editorAction', 'copyLineUp')
+          }
         },
         {
           label: 'Copy Line Down',
-          accelerator: 'Shift+Alt+Down'
+          accelerator: 'Shift+Alt+Down',
+          click () {
+            mainWindow.webContents.send('editorAction', 'copyLineDown')
+          }
         },
         {
           label: 'Move Line Up',
-          accelerator: 'Alt+Up'
+          accelerator: 'Alt+Up',
+          click () {
+            mainWindow.webContents.send('editorAction', 'moveLineUp')
+          }
         },
         {
           label: 'Move Line Down',
-          accelerator: 'Alt+Down'
+          accelerator: 'Alt+Down',
+          click () {
+            mainWindow.webContents.send('editorAction', 'moveLineDown')
+          }
         },
         {
-          label: 'Duplicate Selection'
+          label: 'Duplicate Selection',
+          click () {
+            mainWindow.webContents.send('editorAction', 'duplicateSelection')
+          }
         },
         { type: 'separator' },
         {
           label: 'Add Cursor Above',
-          accelerator: 'CommandOrControl+Alt+Up'
+          accelerator: 'CommandOrControl+Alt+Up',
+          click () {
+            mainWindow.webContents.send('editorAction', 'addCursorAbove')
+          }
         },
         {
           label: 'Add Cursor Below',
-          accelerator: 'CommandOrControl+Alt+Down'
+          accelerator: 'CommandOrControl+Alt+Down',
+          click () {
+            mainWindow.webContents.send('editorAction', 'addCursorBelow')
+          }
         },
         {
-          label: 'Add Cursors to Line Ends Below',
-          accelerator: 'Shift+Alt+I'
+          label: 'Add Cursors to Line Ends',
+          accelerator: 'Shift+Alt+I',
+          click () {
+            mainWindow.webContents.send('editorAction', 'addCursorsToLineEnds')
+          }
         },
         {
           label: 'Add Next Occurence',
-          accelerator: 'CommandOrControl+D'
+          accelerator: 'CommandOrControl+D',
+          click () {
+            mainWindow.webContents.send('editorAction', 'addNextOccurence')
+          }
         },
         {
-          label: 'Add Previous Occurence'
+          label: 'Add Previous Occurence',
+          click () {
+            mainWindow.webContents.send('editorAction', 'addPreviousOccurence')
+          }
         },
         {
           label: 'Select All Occurences',
-          accelerator: 'CommandOrControl+Shift+L'
+          accelerator: 'CommandOrControl+Shift+L',
+          click () {
+            mainWindow.webContents.send('editorAction', 'selectAllOccurences')
+          }
         }
       ]
     },
