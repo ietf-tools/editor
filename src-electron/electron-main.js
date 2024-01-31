@@ -49,7 +49,7 @@ function createWindow () {
     // useContentSize: true,
     center: true,
     frame: true,
-    backgroundMaterial: 'acrylic',
+    // backgroundMaterial: 'auto',
     vibrancy: 'under-window',
     darkTheme: true,
     webPreferences: {

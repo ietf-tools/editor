@@ -14,7 +14,7 @@ function helpAbout () {
   })
 }
 
-window.menuEmitter.subscribe('menuAction', (evt, action) => {
+window.menuEmitter.subscribe('dialogAction', (evt, action) => {
   switch (action) {
     case 'helpAbout':
       helpAbout()

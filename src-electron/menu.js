@@ -203,20 +203,32 @@ export function registerMenu (mainWindow) {
       submenu: [
         {
           label: 'Command Palette...',
-          accelerator: 'F1'
+          accelerator: 'F1',
+          click () {
+            mainWindow.webContents.send('editorAction', 'commandPalette')
+          }
         },
         { type: 'separator' },
         {
           label: 'Zoom In',
-          accelerator: 'CommandOrControl+='
+          accelerator: 'CommandOrControl+=',
+          click () {
+            mainWindow.webContents.send('editorAction', 'zoomIn')
+          }
         },
         {
           label: 'Zoom Out',
-          accelerator: 'CommandOrControl+-'
+          accelerator: 'CommandOrControl+-',
+          click () {
+            mainWindow.webContents.send('editorAction', 'zoomOut')
+          }
         },
         {
           label: 'Reset Zoom',
-          accelerator: 'CommandOrControl+0'
+          accelerator: 'CommandOrControl+0',
+          click () {
+            mainWindow.webContents.send('editorAction', 'zoomReset')
+          }
         },
         { type: 'separator' },
         {
@@ -237,7 +249,11 @@ export function registerMenu (mainWindow) {
         {
           label: 'Word Wrap',
           type: 'checkbox',
-          accelerator: 'Alt+Z'
+          checked: true,
+          accelerator: 'Alt+Z',
+          click () {
+            mainWindow.webContents.send('editorAction', 'wordWrap')
+          }
         }
       ]
     },
@@ -332,7 +348,7 @@ export function registerMenu (mainWindow) {
         {
           label: 'About',
           click () {
-            mainWindow.webContents.send('menuAction', 'helpAbout')
+            mainWindow.webContents.send('dialogAction', 'helpAbout')
           }
         }
       ]

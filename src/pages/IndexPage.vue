@@ -177,6 +177,45 @@ onMounted(async () => {
     // -> Post init
     editor.focus()
   }, 500)
+
+  window.menuEmitter.subscribe('editorAction', (evt, action) => {
+    switch (action) {
+      case 'commandPalette': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.quickCommand')
+        })
+        break
+      }
+      case 'wordWrap': {
+        editor.updateOptions({
+          wordWrap: editor.getOption(monaco.editor.EditorOption.wordWrap) === 'on' ? 'off' : 'on'
+        })
+        break
+      }
+      case 'zoomIn': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.fontZoomIn')
+        })
+        break
+      }
+      case 'zoomOut': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.fontZoomOut')
+        })
+        break
+      }
+      case 'zoomReset': {
+        editor.focus()
+        setTimeout(() => {
+          editor.trigger('menu', 'editor.action.fontZoomReset')
+        })
+        break
+      }
+    }
+  })
 })
 
 async function validateContent () {
