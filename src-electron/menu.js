@@ -22,6 +22,12 @@ export function registerMenu (mainWindow) {
           accelerator: 'CommandOrControl+O'
         },
         {
+          label: 'Open from URL...',
+          click () {
+            mainWindow.webContents.send('dialogAction', 'openFromURL')
+          }
+        },
+        {
           label: 'Open Recent',
           role: 'recentDocuments',
           submenu: [],
@@ -342,7 +348,10 @@ export function registerMenu (mainWindow) {
           label: 'Validate RFCXML'
         },
         {
-          label: 'Check ID Nits'
+          label: 'Check ID Nits',
+          click () {
+            mainWindow.webContents.send('editorAction', 'checkIdNits')
+          }
         },
         {
           label: 'Check References'

@@ -31,3 +31,15 @@ body {
 .bg-dark-7 {
   background-color: darken(#070a0d, 5%);
 }
+
+.mica {
+  &.q-card {
+    background-color: rgba(20,20,20,.7);
+    backdrop-filter: blur(10px);
+  }
+}
+
+.card-border {
+  border: 1px solid $primary !important;
+  border-top-width: 0 !important;
+}

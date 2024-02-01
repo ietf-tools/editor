@@ -3,12 +3,6 @@ q-page.row.items-stretch
   .col-12.col-lg-6(ref="monacoContainer")
   .col-12.col-lg-6.bg-dark-5
     .q-ma-lg Preview
-    q-btn(
-      @click='validateContent'
-      label='Check Nits'
-      push
-      color='teal'
-      )
 </template>
 
 <script setup>
@@ -176,6 +170,8 @@ onMounted(async () => {
 
     // -> Post init
     editor.focus()
+
+    document.getElementById('app-loading').remove()
   }, 500)
 
   window.menuEmitter.subscribe('editorAction', (evt, action) => {
@@ -213,6 +209,10 @@ onMounted(async () => {
         setTimeout(() => {
           editor.trigger('menu', 'editor.action.addSelectionToPreviousFindMatch')
         })
+        break
+      }
+      case 'checkIdNits': {
+        validateContent()
         break
       }
       case 'commandPalette': {

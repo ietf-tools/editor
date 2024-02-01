@@ -17,6 +17,10 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
       .text-caption App Version: #[strong {{ appVersion }}]
       .text-caption Execution Mode: #[strong {{ appMode }}]
       .text-caption Quasar Framework Version: #[strong {{ $q.version }}]
+      .q-mt-md.text-amber-5
+        .text-caption Licensed under BSD 3-Clause
+        .text-caption Copyright © 2008-{{ currentYear }}, The IETF Trust
+        .text-caption All rights reserved.
 
 </template>
 
@@ -39,4 +43,5 @@ const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent()
 
 const appVersion = process.env.APP_VERSION ?? 'Unknown'
 const appMode = process.env.MODE ?? 'Unknown'
+const currentYear = new Date().getFullYear()
 </script>
