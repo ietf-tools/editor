@@ -6,7 +6,7 @@ q-page.row.items-stretch
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import * as monaco from 'monaco-editor'
 import { debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
@@ -14,10 +14,12 @@ import { checkNits } from '@ietf-tools/idnits'
 
 import { useAppStore } from 'stores/app'
 import { useEditorStore } from 'stores/editor'
+import { useDocsStore } from 'src/stores/docs'
 
 // STORES
 
 const appStore = useAppStore()
+const docsStore = useDocsStore()
 const editorStore = useEditorStore()
 
 // MONACO
@@ -92,8 +94,8 @@ monaco.languages.setMonarchTokensProvider('xmlrfc', {
 
 onMounted(async () => {
   // const baseDocReq = await fetch('https://raw.githubusercontent.com/ietf-tools/idnits/v3/tests/fixtures/draft-template-standard.xml')
-  const baseDocReq = await fetch('https://www.ietf.org/archive/id/draft-ietf-ccamp-mw-topo-yang-08.xml')
-  const baseDoc = await baseDocReq.text()
+  // const baseDocReq = await fetch('https://www.ietf.org/archive/id/draft-ietf-ccamp-mw-topo-yang-08.xml')
+  // const baseDoc = await baseDocReq.text()
   setTimeout(() => {
     // -> Define Monaco Theme
     monaco.editor.defineTheme('ietf', {
@@ -120,7 +122,7 @@ onMounted(async () => {
       scrollBeyondLastLine: false,
       tabSize: 2,
       theme: 'ietf',
-      value: baseDoc,
+      value: '',
       wordWrap: 'on'
     })
 
@@ -174,7 +176,17 @@ onMounted(async () => {
     document.getElementById('app-loading').remove()
   }, 500)
 
-  window.menuEmitter.subscribe('editorAction', (evt, action) => {
+  watch(() => docsStore.active, (newValue) => {
+    if (newValue) {
+      editor.getModel().setValue(docsStore.activeDocument.data)
+    }
+  })
+
+  if (docsStore.opened.length < 1) {
+    docsStore.loadDocument()
+  }
+
+  window.ipcBridge.subscribe('editorAction', (evt, action) => {
     switch (action) {
       case 'addCursorAbove': {
         editor.focus()

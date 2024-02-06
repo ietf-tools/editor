@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
-contextBridge.exposeInMainWorld('menuEmitter', {
+contextBridge.exposeInMainWorld('ipcBridge', {
   emit (channel, data) {
     ipcRenderer.send(channel, data)
   },

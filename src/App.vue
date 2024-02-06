@@ -5,10 +5,13 @@
 <script setup>
 import { defineAsyncComponent } from 'vue'
 import { useQuasar } from 'quasar'
+import { useDocsStore } from 'src/stores/docs'
 
 const $q = useQuasar()
 
-window.menuEmitter.subscribe('dialogAction', (evt, action) => {
+const docsStore = useDocsStore()
+
+window.ipcBridge.subscribe('dialogAction', (evt, action) => {
   switch (action) {
     case 'helpAbout': {
       $q.dialog({
@@ -23,6 +26,10 @@ window.menuEmitter.subscribe('dialogAction', (evt, action) => {
       break
     }
   }
+})
+
+window.ipcBridge.subscribe('openDocument', (evt, doc) => {
+  docsStore.loadDocument(doc)
 })
 
 </script>
