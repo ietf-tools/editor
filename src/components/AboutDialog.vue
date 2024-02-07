@@ -15,11 +15,10 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
     img(src='/images/draftforge-banner.png' alt="DraftForge")
     q-card-section.bg-black
       .text-caption App Version: #[strong {{ appVersion }}]
-      .text-caption Execution Mode: #[strong {{ appMode }}]
       .text-caption Quasar Framework Version: #[strong {{ $q.version }}]
       .q-mt-md.text-amber-5
         .text-caption Licensed under BSD 3-Clause
-        .text-caption Copyright © 2008-{{ currentYear }}, The IETF Trust
+        .text-caption Copyright © 2023-{{ currentYear }}, The IETF Trust
         .text-caption All rights reserved.
 
 </template>

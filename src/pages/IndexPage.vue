@@ -93,9 +93,6 @@ monaco.languages.setMonarchTokensProvider('xmlrfc', {
 })
 
 onMounted(async () => {
-  // const baseDocReq = await fetch('https://raw.githubusercontent.com/ietf-tools/idnits/v3/tests/fixtures/draft-template-standard.xml')
-  // const baseDocReq = await fetch('https://www.ietf.org/archive/id/draft-ietf-ccamp-mw-topo-yang-08.xml')
-  // const baseDoc = await baseDocReq.text()
   setTimeout(() => {
     // -> Define Monaco Theme
     monaco.editor.defineTheme('ietf', {
@@ -128,10 +125,13 @@ onMounted(async () => {
 
     // -> Handle content change
     editor.onDidChangeModelContent(debounce(ev => {
-      editorStore.$patch({
-        lastChangeTimestamp: DateTime.utc(),
-        content: editor.getValue()
-      })
+      docsStore.activeDocument.activeData = editor.getValue()
+      docsStore.activeDocument.isModified = docsStore.activeDocument.activeData !== docsStore.activeDocument.data
+      docsStore.activeDocument.lastModifiedAt = DateTime.utc()
+      // editorStore.$patch({
+      //   lastChangeTimestamp: DateTime.utc(),
+      //   content: editor.getValue()
+      // })
     }, 500))
 
     // Code Lens
@@ -177,8 +177,8 @@ onMounted(async () => {
   }, 500)
 
   watch(() => docsStore.active, (newValue) => {
-    if (newValue) {
-      editor.getModel().setValue(docsStore.activeDocument.data)
+    if (newValue && editor) {
+      editor.getModel().setValue(docsStore.activeDocument.activeData)
     }
   })
 

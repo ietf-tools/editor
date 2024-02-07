@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { find } from 'lodash-es'
+import { DateTime } from 'luxon'
 
 export const useDocsStore = defineStore('docs', {
   state: () => ({
@@ -16,9 +17,13 @@ export const useDocsStore = defineStore('docs', {
       const docId = crypto.randomUUID()
       this.opened.push({
         id: docId,
+        type: doc.type ?? 'xml',
         path: doc.path ?? '',
         fileName: doc.fileName ?? 'untitled-draft.xml',
-        data: doc.data ?? ''
+        data: doc.data ?? '',
+        activeData: doc.data ?? '',
+        isModified: false,
+        lastModifiedAt: DateTime.utc()
       })
       this.active = docId
     },

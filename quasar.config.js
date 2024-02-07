@@ -104,7 +104,22 @@ module.exports = configure(function (/* ctx */) {
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#framework
     framework: {
       config: {
-        dark: true
+        dark: true,
+        notify: {
+          position: 'top',
+          progress: true,
+          color: 'positive',
+          icon: 'mdi-check',
+          actions: [
+            {
+              icon: 'mdi-close',
+              color: 'white',
+              size: 'sm',
+              round: true,
+              handler: () => {}
+            }
+          ]
+        }
       },
 
       iconSet: 'mdi-v7', // Quasar icon set
@@ -119,7 +134,9 @@ module.exports = configure(function (/* ctx */) {
 
       // Quasar plugins
       plugins: [
-        'Dialog'
+        'Dialog',
+        'Loading',
+        'Notify'
       ]
     },
 

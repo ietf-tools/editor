@@ -70,11 +70,29 @@ export function registerMenu (mainWindow) {
         },
         {
           label: 'Save',
-          accelerator: 'CommandOrControl+S'
+          accelerator: 'CommandOrControl+S',
+          click () {
+
+          }
         },
         {
           label: 'Save As...',
-          accelerator: 'CommandOrControl+Shift+S'
+          accelerator: 'CommandOrControl+Shift+S',
+          async click () {
+            const saveOpts = await dialog.showSaveDialog(mainWindow, {
+              title: 'Save As...',
+              filters: [
+                {
+                  name: 'RFC/Internet Draft',
+                  extensions: ['txt', 'xml']
+                }
+              ],
+              properties: ['showOverwriteConfirmation', 'createDirectory']
+            })
+            if (!saveOpts.canceled) {
+              mainWindow.webContents.send('saveAs', saveOpts.filePath)
+            }
+          }
         },
         {
           label: 'Move To...'

@@ -8,7 +8,7 @@ q-bar.toolbar-main
       :key='doc.id'
       )
       q-btn(
-        icon='mdi-file-document-outline'
+        :icon='doc.isModified ? `mdi-file-document-edit-outline` : `mdi-file-document-outline`'
         :label='doc.fileName'
         :color='doc.id === docsStore.active ? `light-blue-7` : `light-blue-9`'
         no-caps
@@ -20,15 +20,30 @@ q-bar.toolbar-main
         :color='doc.id === docsStore.active ? `light-blue-7` : `light-blue-9`'
         size='xs'
         unelevated
-        @click='docsStore.closeDocument(doc.id)'
+        @click='closeDocument(doc)'
         )
     q-btn(
       icon='mdi-plus'
       color='light-blue-9'
       unelevated
       square
-      @click='newDocument'
       )
+      q-menu.mica(auto-close)
+        q-list(separator)
+          q-item(
+            clickable
+            @click='newDocument(`xml`)'
+            )
+            q-item-section(side)
+              q-icon(name='mdi-xml')
+            q-item-section New XML Internet Draft
+          q-item(
+            clickable
+            @click='newDocument(`txt`)'
+            )
+            q-item-section(side)
+              q-icon(name='mdi-text-long')
+            q-item-section New Text Internet Draft
   q-space
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 ada.lovelace@acme.org
@@ -36,14 +51,42 @@ q-bar.toolbar-main
 </template>
 
 <script setup>
+import { useQuasar } from 'quasar'
+
 import { useDocsStore } from 'src/stores/docs'
 
 const docsStore = useDocsStore()
+const $q = useQuasar()
 
-function newDocument () {
+function newDocument (docType) {
   docsStore.loadDocument({
+    fileName: `untitled-draft.${docType}`,
     data: ''
   })
+}
+
+function closeDocument (doc) {
+  if (doc.isModified) {
+    $q.dialog({
+      title: 'Confirm',
+      message: 'Are you sure you want to close this document and discard changes?',
+      persistent: true,
+      ok: {
+        label: 'Confirm',
+        color: 'negative',
+        unelevated: true
+      },
+      cancel: {
+        label: 'Cancel',
+        color: 'grey',
+        flat: true
+      }
+    }).onOk(() => {
+      docsStore.closeDocument(doc.id)
+    })
+  } else {
+    docsStore.closeDocument(doc.id)
+  }
 }
 
 </script>
