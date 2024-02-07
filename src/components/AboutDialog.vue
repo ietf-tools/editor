@@ -41,6 +41,5 @@ const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent()
 // INFO
 
 const appVersion = process.env.APP_VERSION ?? 'Unknown'
-const appMode = process.env.MODE ?? 'Unknown'
 const currentYear = new Date().getFullYear()
 </script>
