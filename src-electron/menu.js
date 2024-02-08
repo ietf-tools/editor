@@ -17,7 +17,10 @@ export function registerMenu (mainWindow) {
       submenu: [
         {
           label: 'New Draft...',
-          accelerator: 'CommandOrControl+N'
+          accelerator: 'CommandOrControl+N',
+          click () {
+            mainWindow.webContents.send('dialogAction', 'newDraft')
+          }
         },
         {
           label: 'Open...',

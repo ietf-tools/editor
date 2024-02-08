@@ -27,23 +27,8 @@ q-bar.toolbar-main
       color='light-blue-9'
       unelevated
       square
+      @click='newDocument'
       )
-      q-menu.mica(auto-close)
-        q-list(separator)
-          q-item(
-            clickable
-            @click='newDocument(`xml`)'
-            )
-            q-item-section(side)
-              q-icon(name='mdi-xml')
-            q-item-section New XML Internet Draft
-          q-item(
-            clickable
-            @click='newDocument(`txt`)'
-            )
-            q-item-section(side)
-              q-icon(name='mdi-text-long')
-            q-item-section New Text Internet Draft
   q-space
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 ada.lovelace@acme.org
@@ -51,19 +36,13 @@ q-bar.toolbar-main
 </template>
 
 <script setup>
+import { defineAsyncComponent } from 'vue'
 import { useQuasar } from 'quasar'
 
 import { useDocsStore } from 'src/stores/docs'
 
 const docsStore = useDocsStore()
 const $q = useQuasar()
-
-function newDocument (docType) {
-  docsStore.loadDocument({
-    fileName: `untitled-draft.${docType}`,
-    data: ''
-  })
-}
 
 function closeDocument (doc) {
   if (doc.isModified) {
@@ -89,16 +68,23 @@ function closeDocument (doc) {
   }
 }
 
+function newDocument () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('components/NewDraftDialog.vue'))
+  })
+}
+
 </script>
 
 <style lang="scss">
 .toolbar-main {
   height: 40px;
-  background: radial-gradient(ellipse at bottom, $light-blue-9, $light-blue-10)
+  background: radial-gradient(ellipse at bottom, $light-blue-9, $light-blue-10);
+  border-bottom: 1px solid $light-blue-5;
 }
 .toolbar-docs {
   height: 32px;
-  padding-top: 8px;
+  padding-top: 7px;
   display: flex;
 
   .q-btn-group {

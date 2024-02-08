@@ -4,7 +4,10 @@ export const useEditorStore = defineStore('editor', {
   state: () => ({
     content: '',
     lastChangeTimestamp: null,
-    errors: []
+    errors: [],
+    line: 1,
+    col: 1,
+    tabSize: 2
   }),
   getters: {
     hasErrors: (state) => state.errors?.length > 0

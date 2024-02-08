@@ -19,6 +19,12 @@ window.ipcBridge.subscribe('dialogAction', (evt, action) => {
       })
       break
     }
+    case 'newDraft': {
+      $q.dialog({
+        component: defineAsyncComponent(() => import('components/NewDraftDialog.vue'))
+      })
+      break
+    }
     case 'openFromURL': {
       $q.dialog({
         component: defineAsyncComponent(() => import('components/OpenFromUrlDialog.vue'))

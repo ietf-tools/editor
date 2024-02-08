@@ -117,7 +117,7 @@ onMounted(async () => {
       lineNumbersMinChars: 4,
       padding: { top: 10, bottom: 10 },
       scrollBeyondLastLine: false,
-      tabSize: 2,
+      tabSize: editorStore.tabSize,
       theme: 'ietf',
       value: '',
       wordWrap: 'on'
@@ -133,6 +133,14 @@ onMounted(async () => {
       //   content: editor.getValue()
       // })
     }, 500))
+
+    // -> Handle cursor movement
+    editor.onDidChangeCursorPosition(ev => {
+      editorStore.$patch({
+        line: editor.getPosition().lineNumber,
+        col: editor.getPosition().column
+      })
+    })
 
     // Code Lens
     const commandId = editor.addCommand(

@@ -84,7 +84,7 @@ async function load () {
       type = 'xml'
     } else if (filename.endsWith('.txt')) {
       type = 'txt'
-    } else if (baseDocReq.headers.get('content-type') === 'text/xml') {
+    } else if (baseDocReq.headers.get('content-type') === 'text/xml' || baseDoc.startsWith('<?xml')) {
       type = 'xml'
       filename = `${filename}.xml`
     } else if (baseDocReq.headers.get('content-type') === 'text/plain') {

@@ -7,9 +7,9 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
       q-space
       q-btn(
         unelevated
-        label='Close'
+        icon='mdi-close'
         color='primary'
-        padding='xs md'
+        padding='xs'
         @click='onDialogOK'
         )
     img(src='/images/draftforge-banner.png' alt="DraftForge")
