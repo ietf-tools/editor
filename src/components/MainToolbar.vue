@@ -10,14 +10,16 @@ q-bar.toolbar-main
       q-btn(
         :icon='doc.isModified ? `mdi-file-document-edit-outline` : `mdi-file-document-outline`'
         :label='doc.fileName'
-        :color='doc.id === docsStore.active ? `light-blue-7` : `light-blue-9`'
+        :color='doc.id === docsStore.active ? `light-blue-8` : `light-blue-9`'
+        :text-color='doc.id === docsStore.active ? `white` : `light-blue-2`'
         no-caps
         unelevated
         @click='docsStore.switchToDocument(doc.id)'
         )
       q-btn(
         icon='mdi-close'
-        :color='doc.id === docsStore.active ? `light-blue-7` : `light-blue-9`'
+        :color='doc.id === docsStore.active ? `light-blue-8` : `light-blue-9`'
+        :text-color='doc.id === docsStore.active ? `light-blue-2` : `light-blue-3`'
         size='xs'
         unelevated
         @click='closeDocument(doc)'
@@ -25,6 +27,7 @@ q-bar.toolbar-main
     q-btn(
       icon='mdi-plus'
       color='light-blue-9'
+      text-color='light-blue-2'
       unelevated
       square
       @click='newDocument'
@@ -79,7 +82,7 @@ function newDocument () {
 <style lang="scss">
 .toolbar-main {
   height: 40px;
-  background: radial-gradient(ellipse at bottom, $light-blue-9, $light-blue-10);
+  background: radial-gradient(ellipse at bottom, $light-blue-9, darken($light-blue-10, 5%));
   border-bottom: 1px solid $light-blue-5;
 }
 .toolbar-docs {

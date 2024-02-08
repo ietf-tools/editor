@@ -33,9 +33,17 @@ window.ipcBridge.subscribe('dialogAction', (evt, action) => {
     }
   }
 })
-
+window.ipcBridge.subscribe('notify', (evt, opts) => {
+  $q.notify(opts)
+})
 window.ipcBridge.subscribe('openDocument', (evt, doc) => {
   docsStore.loadDocument(doc)
+})
+window.ipcBridge.subscribe('save', (evt, filePath) => {
+  docsStore.saveDocument(filePath)
+})
+window.ipcBridge.subscribe('saveAs', () => {
+  docsStore.saveDocument(null, true)
 })
 
 </script>

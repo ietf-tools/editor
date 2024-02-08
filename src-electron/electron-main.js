@@ -1,9 +1,13 @@
-import { app, BrowserWindow, nativeTheme, screen } from 'electron'
+import { app, BrowserWindow, ipcMain, nativeTheme, screen } from 'electron'
 import { initialize, enable } from '@electron/remote/main'
 import path from 'path'
 import os from 'os'
 
 import { registerMenu } from './menu'
+import {
+  saveDocument,
+  saveDocumentAs
+} from './handlers'
 
 /**
  * Merge new header with existing headers, handling lowercase header duplicates
@@ -92,6 +96,13 @@ function createWindow () {
 
   mainWindow.on('closed', () => {
     mainWindow = null
+  })
+
+  ipcMain.on('save', (ev, opts) => {
+    saveDocument(mainWindow, opts.path, opts.data)
+  })
+  ipcMain.on('promptSaveAs', (ev, opts) => {
+    saveDocumentAs(mainWindow, opts.type, opts.fileName)
   })
 }
 

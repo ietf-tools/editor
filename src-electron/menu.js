@@ -1,7 +1,9 @@
-import { Menu, app, dialog, shell } from 'electron'
+import { Menu, app, shell } from 'electron'
 import os from 'node:os'
-import fs from 'node:fs/promises'
-import path from 'node:path'
+
+import {
+  openDocument
+} from './handlers'
 
 export function registerMenu (mainWindow) {
   const platform = process.platform || os.platform()
@@ -25,28 +27,8 @@ export function registerMenu (mainWindow) {
         {
           label: 'Open...',
           accelerator: 'CommandOrControl+O',
-          async click () {
-            const files = await dialog.showOpenDialog(mainWindow, {
-              title: 'Open RFC / Internet Draft...',
-              filters: [
-                {
-                  name: 'RFC/Internet Draft',
-                  extensions: ['txt', 'xml']
-                }
-              ],
-              properties: ['openFile', 'multiSelections']
-            })
-            if (!files.canceled) {
-              for (const fl of files.filePaths) {
-                const fileContents = await fs.readFile(fl, 'utf8')
-                mainWindow.webContents.send('openDocument', {
-                  path: fl,
-                  fileName: path.parse(fl).base,
-                  data: fileContents
-                })
-                app.addRecentDocument(fl)
-              }
-            }
+          click () {
+            openDocument(mainWindow)
           }
         },
         {
@@ -75,26 +57,14 @@ export function registerMenu (mainWindow) {
           label: 'Save',
           accelerator: 'CommandOrControl+S',
           click () {
-
+            mainWindow.webContents.send('save')
           }
         },
         {
           label: 'Save As...',
           accelerator: 'CommandOrControl+Shift+S',
           async click () {
-            const saveOpts = await dialog.showSaveDialog(mainWindow, {
-              title: 'Save As...',
-              filters: [
-                {
-                  name: 'RFC/Internet Draft',
-                  extensions: ['txt', 'xml']
-                }
-              ],
-              properties: ['showOverwriteConfirmation', 'createDirectory']
-            })
-            if (!saveOpts.canceled) {
-              mainWindow.webContents.send('saveAs', saveOpts.filePath)
-            }
+            mainWindow.webContents.send('saveAs')
           }
         },
         {

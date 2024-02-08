@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { find } from 'lodash-es'
+import { find, last } from 'lodash-es'
 import { DateTime } from 'luxon'
 
 export const useDocsStore = defineStore('docs', {
@@ -36,6 +36,26 @@ export const useDocsStore = defineStore('docs', {
         this.loadDocument()
       } else if (this.active === docId) {
         this.active = this.opened[0].id
+      }
+    },
+    async saveDocument (overridePath, forcePromptSaveAs = false) {
+      if (overridePath) {
+        this.activeDocument.path = overridePath
+        this.activeDocument.fileName = overridePath.indexOf('\\') >= 0 ? last(overridePath.split('\\')) : last(overridePath.split('/'))
+      }
+      if (!this.activeDocument.path || forcePromptSaveAs) {
+        window.ipcBridge.emit('promptSaveAs', {
+          fileName: this.activeDocument.fileName,
+          type: this.activeDocument.type
+        })
+      } else {
+        window.ipcBridge.emit('save', {
+          path: this.activeDocument.path,
+          data: this.activeDocument.activeData
+        })
+        this.activeDocument.data = this.activeDocument.activeData
+        this.activeDocument.isModified = false
+        this.activeDocument.lastModifiedAt = DateTime.utc()
       }
     }
   }
