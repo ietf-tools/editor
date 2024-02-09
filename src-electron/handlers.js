@@ -8,7 +8,7 @@ export async function openDocument (mainWindow) {
     filters: [
       {
         name: 'RFC/Internet Draft',
-        extensions: ['txt', 'xml']
+        extensions: ['md', 'txt', 'xml']
       }
     ],
     properties: ['openFile', 'multiSelections']
@@ -16,9 +16,11 @@ export async function openDocument (mainWindow) {
   if (!files.canceled) {
     for (const fl of files.filePaths) {
       const fileContents = await fs.readFile(fl, 'utf8')
+      const filePath = path.parse(fl)
       mainWindow.webContents.send('openDocument', {
+        type: filePath.ext.slice(1),
         path: fl,
-        fileName: path.parse(fl).base,
+        fileName: filePath.base,
         data: fileContents
       })
       app.addRecentDocument(fl)

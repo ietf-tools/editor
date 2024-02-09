@@ -1,76 +1,46 @@
 <template lang="pug">
 q-layout(view='hHh lpr fFf')
-  q-header(elevated)
+  q-header
     main-toolbar
-  //- q-drawer.bg-dark-4.text-white(v-model='leftDrawerOpen' show-if-above mini persistent)
-  //-   q-list
-  //-     q-item-label(header) Essential Links
-  //-     essential-link(v-for='link in linksList' :key='link.title' v-bind='link')
+  //- q-drawer.bg-dark-4(
+  //-   :model-value='true'
+  //-   show-if-above
+  //-   :mini='state.miniState'
+  //-   @mouseover='state.miniState = false'
+  //-   @mouseout='state.miniState = true'
+  //-   mini-to-overlay
+  //-   persistent
+  //-   )
+  //-   q-scroll-area.fit(
+  //-     :horizontal-thumb-style='{ opacity: 0 }'
+  //-     )
+  //-     q-list(padding)
+  //-       q-item(clickable)
+  //-         q-item-section(side)
+  //-           q-icon(name='mdi-library-shelves' size='xs' color='light-blue-4')
+  //-         q-item-section
+  //-           q-item-label Library
+  //-           q-item-label.text-light-blue-3(caption) Quick Insert Code Snippets
+  //-       q-separator(inset)
+  //-       q-item(clickable)
+  //-         q-item-section(side)
+  //-           q-icon(name='mdi-page-previous-outline' size='xs' color='light-blue-4')
+  //-         q-item-section
+  //-           q-item-label Reindent
+  //-           q-item-label.text-light-blue-3(caption) Reformat Document Indentation
   footer-toolbar
   q-page-container
     router-view
 </template>
 
 <script setup>
-// import { ref } from 'vue'
+// import { reactive } from 'vue'
 import MainToolbar from 'components/MainToolbar.vue'
 import FooterToolbar from 'components/FooterToolbar.vue'
-// import EssentialLink from 'components/EssentialLink.vue'
 
 /* eslint-disable space-before-function-paren */
 
-// const linksList = [
-//   {
-//     title: 'Test',
-//     caption: 'testing',
-//     icon: 'mdi-file-document-edit-outline',
-//     link: 'https://ietf.org'
-//   },
-//   {
-//     title: 'Test',
-//     caption: 'testing',
-//     icon: 'mdi-magnify',
-//     link: 'https://ietf.org'
-//   },
-//   {
-//     title: 'Test',
-//     caption: 'testing',
-//     icon: 'mdi-source-branch',
-//     link: 'https://ietf.org'
-//   },
-//   {
-//     title: 'Test',
-//     caption: 'testing',
-//     icon: 'mdi-wan',
-//     link: 'https://ietf.org'
-//   },
-//   {
-//     title: 'Test',
-//     caption: 'testing',
-//     icon: 'mdi-account-multiple',
-//     link: 'https://ietf.org'
-//   },
-//   {
-//     title: 'Test',
-//     caption: 'testing',
-//     icon: 'mdi-comment-check-outline',
-//     link: 'https://ietf.org'
-//   }
-// ]
-
-// const leftDrawerOpen = ref(false)
-
-// function minimize() {
-//   window.myWindowAPI?.minimize()
-// }
-
-// function toggleMaximize() {
-//   window.myWindowAPI?.toggleMaximize()
-// }
-
-// function closeApp() {
-//   window.myWindowAPI?.close()
-// }
-
-// const isElectron = process.env.MODE === 'electron'
+// const state = reactive({
+//   miniState: true
+// })
 </script>

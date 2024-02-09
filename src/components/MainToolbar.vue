@@ -89,6 +89,7 @@ function newDocument () {
   height: 32px;
   padding-top: 7px;
   display: flex;
+  padding-left: 48px;
 
   .q-btn-group {
     margin-right: 8px;

@@ -74,10 +74,10 @@ function createWindow () {
     mergeWithHeaders(requestHeaders, 'Access-Control-Allow-Origin', ['*'])
     clb({ requestHeaders })
   })
-  mainWindow.webContents.session.webRequest.onHeadersReceived(({ requestHeaders }, clb) => {
-    mergeWithHeaders(requestHeaders, 'Access-Control-Allow-Headers', ['*'])
-    mergeWithHeaders(requestHeaders, 'Access-Control-Allow-Origin', ['*'])
-    clb({ requestHeaders })
+  mainWindow.webContents.session.webRequest.onHeadersReceived(({ responseHeaders }, clb) => {
+    mergeWithHeaders(responseHeaders, 'Access-Control-Allow-Headers', ['*'])
+    mergeWithHeaders(responseHeaders, 'Access-Control-Allow-Origin', ['*'])
+    clb({ responseHeaders })
   })
 
   // -> Load start URL

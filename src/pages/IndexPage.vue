@@ -91,6 +91,17 @@ monaco.languages.setMonarchTokensProvider('xmlrfc', {
     ]
   }
 })
+monaco.languages.setLanguageConfiguration('xmlrfc', {
+  indentationRules: {
+    increaseIndentPattern: /<(?!\?|[^>]*\/>)([-_.A-Za-z0-9]+)(?=\s|>)\b[^>]*>(?!.*<\/\1>)|<!--(?!.*-->)|\{[^}"']*$/,
+    decreaseIndentPattern: /^\s*(<\/(?!html)[-_.A-Za-z0-9]+\b[^>]*>|-->|})/
+  }
+})
+// Allow `*` in word pattern for quick styling (toggle bold/italic without selection)
+// original https://github.com/microsoft/vscode/blob/3e5c7e2c570a729e664253baceaf443b69e82da6/extensions/markdown-basics/language-configuration.json#L55
+monaco.languages.setLanguageConfiguration('markdown', {
+  wordPattern: /([*_]{1,2}|~~|`+)?[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+(_+[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+)*\1/gu
+})
 
 onMounted(async () => {
   setTimeout(() => {
@@ -117,6 +128,9 @@ onMounted(async () => {
       lineNumbersMinChars: 4,
       padding: { top: 10, bottom: 10 },
       scrollBeyondLastLine: false,
+      stickyScroll: {
+        enabled: true
+      },
       tabSize: editorStore.tabSize,
       theme: 'ietf',
       value: '',
@@ -143,40 +157,40 @@ onMounted(async () => {
     })
 
     // Code Lens
-    const commandId = editor.addCommand(
-      0,
-      function () {
-        // services available in `ctx`
-        alert('my command is executing!')
-      },
-      ''
-    )
+    // const commandId = editor.addCommand(
+    //   0,
+    //   function () {
+    //     // services available in `ctx`
+    //     alert('my command is executing!')
+    //   },
+    //   ''
+    // )
 
-    monaco.languages.registerCodeLensProvider('xmlrfc', {
-      provideCodeLenses: function (model, token) {
-        return {
-          lenses: [
-            {
-              range: {
-                startLineNumber: 12,
-                startColumn: 1,
-                endLineNumber: 13,
-                endColumn: 1
-              },
-              id: 'First Line',
-              command: {
-                id: commandId,
-                title: 'Code Lens Test'
-              }
-            }
-          ],
-          dispose: () => { }
-        }
-      },
-      resolveCodeLens: function (model, codeLens, token) {
-        return codeLens
-      }
-    })
+    // monaco.languages.registerCodeLensProvider('xmlrfc', {
+    //   provideCodeLenses: function (model, token) {
+    //     return {
+    //       lenses: [
+    //         {
+    //           range: {
+    //             startLineNumber: 12,
+    //             startColumn: 1,
+    //             endLineNumber: 13,
+    //             endColumn: 1
+    //           },
+    //           id: 'First Line',
+    //           command: {
+    //             id: commandId,
+    //             title: 'Code Lens Test'
+    //           }
+    //         }
+    //       ],
+    //       dispose: () => { }
+    //     }
+    //   },
+    //   resolveCodeLens: function (model, codeLens, token) {
+    //     return codeLens
+    //   }
+    // })
 
     // -> Post init
     editor.focus()
@@ -187,11 +201,14 @@ onMounted(async () => {
   watch(() => docsStore.active, (newValue) => {
     if (newValue && editor) {
       editor.getModel().setValue(docsStore.activeDocument.activeData)
+      if (editor.getModel().getLanguageId() !== docsStore.activeDocument.language) {
+        monaco.editor.setModelLanguage(editor.getModel(), docsStore.activeDocument.language)
+      }
     }
   })
 
   if (docsStore.opened.length < 1) {
-    docsStore.loadDocument()
+    docsStore.loadDocument({ isDefault: true })
   }
 
   window.ipcBridge.subscribe('editorAction', (evt, action) => {

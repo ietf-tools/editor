@@ -13,7 +13,33 @@ export const useDocsStore = defineStore('docs', {
     }
   },
   actions: {
+    /**
+     * Open / Create a New Document
+     *
+     * @param {Object} doc Document options
+     */
     async loadDocument (doc = {}) {
+      // Select appropriate language for editor
+      let lang = 'xmlrfc'
+      switch (doc.type) {
+        case 'xml': {
+          lang = 'xmlrfc'
+          break
+        }
+        case 'md': {
+          lang = 'markdown'
+          break
+        }
+        case 'txt': {
+          lang = 'text'
+          break
+        }
+      }
+      // Close default doc if unmodified
+      if (this.opened.length === 1 && this.activeDocument.isDefault && this.activeDocument.activeData === '') {
+        this.opened = []
+      }
+      // Create new document
       const docId = crypto.randomUUID()
       this.opened.push({
         id: docId,
@@ -23,21 +49,39 @@ export const useDocsStore = defineStore('docs', {
         data: doc.data ?? '',
         activeData: doc.data ?? '',
         isModified: false,
-        lastModifiedAt: DateTime.utc()
+        lastModifiedAt: DateTime.utc(),
+        isDefault: doc.isDefault ?? false,
+        language: lang
       })
       this.active = docId
     },
+    /**
+     * Switch active document
+     *
+     * @param {string} docId Document UUID
+     */
     async switchToDocument (docId) {
       this.active = docId
     },
+    /**
+     * Close a document
+     *
+     * @param {string} docId Document UUID
+     */
     async closeDocument (docId) {
       this.opened = this.opened.filter(d => d.id !== docId)
       if (this.opened.length < 1) {
-        this.loadDocument()
+        this.loadDocument({ isDefault: true })
       } else if (this.active === docId) {
         this.active = this.opened[0].id
       }
     },
+    /**
+     * Save active document
+     *
+     * @param {string} overridePath Override the document path / filename
+     * @param {boolean} forcePromptSaveAs Force the main thread to prompt the user with the save as dialog
+     */
     async saveDocument (overridePath, forcePromptSaveAs = false) {
       if (overridePath) {
         this.activeDocument.path = overridePath
