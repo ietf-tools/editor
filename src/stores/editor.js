@@ -7,7 +7,8 @@ export const useEditorStore = defineStore('editor', {
     errors: [],
     line: 1,
     col: 1,
-    tabSize: 2
+    tabSize: 2,
+    previewPaneShown: true
   }),
   getters: {
     hasErrors: (state) => state.errors?.length > 0

@@ -325,6 +325,14 @@ export function registerMenu (mainWindow) {
         },
         { type: 'separator' },
         {
+          label: 'Show Preview Pane',
+          type: 'checkbox',
+          checked: true,
+          click () {
+            mainWindow.webContents.send('editorAction', 'previewPane')
+          }
+        },
+        {
           label: 'Preview Output',
           submenu: [
             {

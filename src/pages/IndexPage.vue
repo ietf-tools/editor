@@ -1,7 +1,10 @@
 <template lang="pug">
 q-page.row.items-stretch
-  .col-12.col-lg-6(ref="monacoContainer")
-  .col-12.col-lg-6.bg-dark-5
+  .col-12(
+    ref='monacoContainer'
+    :class='{ "col-lg-6": editorStore.previewPaneShown }'
+    )
+  .col-12.col-lg-6.bg-dark-5(v-if='editorStore.previewPaneShown')
     .q-ma-lg Preview
 </template>
 
@@ -315,6 +318,10 @@ onMounted(async () => {
         setTimeout(() => {
           editor.trigger('menu', 'editor.action.moveLinesUpAction')
         })
+        break
+      }
+      case 'previewPane': {
+        editorStore.previewPaneShown = !editorStore.previewPaneShown
         break
       }
       case 'redo': {
