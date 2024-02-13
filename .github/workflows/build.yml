@@ -28,7 +28,7 @@ jobs:
         skipInvalidTags: true
 
     - name: Create Draft Release
-      uses: ncipollo/release-action@v1.12.0
+      uses: ncipollo/release-action@v1.14.0
       with:
         prerelease: true
         draft: false
@@ -48,7 +48,7 @@ jobs:
         writeToFile: false
 
     - name: Update Release Body
-      uses: ncipollo/release-action@v1.12.0
+      uses: ncipollo/release-action@v1.14.0
       with:
         prerelease: true
         updateOnlyUnreleased: true
@@ -116,7 +116,7 @@ jobs:
         npx quasar build -m electron -T ${{ matrix.platform }} --arch ${{ matrix.arch }} -P never
 
     - name: Add Package to Release
-      uses: ncipollo/release-action@v1.12.0
+      uses: ncipollo/release-action@v1.14.0
       with:
         prerelease: true
         updateOnlyUnreleased: true
@@ -139,7 +139,7 @@ jobs:
 
     steps:
     - name: Finalize Release
-      uses: ncipollo/release-action@v1.12.0
+      uses: ncipollo/release-action@v1.14.0
       with:
         allowUpdates: true
         makeLatest: true
