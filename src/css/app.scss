@@ -20,16 +20,16 @@ body {
 }
 
 .bg-dark-4 {
-  background-color: lighten(#0d1117, 5%);
+  background-color: $dark-4;
 }
 .bg-dark-5 {
-  background-color: #0d1117;
+  background-color: $dark-5;
 }
 .bg-dark-6 {
-  background-color: #070a0d;
+  background-color: $dark-6;
 }
 .bg-dark-7 {
-  background-color: darken(#070a0d, 5%);
+  background-color: $dark-7;
 }
 
 .mica {

@@ -7,8 +7,12 @@ export const useEditorStore = defineStore('editor', {
     errors: [],
     line: 1,
     col: 1,
+    cursorBlinking: 'blink',
+    fontSize: 16,
+    formatOnType: true,
     tabSize: 2,
     previewPaneShown: true,
+    gitMode: 'system',
     drawerPane: 'DrawerGit'
   }),
   getters: {

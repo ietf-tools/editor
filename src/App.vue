@@ -31,6 +31,12 @@ window.ipcBridge.subscribe('dialogAction', (evt, action) => {
       })
       break
     }
+    case 'preferences': {
+      $q.dialog({
+        component: defineAsyncComponent(() => import('components/PreferencesDialog.vue'))
+      })
+      break
+    }
   }
 })
 window.ipcBridge.subscribe('notify', (evt, opts) => {

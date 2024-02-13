@@ -100,7 +100,10 @@ export function registerMenu (mainWindow) {
           type: 'separator'
         },
         {
-          label: 'Preferences'
+          label: 'Preferences',
+          click () {
+            mainWindow.webContents.send('dialogAction', 'preferences')
+          }
         },
         {
           type: 'separator'

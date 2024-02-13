@@ -124,9 +124,9 @@ onMounted(async () => {
     // -> Initialize Monaco editor
     editor = monaco.editor.create(monacoContainer.value, {
       automaticLayout: true,
-      cursorBlinking: 'blink',
-      fontSize: 16,
-      formatOnType: true,
+      cursorBlinking: editorStore.cursorBlinking,
+      fontSize: editorStore.fontSize,
+      formatOnType: editorStore.formatOnType,
       language: 'xmlrfc',
       lineNumbersMinChars: 4,
       padding: { top: 10, bottom: 10 },
@@ -201,6 +201,8 @@ onMounted(async () => {
     document.getElementById('app-loading').remove()
   }, 500)
 
+  // WATCHERS
+
   watch(() => docsStore.active, (newValue) => {
     if (newValue && editor) {
       editor.getModel().setValue(docsStore.activeDocument.activeData)
@@ -213,6 +215,27 @@ onMounted(async () => {
   if (docsStore.opened.length < 1) {
     docsStore.loadDocument({ isDefault: true })
   }
+
+  watch(() => editorStore.cursorBlinking, (newValue) => {
+    if (newValue && editor) {
+      editor.updateOptions({ cursorBlinking: newValue })
+    }
+  })
+  watch(() => editorStore.fontSize, (newValue) => {
+    if (newValue && editor) {
+      editor.updateOptions({ fontSize: newValue })
+    }
+  })
+  watch(() => editorStore.formatOnType, (newValue) => {
+    if (newValue && editor) {
+      editor.updateOptions({ formatOnType: newValue })
+    }
+  })
+  watch(() => editorStore.tabSize, (newValue) => {
+    if (newValue && editor) {
+      editor.updateOptions({ tabSize: newValue })
+    }
+  })
 
   window.ipcBridge.subscribe('editorAction', (evt, action) => {
     switch (action) {
