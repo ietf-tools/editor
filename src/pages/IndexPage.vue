@@ -386,6 +386,9 @@ onMounted(async () => {
     }
   })
 })
+EVENT_BUS.on('editorCommand', cmd => {
+  editor.trigger('drawer', cmd)
+})
 
 async function validateContent () {
   const enc = new TextEncoder()

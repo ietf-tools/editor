@@ -1,0 +1,35 @@
+<template lang="pug">
+q-drawer.bg-dark-4(
+  :model-value='state.drawerShown'
+  show-if-above
+  persistent
+  :width='350'
+  )
+  q-scroll-area.fit(
+    :horizontal-thumb-style='{ opacity: 0 }'
+    )
+    component(:is='panes[editorStore.drawerPane]')
+</template>
+
+<script setup>
+import { reactive } from 'vue'
+import { useEditorStore } from 'src/stores/editor'
+
+import DrawerFiles from 'src/components/DrawerFiles.vue'
+import DrawerGit from 'src/components/DrawerGit.vue'
+import DrawerTools from 'src/components/DrawerTools.vue'
+import DrawerSnippets from 'src/components/DrawerSnippets.vue'
+
+const editorStore = useEditorStore()
+
+const panes = {
+  DrawerFiles,
+  DrawerGit,
+  DrawerTools,
+  DrawerSnippets
+}
+
+const state = reactive({
+  drawerShown: true
+})
+</script>

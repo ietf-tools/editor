@@ -50,6 +50,8 @@ function createWindow () {
     icon: path.resolve(__dirname, 'icons/icon.png'), // tray icon
     width: Math.round(width * 0.9),
     height: Math.round(height * 0.9),
+    minWidth: 1400,
+    minHeight: 600,
     // useContentSize: true,
     center: true,
     frame: true,

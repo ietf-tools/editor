@@ -8,7 +8,8 @@ export const useEditorStore = defineStore('editor', {
     line: 1,
     col: 1,
     tabSize: 2,
-    previewPaneShown: true
+    previewPaneShown: true,
+    drawerPane: 'DrawerGit'
   }),
   getters: {
     hasErrors: (state) => state.errors?.length > 0
