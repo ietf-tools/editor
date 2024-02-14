@@ -15,6 +15,7 @@ q-bar.toolbar-main
         unelevated
         @click='editorStore.drawerPane = pane.key'
         )
+        q-tooltip {{ pane.label }}
   .toolbar-docs
     q-btn-group(
       unelevated
@@ -68,19 +69,23 @@ const $q = useQuasar()
 const drawerPanes = [
   {
     key: 'DrawerFiles',
-    icon: 'mdi-folder-file'
+    icon: 'mdi-folder-file',
+    label: 'Files'
   },
   {
     key: 'DrawerGit',
-    icon: 'mdi-git'
+    icon: 'mdi-git',
+    label: 'Git'
   },
   {
     key: 'DrawerTools',
-    icon: 'mdi-tools'
+    icon: 'mdi-tools',
+    label: 'Tools'
   },
   {
     key: 'DrawerSnippets',
-    icon: 'mdi-library-shelves'
+    icon: 'mdi-library-shelves',
+    label: 'Snippets'
   }
 ]
 

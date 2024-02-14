@@ -30,38 +30,92 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
       .col
         template(v-if='state.tab === `editor`')
           q-form.q-gutter-md.q-pa-lg
-            q-select(
-              outlined
-              v-model='editorStore.cursorBlinking'
-              :options='cursorAnims'
-              label='Cursor Blinking Animation'
-              color='light-blue-4'
-              emit-value
-              map-options
-              style='width: 400px'
-              )
-            q-input(
-              v-model.number='editorStore.fontSize'
-              type='number'
-              outlined
-              label='Font Size'
-              color='light-blue-4'
-              suffix='px'
-              style='width: 200px'
-            )
-            q-input(
-              v-model.number='editorStore.tabSize'
-              type='number'
-              outlined
-              label='Tab Size'
-              color='light-blue-4'
-              suffix='spaces'
-              style='width: 200px'
-            )
-            q-toggle(
-              v-model='editorStore.formatOnType'
-              label='Format on Type'
-            )
+            .row
+              .col-8
+                .text-body2 Theme
+                .text-caption.text-grey-5 Color theme for the editor and preview pane.
+              .col-4
+                q-select(
+                  outlined
+                  v-model='editorStore.theme'
+                  :options='themes'
+                  dense
+                  color='light-blue-4'
+                  emit-value
+                  map-options
+                  )
+            .row
+              .col-8
+                .text-body2 Cursor Style
+                .text-caption.text-grey-5 Control the cursor style.
+              .col-4
+                q-select(
+                  outlined
+                  v-model='editorStore.cursorStyle'
+                  :options='cursorStyles'
+                  dense
+                  color='light-blue-4'
+                  emit-value
+                  map-options
+                  )
+            .row
+              .col-8
+                .text-body2 Cursor Blinking
+                .text-caption.text-grey-5 Control the cursor animation style.
+              .col-4
+                q-select(
+                  outlined
+                  v-model='editorStore.cursorBlinking'
+                  :options='cursorAnims'
+                  dense
+                  color='light-blue-4'
+                  emit-value
+                  map-options
+                  )
+            .row
+              .col-8
+                .text-body2 Font Size
+                .text-caption.text-grey-5 Note that you can still zoom in / out on the editor regardless of this setting.
+              .col-4
+                q-input(
+                  v-model.number='editorStore.fontSize'
+                  type='number'
+                  outlined
+                  dense
+                  color='light-blue-4'
+                  suffix='px'
+                  style='width: 200px'
+                )
+            .row
+              .col-8
+                .text-body2 Tab Size
+                .text-caption.text-grey-5 The number of spaces a tab is equal to.
+              .col-4
+                q-input(
+                  v-model.number='editorStore.tabSize'
+                  type='number'
+                  outlined
+                  dense
+                  color='light-blue-4'
+                  suffix='spaces'
+                  style='width: 200px'
+                )
+            .row
+              .col-8
+                .text-body2 Format on Type
+                .text-caption.text-grey-5 Controls whether the editor should automatically format the line after typing.
+              .col-4
+                q-toggle(
+                  v-model='editorStore.formatOnType'
+                )
+            .row
+              .col-8
+                .text-body2 Word Wrap
+                .text-caption.text-grey-5 Control the wrapping of the editor.
+              .col-4
+                q-toggle(
+                  v-model='editorStore.wordWrap'
+                )
 
         template(v-else-if='state.tab === `git`')
           q-form.q-gutter-md.q-pa-lg
@@ -118,6 +172,52 @@ const tabs = [
     key: 'profile',
     icon: 'mdi-account',
     label: 'Profile'
+  }
+]
+
+const themes = [
+  {
+    label: 'Dark',
+    value: 'ietf-dark'
+  },
+  {
+    label: 'Light',
+    value: 'ietf-light'
+  },
+  {
+    label: 'High Contrast',
+    value: 'hc-black'
+  },
+  {
+    label: 'High Contrast Light',
+    value: 'hc-light'
+  }
+]
+
+const cursorStyles = [
+  {
+    label: 'Line',
+    value: 'line'
+  },
+  {
+    label: 'Block',
+    value: 'block'
+  },
+  {
+    label: 'Underline',
+    value: 'underline'
+  },
+  {
+    label: 'Line Thin',
+    value: 'line-thin'
+  },
+  {
+    label: 'Block Outline',
+    value: 'block-outline'
+  },
+  {
+    label: 'Underline Thin',
+    value: 'underline-thin'
   }
 ]
 

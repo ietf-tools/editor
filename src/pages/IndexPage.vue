@@ -4,7 +4,10 @@ q-page.row.items-stretch
     ref='monacoContainer'
     :class='{ "col-lg-6": editorStore.previewPaneShown }'
     )
-  .col-12.col-lg-6.bg-dark-5(v-if='editorStore.previewPaneShown')
+  .col-12.col-lg-6(
+    v-if='editorStore.previewPaneShown'
+    :class='editorStore.isDarkTheme ? `bg-dark-5 text-white` : `bg-grey-2 text-black`'
+    )
     .q-ma-lg Preview
 </template>
 
@@ -109,7 +112,7 @@ monaco.languages.setLanguageConfiguration('markdown', {
 onMounted(async () => {
   setTimeout(() => {
     // -> Define Monaco Theme
-    monaco.editor.defineTheme('ietf', {
+    monaco.editor.defineTheme('ietf-dark', {
       base: 'vs-dark',
       inherit: true,
       rules: [],
@@ -120,10 +123,17 @@ onMounted(async () => {
         'editorGutter.background': '#0d1117'
       }
     })
+    monaco.editor.defineTheme('ietf-light', {
+      base: 'vs',
+      inherit: true,
+      rules: [],
+      colors: {}
+    })
 
     // -> Initialize Monaco editor
     editor = monaco.editor.create(monacoContainer.value, {
       automaticLayout: true,
+      cursorStyle: editorStore.cursorStyle,
       cursorBlinking: editorStore.cursorBlinking,
       fontSize: editorStore.fontSize,
       formatOnType: editorStore.formatOnType,
@@ -135,9 +145,9 @@ onMounted(async () => {
         enabled: true
       },
       tabSize: editorStore.tabSize,
-      theme: 'ietf',
+      theme: editorStore.theme,
       value: '',
-      wordWrap: 'on'
+      wordWrap: editorStore.wordWrap ? 'on' : 'off'
     })
 
     // -> Handle content change
@@ -216,6 +226,11 @@ onMounted(async () => {
     docsStore.loadDocument({ isDefault: true })
   }
 
+  watch(() => editorStore.cursorStyle, (newValue) => {
+    if (newValue && editor) {
+      editor.updateOptions({ cursorStyle: newValue })
+    }
+  })
   watch(() => editorStore.cursorBlinking, (newValue) => {
     if (newValue && editor) {
       editor.updateOptions({ cursorBlinking: newValue })
@@ -227,13 +242,23 @@ onMounted(async () => {
     }
   })
   watch(() => editorStore.formatOnType, (newValue) => {
-    if (newValue && editor) {
+    if (editor) {
       editor.updateOptions({ formatOnType: newValue })
     }
   })
   watch(() => editorStore.tabSize, (newValue) => {
     if (newValue && editor) {
       editor.updateOptions({ tabSize: newValue })
+    }
+  })
+  watch(() => editorStore.theme, (newValue) => {
+    if (newValue && editor) {
+      editor.updateOptions({ theme: newValue })
+    }
+  })
+  watch(() => editorStore.wordWrap, (newValue) => {
+    if (editor) {
+      editor.updateOptions({ wordWrap: newValue ? 'on' : 'off' })
     }
   })
 
@@ -380,9 +405,7 @@ onMounted(async () => {
         break
       }
       case 'wordWrap': {
-        editor.updateOptions({
-          wordWrap: editor.getOption(monaco.editor.EditorOption.wordWrap) === 'on' ? 'off' : 'on'
-        })
+        editorStore.wordWrap = !editorStore.wordWrap
         break
       }
       case 'zoomIn': {

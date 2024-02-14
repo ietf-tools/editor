@@ -2,21 +2,25 @@ import { defineStore } from 'pinia'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
-    content: '',
-    lastChangeTimestamp: null,
-    errors: [],
-    line: 1,
     col: 1,
+    content: '',
     cursorBlinking: 'blink',
+    cursorStyle: 'line',
+    drawerPane: 'DrawerGit',
+    errors: [],
     fontSize: 16,
     formatOnType: true,
-    tabSize: 2,
-    previewPaneShown: true,
     gitMode: 'system',
-    drawerPane: 'DrawerGit'
+    lastChangeTimestamp: null,
+    line: 1,
+    previewPaneShown: true,
+    tabSize: 2,
+    theme: 'ietf-dark',
+    wordWrap: true
   }),
   getters: {
-    hasErrors: (state) => state.errors?.length > 0
+    hasErrors: (state) => state.errors?.length > 0,
+    isDarkTheme: (state) => ['ietf-dark', 'hc-black'].includes(state.theme)
   },
   actions: {
   }
