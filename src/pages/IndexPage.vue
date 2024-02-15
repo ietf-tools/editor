@@ -146,7 +146,7 @@ onMounted(async () => {
       },
       tabSize: editorStore.tabSize,
       theme: editorStore.theme,
-      value: '',
+      value: docsStore.activeDocument.activeData,
       wordWrap: editorStore.wordWrap ? 'on' : 'off'
     })
 

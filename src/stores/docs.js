@@ -4,8 +4,22 @@ import { DateTime } from 'luxon'
 
 export const useDocsStore = defineStore('docs', {
   state: () => ({
-    opened: [],
-    active: null
+    opened: [
+      // Default document
+      {
+        id: '40a87500-97ae-4889-945d-8b54ea5e7d29',
+        type: 'xml',
+        path: '',
+        fileName: 'untitled-draft.xml',
+        data: '',
+        activeData: '',
+        isModified: false,
+        lastModifiedAt: DateTime.utc(),
+        isDefault: true,
+        language: 'xmlrfc'
+      }
+    ],
+    active: '40a87500-97ae-4889-945d-8b54ea5e7d29'
   }),
   getters: {
     activeDocument (state) {
@@ -102,5 +116,11 @@ export const useDocsStore = defineStore('docs', {
         this.activeDocument.lastModifiedAt = DateTime.utc()
       }
     }
+  },
+  persist: {
+    paths: [
+      'opened',
+      'active'
+    ]
   }
 })

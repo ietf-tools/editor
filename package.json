@@ -20,6 +20,7 @@
     "mitt": "3.0.1",
     "monaco-editor": "0.44.0",
     "pinia": "2.1.7",
+    "pinia-plugin-persistedstate": "3.2.1",
     "quasar": "2.14.1",
     "vue": "3.3.9",
     "vue-router": "4.2.5"

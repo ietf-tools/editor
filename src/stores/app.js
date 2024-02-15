@@ -9,5 +9,8 @@ export const useAppStore = defineStore('app', {
     isPWA: (state) => state.mode === 'pwa' && window.matchMedia('(display-mode: standalone)').matches
   },
   actions: {
+  },
+  persist: {
+    paths: []
   }
 })

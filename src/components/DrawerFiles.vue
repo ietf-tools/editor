@@ -7,6 +7,6 @@ q-list(padding)
       label='Set Working Directory...'
       color='primary'
       no-caps
-      push
+      unelevated
     )
 </template>

@@ -10,7 +10,7 @@ export const useEditorStore = defineStore('editor', {
     errors: [],
     fontSize: 16,
     formatOnType: true,
-    gitMode: 'system',
+    gitMode: 'editor',
     lastChangeTimestamp: null,
     line: 1,
     previewPaneShown: true,
@@ -23,5 +23,19 @@ export const useEditorStore = defineStore('editor', {
     isDarkTheme: (state) => ['ietf-dark', 'hc-black'].includes(state.theme)
   },
   actions: {
+  },
+  persist: {
+    paths: [
+      'cursorBlinking',
+      'cursorStyle',
+      'drawerPane',
+      'fontSize',
+      'formatOnType',
+      'gitMode',
+      'previewPaneShown',
+      'tabSize',
+      'theme',
+      'wordWrap'
+    ]
   }
 })

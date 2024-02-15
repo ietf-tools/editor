@@ -119,16 +119,20 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
         template(v-else-if='state.tab === `git`')
           q-form.q-gutter-md.q-pa-lg
-            q-select(
-              outlined
-              v-model='editorStore.gitMode'
-              :options='gitModes'
-              label='Git Mode'
-              hint='Whether to use the system git or the editor built-in git integration.'
-              color='light-blue-4'
-              emit-value
-              map-options
-              )
+            .row
+              .col-8
+                .text-body2 Git Mode
+                .text-caption.text-grey-5 Whether to use the system git or the editor built-in git integration.
+              .col-4
+                q-select(
+                  outlined
+                  v-model='editorStore.gitMode'
+                  :options='gitModes'
+                  dense
+                  color='light-blue-4'
+                  emit-value
+                  map-options
+                  )
 
 </template>
 
@@ -246,14 +250,12 @@ const cursorAnims = [
 
 const gitModes = [
   {
-    label: 'Integrated Git',
-    value: 'integrated',
-    description: 'Use the editor built-in git'
+    label: 'Editor Git',
+    value: 'editor'
   },
   {
     label: 'System Git',
-    value: 'system',
-    description: 'Use the local system git'
+    value: 'system'
   }
 ]
 
