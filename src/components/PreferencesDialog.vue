@@ -44,6 +44,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
                   emit-value
                   map-options
                   )
+            q-separator
             .row
               .col-8
                 .text-body2 Cursor Style
@@ -88,6 +89,22 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
                 )
             .row
               .col-8
+                .text-body2 Format on Type
+                .text-caption.text-grey-5 Controls whether the editor should automatically format the line after typing.
+              .col-4
+                q-toggle(
+                  v-model='editorStore.formatOnType'
+                )
+            .row
+              .col-8
+                .text-body2 Preview Pane
+                .text-caption.text-grey-5 Controls whether the preview pane should be displayed.
+              .col-4
+                q-toggle(
+                  v-model='editorStore.previewPaneShown'
+                )
+            .row
+              .col-8
                 .text-body2 Tab Size
                 .text-caption.text-grey-5 The number of spaces a tab is equal to.
               .col-4
@@ -99,14 +116,6 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
                   color='light-blue-4'
                   suffix='spaces'
                   style='width: 200px'
-                )
-            .row
-              .col-8
-                .text-body2 Format on Type
-                .text-caption.text-grey-5 Controls whether the editor should automatically format the line after typing.
-              .col-4
-                q-toggle(
-                  v-model='editorStore.formatOnType'
                 )
             .row
               .col-8

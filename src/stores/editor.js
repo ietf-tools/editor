@@ -6,7 +6,7 @@ export const useEditorStore = defineStore('editor', {
     content: '',
     cursorBlinking: 'blink',
     cursorStyle: 'line',
-    drawerPane: 'DrawerGit',
+    drawerPane: 'DrawerFiles',
     errors: [],
     fontSize: 16,
     formatOnType: true,
@@ -16,14 +16,15 @@ export const useEditorStore = defineStore('editor', {
     previewPaneShown: true,
     tabSize: 2,
     theme: 'ietf-dark',
-    wordWrap: true
+    wordWrap: true,
+    workingDirectory: '',
+    workingDirFiles: []
   }),
   getters: {
     hasErrors: (state) => state.errors?.length > 0,
     isDarkTheme: (state) => ['ietf-dark', 'hc-black'].includes(state.theme)
   },
-  actions: {
-  },
+  actions: { },
   persist: {
     paths: [
       'cursorBlinking',
@@ -35,7 +36,8 @@ export const useEditorStore = defineStore('editor', {
       'previewPaneShown',
       'tabSize',
       'theme',
-      'wordWrap'
+      'wordWrap',
+      'workingDirectory'
     ]
   }
 })

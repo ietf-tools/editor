@@ -1,9 +1,7 @@
 import { Menu, app, shell } from 'electron'
 import os from 'node:os'
 
-import {
-  openDocument
-} from './handlers'
+import { openDocument } from './handlers'
 
 export function registerMenu (mainWindow) {
   const platform = process.platform || os.platform()
@@ -328,6 +326,7 @@ export function registerMenu (mainWindow) {
         },
         { type: 'separator' },
         {
+          id: 'viewShowPreviewPane',
           label: 'Show Preview Pane',
           type: 'checkbox',
           checked: true,
@@ -351,6 +350,7 @@ export function registerMenu (mainWindow) {
         },
         { type: 'separator' },
         {
+          id: 'viewWordWrap',
           label: 'Word Wrap',
           type: 'checkbox',
           checked: true,
@@ -441,6 +441,18 @@ export function registerMenu (mainWindow) {
           label: 'Debug',
           submenu: [
             {
+              label: 'Clear HTTP Cache',
+              click () {
+                mainWindow.webContents.session.clearCache()
+              }
+            },
+            {
+              label: 'Clear Session Data',
+              click () {
+                mainWindow.webContents.session.clearStorageData()
+              }
+            },
+            {
               role: 'reload'
             },
             {
@@ -463,4 +475,5 @@ export function registerMenu (mainWindow) {
   ]
   const menu = Menu.buildFromTemplate(menuTemplate)
   Menu.setApplicationMenu(menu)
+  return menu
 }

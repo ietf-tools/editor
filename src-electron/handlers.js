@@ -1,6 +1,7 @@
-import { app, dialog } from 'electron'
+import { app, dialog, ipcMain } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import orderBy from 'lodash/orderBy'
 
 export async function openDocument (mainWindow) {
   const files = await dialog.showOpenDialog(mainWindow, {
@@ -81,4 +82,54 @@ export async function saveDocumentAs (mainWindow, type, defaultFileName) {
   if (!saveOpts.canceled) {
     mainWindow.webContents.send('save', saveOpts.filePath)
   }
+}
+
+export async function selectWorkingDirectory (mainWindow, current) {
+  const setWdOpts = await dialog.showOpenDialog(mainWindow, {
+    title: 'Set Working Directory...',
+    ...(current && { defaultPath: current }),
+    properties: ['openDirectory', 'createDirectory', 'dontAddToRecent']
+  })
+  if (!setWdOpts.canceled && setWdOpts.filePaths.length > 0) {
+    return setWdOpts.filePaths[0]
+  } else {
+    return ''
+  }
+}
+
+export async function readDirectory (dirPath) {
+  const dirItems = []
+  const files = await fs.readdir(dirPath, { withFileTypes: true })
+  for (const file of files) {
+    if (!file.isDirectory() && !file.isFile()) { continue }
+    dirItems.push({
+      isDirectory: file.isDirectory(),
+      name: file.name,
+      path: path.join(file.path, file.name)
+    })
+  }
+  return orderBy(dirItems, ['isDirectory', 'name'], ['desc', 'asc'])
+}
+
+export function registerCallbacks (mainWindow, mainMenu) {
+  ipcMain.on('save', (ev, opts) => {
+    saveDocument(mainWindow, opts.path, opts.data)
+  })
+  ipcMain.on('promptSaveAs', (ev, opts) => {
+    saveDocumentAs(mainWindow, opts.type, opts.fileName)
+  })
+  ipcMain.handle('promptWorkingDirectory', async (ev, opts) => {
+    return selectWorkingDirectory(mainWindow, opts.current)
+  })
+  ipcMain.on('setMenuItemCheckedState', (ev, opts) => {
+    const mItem = mainMenu.getMenuItemById(opts.id)
+    if (mItem) {
+      mItem.checked = opts.value
+    } else {
+      dialog.showErrorBox('Internal Error', `Invalid Menu Item ${opts.id} [checked: ${opts.value}]`)
+    }
+  })
+  ipcMain.handle('readDirectory', async (evt, opts) => {
+    return readDirectory(opts.dirPath)
+  })
 }

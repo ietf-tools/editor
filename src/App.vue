@@ -6,10 +6,12 @@
 import { defineAsyncComponent } from 'vue'
 import { useQuasar } from 'quasar'
 import { useDocsStore } from 'src/stores/docs'
+import { useEditorStore } from 'src/stores/editor'
 
 const $q = useQuasar()
 
 const docsStore = useDocsStore()
+const editorStore = useEditorStore()
 
 window.ipcBridge.subscribe('dialogAction', (evt, action) => {
   switch (action) {
@@ -50,6 +52,9 @@ window.ipcBridge.subscribe('save', (evt, filePath) => {
 })
 window.ipcBridge.subscribe('saveAs', () => {
   docsStore.saveDocument(null, true)
+})
+window.ipcBridge.subscribe('setWorkingDirectory', (evt, dirPath) => {
+  editorStore.workingDirectory = dirPath
 })
 
 </script>

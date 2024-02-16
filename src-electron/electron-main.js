@@ -1,13 +1,10 @@
-import { app, BrowserWindow, ipcMain, nativeTheme, screen } from 'electron'
+import { app, BrowserWindow, nativeTheme, screen } from 'electron'
 import { initialize, enable } from '@electron/remote/main'
 import path from 'path'
 import os from 'os'
 
 import { registerMenu } from './menu'
-import {
-  saveDocument,
-  saveDocumentAs
-} from './handlers'
+import { registerCallbacks } from './handlers'
 
 /**
  * Merge new header with existing headers, handling lowercase header duplicates
@@ -35,6 +32,7 @@ try {
 } catch (_) { }
 
 let mainWindow
+let mainMenu
 
 function createWindow () {
   initialize()
@@ -66,7 +64,7 @@ function createWindow () {
     }
   })
 
-  registerMenu(mainWindow)
+  mainMenu = registerMenu(mainWindow)
   // mainWindow.setMenu(null)
 
   enable(mainWindow.webContents)
@@ -100,12 +98,7 @@ function createWindow () {
     mainWindow = null
   })
 
-  ipcMain.on('save', (ev, opts) => {
-    saveDocument(mainWindow, opts.path, opts.data)
-  })
-  ipcMain.on('promptSaveAs', (ev, opts) => {
-    saveDocumentAs(mainWindow, opts.type, opts.fileName)
-  })
+  registerCallbacks(mainWindow, mainMenu)
 }
 
 app.whenReady().then(createWindow)

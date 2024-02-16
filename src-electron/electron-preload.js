@@ -7,5 +7,8 @@ contextBridge.exposeInMainWorld('ipcBridge', {
 
   subscribe (channel, callback) {
     ipcRenderer.on(channel, callback)
-  }
+  },
+
+  promptWorkingDirectory: (current) => ipcRenderer.invoke('promptWorkingDirectory', { current }),
+  readDirectory: (dirPath) => ipcRenderer.invoke('readDirectory', { dirPath })
 })

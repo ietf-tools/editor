@@ -260,6 +260,16 @@ onMounted(async () => {
     if (editor) {
       editor.updateOptions({ wordWrap: newValue ? 'on' : 'off' })
     }
+    window.ipcBridge.emit('setMenuItemCheckedState', {
+      id: 'viewWordWrap',
+      value: newValue
+    })
+  })
+  watch(() => editorStore.previewPaneShown, (newValue) => {
+    window.ipcBridge.emit('setMenuItemCheckedState', {
+      id: 'viewShowPreviewPane',
+      value: newValue
+    })
   })
 
   window.ipcBridge.subscribe('editorAction', (evt, action) => {
