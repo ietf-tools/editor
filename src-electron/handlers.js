@@ -16,17 +16,21 @@ export async function openDocument (mainWindow) {
   })
   if (!files.canceled) {
     for (const fl of files.filePaths) {
-      const fileContents = await fs.readFile(fl, 'utf8')
-      const filePath = path.parse(fl)
-      mainWindow.webContents.send('openDocument', {
-        type: filePath.ext.slice(1),
-        path: fl,
-        fileName: filePath.base,
-        data: fileContents
-      })
-      app.addRecentDocument(fl)
+      await loadDocument(fl)
     }
   }
+}
+
+async function loadDocument (mainWindow, filePath) {
+  const fileContents = await fs.readFile(filePath, 'utf8')
+  const pathInfo = path.parse(filePath)
+  mainWindow.webContents.send('openDocument', {
+    type: pathInfo.ext.slice(1),
+    path: filePath,
+    fileName: pathInfo.base,
+    data: fileContents
+  })
+  app.addRecentDocument(filePath)
 }
 
 export async function saveDocument (mainWindow, filePath, contents) {
@@ -117,6 +121,9 @@ export function registerCallbacks (mainWindow, mainMenu) {
   })
   ipcMain.on('promptSaveAs', (ev, opts) => {
     saveDocumentAs(mainWindow, opts.type, opts.fileName)
+  })
+  ipcMain.on('openFromPath', (ev, opts) => {
+    loadDocument(mainWindow, opts.path)
   })
   ipcMain.handle('promptWorkingDirectory', async (ev, opts) => {
     return selectWorkingDirectory(mainWindow, opts.current)

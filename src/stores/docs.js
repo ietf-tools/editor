@@ -78,6 +78,16 @@ export const useDocsStore = defineStore('docs', {
       this.active = docId
     },
     /**
+     * Open document from path
+     *
+     * @param {string} docPath Document Path
+     */
+    async openDocumentFromPath (docPath) {
+      window.ipcBridge.emit('openFromPath', {
+        path: docPath
+      })
+    },
+    /**
      * Close a document
      *
      * @param {string} docId Document UUID

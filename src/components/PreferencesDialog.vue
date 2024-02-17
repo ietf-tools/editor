@@ -128,20 +128,70 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 
         template(v-else-if='state.tab === `git`')
           q-form.q-gutter-md.q-pa-lg
+            //- .row
+            //-   .col-8
+            //-     .text-body2 Git Mode
+            //-     .text-caption.text-grey-5 Whether to use the system git or the editor built-in git integration.
+            //-   .col-4
+            //-     q-select(
+            //-       outlined
+            //-       v-model='editorStore.gitMode'
+            //-       :options='gitModes'
+            //-       dense
+            //-       color='light-blue-4'
+            //-       emit-value
+            //-       map-options
+            //-       )
             .row
               .col-8
-                .text-body2 Git Mode
-                .text-caption.text-grey-5 Whether to use the system git or the editor built-in git integration.
+                .text-body2 Use Git Credential Manager
+                .text-caption.text-grey-5 Use the native git credential manager for authentication. Git must be installed on the system.
               .col-4
-                q-select(
+                q-toggle(
+                  v-model='editorStore.gitUseCredMan'
+                )
+            .row(v-if='!editorStore.gitUseCredMan')
+              .col-8
+                .text-body2 Username
+                .text-caption.text-grey-5 The username to use for git authentication.
+              .col-4
+                q-input(
+                  v-model.number='editorStore.gitUsername'
                   outlined
-                  v-model='editorStore.gitMode'
-                  :options='gitModes'
                   dense
                   color='light-blue-4'
-                  emit-value
-                  map-options
-                  )
+                )
+            .row(v-if='!editorStore.gitUseCredMan')
+              .col-8
+                .text-body2 Password / Personal Access Token
+                .text-caption.text-grey-5 The password / PAT to use for git authentication
+              .col-4
+                q-input(
+                  v-model.number='editorStore.gitPassword'
+                  type='password'
+                  outlined
+                  dense
+                  color='light-blue-4'
+                )
+            q-separator
+            .row
+              .col-8
+                .text-body2 Sign Commits
+                .text-caption.text-grey-5 Use OpenPGP signing when creating commits.
+              .col-4
+                q-toggle(
+                  v-model='editorStore.gitSignCommits'
+                )
+            .row(v-if='editorStore.gitSignCommits')
+              .col-8
+                .text-body2 OpenPGP Signing Key
+                .text-caption.text-grey-5 Set the key to use for signing commits.
+              .col-4
+                q-btn(
+                  label='Set key...'
+                  color='primary'
+                  no-caps
+                )
 
 </template>
 
@@ -151,6 +201,13 @@ import { useDialogPluginComponent } from 'quasar'
 import { useEditorStore } from 'src/stores/editor'
 
 const editorStore = useEditorStore()
+
+const props = defineProps({
+  tab: {
+    type: String,
+    default: 'editor'
+  }
+})
 
 // const $q = useQuasar()
 
@@ -167,7 +224,7 @@ const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent()
 // STATE
 
 const state = reactive({
-  tab: 'editor'
+  tab: props.tab || 'editor'
 })
 
 const tabs = [
@@ -257,16 +314,16 @@ const cursorAnims = [
   }
 ]
 
-const gitModes = [
-  {
-    label: 'Editor Git',
-    value: 'editor'
-  },
-  {
-    label: 'System Git',
-    value: 'system'
-  }
-]
+// const gitModes = [
+//   {
+//     label: 'Editor Git',
+//     value: 'editor'
+//   },
+//   {
+//     label: 'System Git',
+//     value: 'system'
+//   }
+// ]
 
 // METHODS
 
