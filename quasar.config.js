@@ -8,11 +8,13 @@
 // Configuration for your app
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-js
 
-const { configure } = require('quasar/wrappers')
-const curYear = new Date().getFullYear()
-const packageInfo = require('./package.json')
+import { configure } from 'quasar/wrappers'
+import { readFileSync } from 'node:fs'
 
-module.exports = configure(function (/* ctx */) {
+export default configure((/* ctx */) => {
+  const curYear = new Date().getFullYear()
+  const packageInfo = JSON.parse(readFileSync(new URL('./package.json', import.meta.url)))
+
   return {
     eslint: {
       // fix: true,
@@ -56,7 +58,7 @@ module.exports = configure(function (/* ctx */) {
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
     build: {
       target: {
-        browser: ['es2019', 'edge88', 'firefox78', 'chrome87', 'safari13.1'],
+        browser: ['es2019', 'chrome87'],
         node: 'node18'
       },
 
@@ -195,6 +197,9 @@ module.exports = configure(function (/* ctx */) {
     electron: {
       // extendElectronMainConf (esbuildConf)
       // extendElectronPreloadConf (esbuildConf)
+
+      // Electron preload scripts (if any) from /src-electron, WITHOUT file extension
+      preloadScripts: ['electron-preload'],
 
       inspectPort: 5858,
 

@@ -1,7 +1,7 @@
 import { app, dialog, ipcMain } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import orderBy from 'lodash/orderBy'
+import { orderBy } from 'lodash-es'
 
 export async function openDocument (mainWindow) {
   const files = await dialog.showOpenDialog(mainWindow, {

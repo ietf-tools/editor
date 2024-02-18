@@ -1,13 +1,14 @@
-import { app, BrowserWindow, Menu, nativeTheme, screen } from 'electron'
-import { initialize, enable } from '@electron/remote/main'
-import path from 'path'
-import os from 'os'
+import { app, BrowserWindow, Menu, screen } from 'electron'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { registerMenu } from './menu'
 import { loadDocument, registerCallbacks } from './handlers'
 import { mergeWithHeaders } from './helpers'
 
+const currentDir = fileURLToPath(new URL('.', import.meta.url))
+
 // needed in case process is undefined under Linux
-const platform = process.platform || os.platform()
+// const platform = process.platform || os.platform()
 
 // ensure only 1 instance of the app is running
 const instanceLock = app.requestSingleInstanceLock()
@@ -15,25 +16,17 @@ const instanceLock = app.requestSingleInstanceLock()
 // prevent electron from building a default menu
 Menu.setApplicationMenu(null)
 
-try {
-  if (platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
-    require('fs').unlinkSync(path.join(app.getPath('userData'), 'DevTools Extensions'))
-  }
-} catch (_) { }
-
 let mainWindow
 let mainMenu
 
 function createWindow () {
-  initialize()
-
   // -> Get primary screen dimensions
   const primaryDisplay = screen.getPrimaryDisplay()
   const { width, height } = primaryDisplay.workAreaSize
 
   // -> Initial window options
   mainWindow = new BrowserWindow({
-    icon: path.resolve(__dirname, 'icons/icon.png'), // tray icon
+    icon: path.resolve(currentDir, 'icons/icon.png'), // tray icon
     width: Math.round(width * 0.9),
     height: Math.round(height * 0.9),
     minWidth: 1400,
@@ -47,7 +40,7 @@ function createWindow () {
     webPreferences: {
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
-      preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
+      preload: path.resolve(currentDir, path.join(process.env.QUASAR_ELECTRON_PRELOAD_FOLDER, 'electron-preload' + process.env.QUASAR_ELECTRON_PRELOAD_EXTENSION)),
       sandbox: false,
       spellcheck: true
     }
@@ -55,8 +48,6 @@ function createWindow () {
 
   // -> Set application menu
   mainMenu = registerMenu(mainWindow)
-
-  enable(mainWindow.webContents)
 
   // -> Disable CORS
   mainWindow.webContents.session.webRequest.onBeforeSendHeaders(({ requestHeaders }, clb) => {
@@ -73,7 +64,11 @@ function createWindow () {
   mainWindow.webContents.session.setSpellCheckerLanguages(['en-US'])
 
   // -> Load start URL
-  mainWindow.loadURL(process.env.APP_URL)
+  if (process.env.DEV) {
+    mainWindow.loadURL(process.env.APP_URL)
+  } else {
+    mainWindow.loadFile('index.html')
+  }
 
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
