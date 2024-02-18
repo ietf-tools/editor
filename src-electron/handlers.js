@@ -21,7 +21,7 @@ export async function openDocument (mainWindow) {
   }
 }
 
-async function loadDocument (mainWindow, filePath) {
+export async function loadDocument (mainWindow, filePath) {
   const fileContents = await fs.readFile(filePath, 'utf8')
   const pathInfo = path.parse(filePath)
   mainWindow.webContents.send('openDocument', {

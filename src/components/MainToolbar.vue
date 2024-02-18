@@ -49,6 +49,15 @@ q-bar.toolbar-main
       @click='newDocument'
       )
   q-space
+  q-btn(
+    flat
+    icon='mdi-cog'
+    color='light-blue-3'
+    @click='openPreferences'
+    padding='xs sm'
+    )
+    q-tooltip Preferences
+  q-separator.q-mx-sm(inset vertical)
   q-btn(padding="xs sm" flat no-caps)
     span.text-body2 ada.lovelace@acme.org
     q-icon.q-ml-sm(name='mdi-account-circle')
@@ -118,6 +127,12 @@ function closeDocument (doc) {
 function newDocument () {
   $q.dialog({
     component: defineAsyncComponent(() => import('components/NewDraftDialog.vue'))
+  })
+}
+
+function openPreferences () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('components/PreferencesDialog.vue'))
   })
 }
 

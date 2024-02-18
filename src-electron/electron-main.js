@@ -1,29 +1,19 @@
-import { app, BrowserWindow, nativeTheme, screen } from 'electron'
+import { app, BrowserWindow, Menu, nativeTheme, screen } from 'electron'
 import { initialize, enable } from '@electron/remote/main'
 import path from 'path'
 import os from 'os'
-
 import { registerMenu } from './menu'
-import { registerCallbacks } from './handlers'
-
-/**
- * Merge new header with existing headers, handling lowercase header duplicates
- *
- * @param {Object} headers Existing headers
- * @param {string} key New Header Key, in normal ccase
- * @param {string} value New Header Value
- */
-function mergeWithHeaders (headers = {}, key, value) {
-  const lowerKey = key.toLowerCase()
-  if (lowerKey in headers) {
-    headers[lowerKey] = value
-  } else {
-    headers[key] = value
-  }
-}
+import { loadDocument, registerCallbacks } from './handlers'
+import { mergeWithHeaders } from './helpers'
 
 // needed in case process is undefined under Linux
 const platform = process.platform || os.platform()
+
+// ensure only 1 instance of the app is running
+const instanceLock = app.requestSingleInstanceLock()
+
+// prevent electron from building a default menu
+Menu.setApplicationMenu(null)
 
 try {
   if (platform === 'win32' && nativeTheme.shouldUseDarkColors === true) {
@@ -41,9 +31,7 @@ function createWindow () {
   const primaryDisplay = screen.getPrimaryDisplay()
   const { width, height } = primaryDisplay.workAreaSize
 
-  /**
-   * Initial window options
-   */
+  // -> Initial window options
   mainWindow = new BrowserWindow({
     icon: path.resolve(__dirname, 'icons/icon.png'), // tray icon
     width: Math.round(width * 0.9),
@@ -60,12 +48,13 @@ function createWindow () {
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
       preload: path.resolve(__dirname, process.env.QUASAR_ELECTRON_PRELOAD),
-      sandbox: false
+      sandbox: false,
+      spellcheck: true
     }
   })
 
+  // -> Set application menu
   mainMenu = registerMenu(mainWindow)
-  // mainWindow.setMenu(null)
 
   enable(mainWindow.webContents)
 
@@ -79,6 +68,9 @@ function createWindow () {
     mergeWithHeaders(responseHeaders, 'Access-Control-Allow-Origin', ['*'])
     clb({ responseHeaders })
   })
+
+  // -> Set spellchecker language
+  mainWindow.webContents.session.setSpellCheckerLanguages(['en-US'])
 
   // -> Load start URL
   mainWindow.loadURL(process.env.APP_URL)
@@ -101,16 +93,34 @@ function createWindow () {
   registerCallbacks(mainWindow, mainMenu)
 }
 
-app.whenReady().then(createWindow)
+if (!instanceLock) {
+  app.exit()
+} else {
+  app.whenReady().then(createWindow)
 
-app.on('window-all-closed', () => {
-  // if (platform !== 'darwin') {
-  app.quit()
-  // }
-})
+  // Handle open document from Recent Files / drop onto macOS dock
+  app.on('open-file', (ev, filePath) => {
+    ev.preventDefault()
+    loadDocument(mainWindow, filePath)
+  })
 
-app.on('activate', () => {
-  if (mainWindow === null) {
-    createWindow()
-  }
-})
+  app.on('window-all-closed', () => {
+    // if (platform !== 'darwin') {
+    app.quit()
+    // }
+  })
+
+  app.on('activate', () => {
+    if (mainWindow === null) {
+      createWindow()
+    }
+  })
+
+  app.on('second-instance', (event, commandLine, workingDirectory, additionalData) => {
+    // Someone tried to run a second instance, we should focus our window.
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+    }
+  })
+}

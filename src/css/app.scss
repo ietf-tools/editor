@@ -47,3 +47,7 @@ body {
   border: 1px solid $primary !important;
   border-top-width: 0 !important;
 }
+
+.q-dialog__backdrop {
+  backdrop-filter: blur(1px);
+}
