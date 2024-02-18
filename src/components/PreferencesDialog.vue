@@ -196,7 +196,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
 </template>
 
 <script setup>
-import { reactive } from 'vue'
+import { onBeforeUnmount, reactive } from 'vue'
 import { useDialogPluginComponent } from 'quasar'
 import { useEditorStore } from 'src/stores/editor'
 
@@ -326,6 +326,10 @@ const cursorAnims = [
 // ]
 
 // METHODS
+
+onBeforeUnmount(() => {
+  editorStore.saveGitConfig()
+})
 
 </script>
 

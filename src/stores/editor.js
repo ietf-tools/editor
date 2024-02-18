@@ -15,6 +15,8 @@ export const useEditorStore = defineStore('editor', {
     gitUseCredMan: true,
     gitUsername: '',
     gitPassword: '',
+    gitPgpKeySet: false,
+    gitSafeStorageEnabled: false,
     lastChangeTimestamp: null,
     line: 1,
     previewPaneShown: true,
@@ -28,7 +30,29 @@ export const useEditorStore = defineStore('editor', {
     hasErrors: (state) => state.errors?.length > 0,
     isDarkTheme: (state) => ['ietf-dark', 'hc-black'].includes(state.theme)
   },
-  actions: { },
+  actions: {
+    async fetchGitConfig () {
+      const conf = await window.ipcBridge.fetchGitConfig()
+      if (conf) {
+        this.$patch({
+          gitSignCommits: conf.signCommits,
+          gitUseCredMan: conf.useCredMan,
+          gitUsername: conf.username,
+          gitPassword: conf.password,
+          gitPgpKeySet: conf.pgpKey,
+          gitSafeStorageEnabled: conf.safeStorageEnabled
+        })
+      }
+    },
+    async saveGitConfig () {
+      window.ipcBridge.emit('updateGitConfig', {
+        signCommits: this.gitSignCommits,
+        useCredMan: this.gitUseCredMan,
+        username: this.gitUsername,
+        password: this.gitPassword
+      })
+    }
+  },
   persist: {
     paths: [
       'cursorBlinking',
@@ -36,8 +60,6 @@ export const useEditorStore = defineStore('editor', {
       'drawerPane',
       'fontSize',
       'formatOnType',
-      'gitMode',
-      'gitSignCommits',
       'previewPaneShown',
       'tabSize',
       'theme',

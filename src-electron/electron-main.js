@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { registerMenu } from './menu'
 import { loadDocument, registerCallbacks } from './handlers'
 import { mergeWithHeaders } from './helpers'
+import git from './git'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
@@ -85,7 +86,9 @@ function createWindow () {
     mainWindow = null
   })
 
-  registerCallbacks(mainWindow, mainMenu)
+  git.init()
+
+  registerCallbacks(mainWindow, mainMenu, git)
 }
 
 if (!instanceLock) {

@@ -115,7 +115,7 @@ export async function readDirectory (dirPath) {
   return orderBy(dirItems, ['isDirectory', 'name'], ['desc', 'asc'])
 }
 
-export function registerCallbacks (mainWindow, mainMenu) {
+export function registerCallbacks (mainWindow, mainMenu, git) {
   ipcMain.on('save', (ev, opts) => {
     saveDocument(mainWindow, opts.path, opts.data)
   })
@@ -138,5 +138,41 @@ export function registerCallbacks (mainWindow, mainMenu) {
   })
   ipcMain.handle('readDirectory', async (evt, opts) => {
     return readDirectory(opts.dirPath)
+  })
+  ipcMain.handle('fetchGitConfig', async (evt, opts) => {
+    return {
+      ...git.conf,
+      password: git.conf.password ? '********' : '',
+      pgpKey: Boolean(git.conf.pgpKey)
+    }
+  })
+  ipcMain.on('updateGitConfig', async (ev, conf) => {
+    git.conf = {
+      ...git.conf,
+      ...conf,
+      password: conf.password !== '********' ? conf.password : git.conf.password,
+      pgpKey: git.conf.pgpKey
+    }
+    try {
+      await git.saveConfig()
+      if (git.conf.safeStorageEnabled) {
+        await git.saveAuthConfig()
+      } else if (git.conf.password || git.conf.pgpKey) {
+        mainWindow.webContents.send('notify', {
+          message: 'Cannot save git auth settings',
+          caption: 'Encrypted safe storage is not available on this system.',
+          color: 'negative',
+          icon: 'mdi-alert'
+        })
+      }
+    } catch (err) {
+      console.warn(err)
+      mainWindow.webContents.send('notify', {
+        message: 'Failed to save git config',
+        caption: err.message,
+        color: 'negative',
+        icon: 'mdi-alert'
+      })
+    }
   })
 }

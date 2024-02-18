@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent } from 'vue'
+import { defineAsyncComponent, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { useDocsStore } from 'src/stores/docs'
 import { useEditorStore } from 'src/stores/editor'
@@ -55,6 +55,10 @@ window.ipcBridge.subscribe('saveAs', () => {
 })
 window.ipcBridge.subscribe('setWorkingDirectory', (evt, dirPath) => {
   editorStore.workingDirectory = dirPath
+})
+
+onMounted(() => {
+  editorStore.fetchGitConfig()
 })
 
 </script>
