@@ -94,6 +94,8 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
               .col-4
                 q-toggle(
                   v-model='editorStore.formatOnType'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
                 )
             .row
               .col-8
@@ -102,6 +104,8 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
               .col-4
                 q-toggle(
                   v-model='editorStore.previewPaneShown'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
                 )
             .row
               .col-8
@@ -124,6 +128,8 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
               .col-4
                 q-toggle(
                   v-model='editorStore.wordWrap'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
                 )
 
         template(v-else-if='state.tab === `git`')
@@ -144,11 +150,36 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
             //-       )
             .row
               .col-8
+                .text-body2 Name
+                .text-caption.text-grey-5 The name to use when creating commits.
+              .col-4
+                q-input(
+                  v-model.number='editorStore.gitName'
+                  outlined
+                  dense
+                  color='light-blue-4'
+                )
+            .row
+              .col-8
+                .text-body2 Email Address
+                .text-caption.text-grey-5 The email address to use when creating commits. It should match your git provider email address.
+              .col-4
+                q-input(
+                  v-model.number='editorStore.gitEmail'
+                  outlined
+                  dense
+                  color='light-blue-4'
+                )
+            q-separator
+            .row
+              .col-8
                 .text-body2 Use Git Credential Manager
                 .text-caption.text-grey-5 Use the native git credential manager for authentication. Git must be installed on the system.
               .col-4
                 q-toggle(
                   v-model='editorStore.gitUseCredMan'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
                 )
             .row(v-if='!editorStore.gitUseCredMan')
               .col-8
@@ -181,23 +212,38 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
               .col-4
                 q-toggle(
                   v-model='editorStore.gitSignCommits'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
                 )
             .row(v-if='editorStore.gitSignCommits')
               .col-8
                 .text-body2 OpenPGP Signing Key
                 .text-caption.text-grey-5 Set the key to use for signing commits.
+                .text-caption.flex(v-if='editorStore.gitPgpKeySet')
+                  q-badge(label='RSA', color='green-9')
+                  q-separator.q-mx-sm(vertical)
+                  .text-uppercase.text-purple-2 {{ editorStore.gitFingerprint }}
+                  q-separator.q-mx-sm(vertical)
+                  a.text-light-blue-3(href='#', @click.stop.prevent='copyPublicKey') Copy Public Key
               .col-4
                 q-btn(
-                  label='Set key...'
+                  :label='editorStore.gitPgpKeySet ? `Generate New` : `Setup`'
                   color='primary'
+                  no-caps
+                  @click='setupPGPKey'
+                )
+                q-btn.q-ml-sm(
+                  v-if='editorStore.gitPgpKeySet'
+                  label='Revoke'
+                  color='negative'
                   no-caps
                 )
 
 </template>
 
 <script setup>
-import { onBeforeUnmount, reactive } from 'vue'
-import { useDialogPluginComponent } from 'quasar'
+import { defineAsyncComponent, onBeforeUnmount, reactive } from 'vue'
+import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { useEditorStore } from 'src/stores/editor'
 
 const editorStore = useEditorStore()
@@ -209,7 +255,7 @@ const props = defineProps({
   }
 })
 
-// const $q = useQuasar()
+const $q = useQuasar()
 
 // EMITS
 
@@ -326,6 +372,21 @@ const cursorAnims = [
 // ]
 
 // METHODS
+
+function setupPGPKey () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('components/OpenPGPSetupDialog.vue'))
+  })
+}
+
+function copyPublicKey () {
+  window.ipcBridge.emit('copyGitPublicKey')
+  $q.notify({
+    message: 'Public key copied to clipboard.',
+    color: 'positive',
+    icon: 'mdi-clipboard-check-outline'
+  })
+}
 
 onBeforeUnmount(() => {
   editorStore.saveGitConfig()

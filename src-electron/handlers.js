@@ -1,7 +1,7 @@
-import { app, dialog, ipcMain } from 'electron'
+import { app, clipboard, dialog, ipcMain, shell } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { orderBy } from 'lodash-es'
+import { isNil, orderBy } from 'lodash-es'
 
 export async function openDocument (mainWindow) {
   const files = await dialog.showOpenDialog(mainWindow, {
@@ -143,21 +143,20 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
     return {
       ...git.conf,
       password: git.conf.password ? '********' : '',
-      pgpKey: Boolean(git.conf.pgpKey)
+      pgpKey: Boolean(git.conf.publicKey)
     }
   })
   ipcMain.on('updateGitConfig', async (ev, conf) => {
     git.conf = {
       ...git.conf,
       ...conf,
-      password: conf.password !== '********' ? conf.password : git.conf.password,
-      pgpKey: git.conf.pgpKey
+      password: (!isNil(conf.password) && conf.password !== '********') ? conf.password : git.conf.password
     }
     try {
       await git.saveConfig()
       if (git.conf.safeStorageEnabled) {
         await git.saveAuthConfig()
-      } else if (git.conf.password || git.conf.pgpKey) {
+      } else if (git.conf.password || git.conf.publicKey) {
         mainWindow.webContents.send('notify', {
           message: 'Cannot save git auth settings',
           caption: 'Encrypted safe storage is not available on this system.',
@@ -172,6 +171,19 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
         caption: err.message,
         color: 'negative',
         icon: 'mdi-alert'
+      })
+    }
+  })
+  ipcMain.on('copyGitPublicKey', async (ev) => {
+    clipboard.writeText(git.conf.publicKey)
+  })
+  ipcMain.on('writeToClipboard', (ev, opts) => {
+    clipboard.writeText(opts.text)
+  })
+  ipcMain.on('launchBrowser', (ev, opts) => {
+    if (opts.url?.startsWith('https://')) {
+      shell.openExternal(opts.url, {
+        activate: true
       })
     }
   })

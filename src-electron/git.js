@@ -9,9 +9,14 @@ export default {
   conf: {
     signCommits: true,
     useCredMan: true,
+    name: '',
+    email: '',
     username: '',
     password: '',
-    pgpKey: '',
+    publicKey: '',
+    privateKey: '',
+    revocationCertificate: '',
+    fingerprint: '',
     safeStorageEnabled: false
   },
   /**
@@ -54,6 +59,8 @@ export default {
     const confPath = path.join(app.getPath('userData'), 'draftforge-gitconf.json')
     try {
       await fs.writeFile(confPath, JSON.stringify({
+        name: this.conf.name,
+        email: this.conf.email,
         signCommits: this.conf.signCommits,
         useCredMan: this.conf.useCredMan
       }, null, 2), 'utf8')
@@ -91,7 +98,10 @@ export default {
       await fs.writeFile(authPath, safeStorage.encryptString(JSON.stringify({
         username: this.conf.username,
         password: this.conf.password,
-        pgpKey: this.conf.pgpKey
+        publicKey: this.conf.publicKey,
+        privateKey: this.conf.privateKey,
+        revocationCertificate: this.conf.revocationCertificate,
+        fingerprint: this.conf.fingerprint
       })))
     } catch (err) {
       console.log(`Failed to write git keys file to disk. [${err.message}]`)

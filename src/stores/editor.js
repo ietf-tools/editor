@@ -11,11 +11,14 @@ export const useEditorStore = defineStore('editor', {
     fontSize: 16,
     formatOnType: true,
     gitMode: 'editor',
+    gitName: '',
+    gitEmail: '',
     gitSignCommits: true,
     gitUseCredMan: true,
     gitUsername: '',
     gitPassword: '',
     gitPgpKeySet: false,
+    gitFingerprint: '',
     gitSafeStorageEnabled: false,
     lastChangeTimestamp: null,
     line: 1,
@@ -35,17 +38,22 @@ export const useEditorStore = defineStore('editor', {
       const conf = await window.ipcBridge.fetchGitConfig()
       if (conf) {
         this.$patch({
+          gitName: conf.name,
+          gitEmail: conf.email,
           gitSignCommits: conf.signCommits,
           gitUseCredMan: conf.useCredMan,
           gitUsername: conf.username,
           gitPassword: conf.password,
           gitPgpKeySet: conf.pgpKey,
+          gitFingerprint: conf.fingerprint,
           gitSafeStorageEnabled: conf.safeStorageEnabled
         })
       }
     },
     async saveGitConfig () {
       window.ipcBridge.emit('updateGitConfig', {
+        name: this.gitName,
+        email: this.gitEmail,
         signCommits: this.gitSignCommits,
         useCredMan: this.gitUseCredMan,
         username: this.gitUsername,
