@@ -136,10 +136,10 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
       dialog.showErrorBox('Internal Error', `Invalid Menu Item ${opts.id} [checked: ${opts.value}]`)
     }
   })
-  ipcMain.handle('readDirectory', async (evt, opts) => {
+  ipcMain.handle('readDirectory', async (ev, opts) => {
     return readDirectory(opts.dirPath)
   })
-  ipcMain.handle('fetchGitConfig', async (evt, opts) => {
+  ipcMain.handle('fetchGitConfig', async (ev) => {
     return {
       ...git.conf,
       password: git.conf.password ? '********' : '',
@@ -176,6 +176,9 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
   })
   ipcMain.on('copyGitPublicKey', async (ev) => {
     clipboard.writeText(git.conf.publicKey)
+  })
+  ipcMain.handle('revokeGitKey', async (ev) => {
+    return git.revokeSigningKey()
   })
   ipcMain.on('writeToClipboard', (ev, opts) => {
     clipboard.writeText(opts.text)

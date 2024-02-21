@@ -174,7 +174,7 @@ async function generatePGPKey () {
       detached: true
     })
     const signature = await openpgp.readSignature({ armoredSignature })
-    state.fingerprint = signature.getSigningKeyIDs().map(x => x.toHex())
+    state.fingerprint = signature.getSigningKeyIDs().map(x => x.toHex())[0]
 
     $q.notify({
       message: 'Public key copied to clipboard.',

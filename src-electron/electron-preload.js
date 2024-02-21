@@ -11,5 +11,6 @@ contextBridge.exposeInMainWorld('ipcBridge', {
 
   promptWorkingDirectory: (current) => ipcRenderer.invoke('promptWorkingDirectory', { current }),
   readDirectory: (dirPath) => ipcRenderer.invoke('readDirectory', { dirPath }),
-  fetchGitConfig: () => ipcRenderer.invoke('fetchGitConfig')
+  fetchGitConfig: () => ipcRenderer.invoke('fetchGitConfig'),
+  revokeGitKey: () => ipcRenderer.invoke('revokeGitKey')
 })

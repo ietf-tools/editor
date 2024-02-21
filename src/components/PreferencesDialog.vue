@@ -237,6 +237,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
                   label='Revoke'
                   color='negative'
                   no-caps
+                  @click='revokePGPKey'
                 )
 
 </template>
@@ -376,6 +377,38 @@ const cursorAnims = [
 function setupPGPKey () {
   $q.dialog({
     component: defineAsyncComponent(() => import('components/OpenPGPSetupDialog.vue'))
+  })
+}
+
+function revokePGPKey () {
+  $q.dialog({
+    title: 'Confirm',
+    message: 'Are you sure you want to revoke this OpenPGP signing key? Note that you must still remove the key from git provider afterwards.',
+    persistent: true,
+    focus: 'none',
+    ok: {
+      color: 'negative',
+      textColor: 'white',
+      unelevated: true,
+      label: 'Revoke',
+      noCaps: true
+    },
+    cancel: {
+      color: 'grey-3',
+      outline: true,
+      noCaps: true
+    }
+  }).onOk(async () => {
+    const succeeded = await window.ipcBridge.revokeGitKey()
+    if (succeeded) {
+      await editorStore.fetchGitConfig()
+      $q.notify({
+        message: 'Signing key cleared successfully.',
+        caption: 'The revocation certificate has been copied to your clipboard.',
+        color: 'positive',
+        icon: 'mdi-check'
+      })
+    }
   })
 }
 

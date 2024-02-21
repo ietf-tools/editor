@@ -3,7 +3,7 @@ import path from 'node:path'
 import fs from 'node:fs/promises'
 import http from 'isomorphic-git/http/node/index.js'
 import { spawn } from 'node:child_process'
-import { app, safeStorage } from 'electron'
+import { app, clipboard, safeStorage } from 'electron'
 
 export default {
   conf: {
@@ -106,6 +106,18 @@ export default {
     } catch (err) {
       console.log(`Failed to write git keys file to disk. [${err.message}]`)
     }
+  },
+  /**
+   * Revoke OpenPGP Signing Key
+   */
+  async revokeSigningKey () {
+    clipboard.writeText(this.conf.revocationCertificate)
+    this.conf.publicKey = ''
+    this.conf.privateKey = ''
+    this.conf.revocationCertificate = ''
+    this.conf.fingerprint = ''
+    await this.saveAuthConfig()
+    return true
   },
   /**
    * Clone a git repository
