@@ -234,10 +234,10 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
                 )
                 q-btn.q-ml-sm(
                   v-if='editorStore.gitPgpKeySet'
-                  label='Revoke'
+                  label='Clear'
                   color='negative'
                   no-caps
-                  @click='revokePGPKey'
+                  @click='clearPGPKey'
                 )
 
 </template>
@@ -380,17 +380,17 @@ function setupPGPKey () {
   })
 }
 
-function revokePGPKey () {
+function clearPGPKey () {
   $q.dialog({
     title: 'Confirm',
-    message: 'Are you sure you want to revoke this OpenPGP signing key? Note that you must still remove the key from git provider afterwards.',
+    message: 'Are you sure you want to clear this OpenPGP signing key? Note that you must still remove the key from git provider afterwards.',
     persistent: true,
     focus: 'none',
     ok: {
       color: 'negative',
       textColor: 'white',
       unelevated: true,
-      label: 'Revoke',
+      label: 'Clear',
       noCaps: true
     },
     cancel: {
@@ -399,7 +399,7 @@ function revokePGPKey () {
       noCaps: true
     }
   }).onOk(async () => {
-    const succeeded = await window.ipcBridge.revokeGitKey()
+    const succeeded = await window.ipcBridge.clearGitKey()
     if (succeeded) {
       await editorStore.fetchGitConfig()
       $q.notify({

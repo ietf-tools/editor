@@ -75,6 +75,9 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss)
               @click='launchGitHubKeys'
               icon='mdi-open-in-app'
             )
+        .row.q-mt-lg
+          .col-12
+            .text-red-3 Note that you should #[strong NOT] publish this key to public key servers. It's intended usage is strictly for signing commits from this editor with the git provider.
       q-card-actions(align='right')
         q-btn(
           outline

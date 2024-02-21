@@ -108,9 +108,9 @@ export default {
     }
   },
   /**
-   * Revoke OpenPGP Signing Key
+   * Clear OpenPGP Signing Key
    */
-  async revokeSigningKey () {
+  async clearSigningKey () {
     clipboard.writeText(this.conf.revocationCertificate)
     this.conf.publicKey = ''
     this.conf.privateKey = ''

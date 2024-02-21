@@ -177,8 +177,8 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
   ipcMain.on('copyGitPublicKey', async (ev) => {
     clipboard.writeText(git.conf.publicKey)
   })
-  ipcMain.handle('revokeGitKey', async (ev) => {
-    return git.revokeSigningKey()
+  ipcMain.handle('clearGitKey', async (ev) => {
+    return git.clearSigningKey()
   })
   ipcMain.on('writeToClipboard', (ev, opts) => {
     clipboard.writeText(opts.text)
