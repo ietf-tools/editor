@@ -126,6 +126,7 @@ export default {
    * @returns {Promise<void>} Promise
    */
   async repoClone ({ dir, url }) {
+    await fs.mkdir(dir, { recursive: true })
     return git.clone({
       fs,
       http,

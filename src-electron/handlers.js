@@ -88,9 +88,9 @@ export async function saveDocumentAs (mainWindow, type, defaultFileName) {
   }
 }
 
-export async function selectWorkingDirectory (mainWindow, current) {
+export async function selectDirectory (mainWindow, current, title) {
   const setWdOpts = await dialog.showOpenDialog(mainWindow, {
-    title: 'Set Working Directory...',
+    title,
     ...(current && { defaultPath: current }),
     properties: ['openDirectory', 'createDirectory', 'dontAddToRecent']
   })
@@ -125,8 +125,8 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
   ipcMain.on('openFromPath', (ev, opts) => {
     loadDocument(mainWindow, opts.path)
   })
-  ipcMain.handle('promptWorkingDirectory', async (ev, opts) => {
-    return selectWorkingDirectory(mainWindow, opts.current)
+  ipcMain.handle('promptSelectDirectory', async (ev, opts) => {
+    return selectDirectory(mainWindow, opts.current, opts.title ?? 'Select Directory...')
   })
   ipcMain.on('setMenuItemCheckedState', (ev, opts) => {
     const mItem = mainMenu.getMenuItemById(opts.id)
@@ -179,6 +179,12 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
   })
   ipcMain.handle('clearGitKey', async (ev) => {
     return git.clearSigningKey()
+  })
+  ipcMain.handle('cloneRepository', async (ev, opts) => {
+    return git.repoClone({
+      dir: opts.target,
+      url: opts.url
+    })
   })
   ipcMain.on('writeToClipboard', (ev, opts) => {
     clipboard.writeText(opts.text)

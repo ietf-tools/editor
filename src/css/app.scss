@@ -51,3 +51,7 @@ body {
 .q-dialog__backdrop {
   backdrop-filter: blur(1px);
 }
+.q-inner-loading--dark {
+  backdrop-filter: blur(2px);
+  background-color: rgba(0,0,0,.5);
+}

@@ -5,10 +5,10 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss)
       q-icon(name='mdi-tray-arrow-down', left, size='sm')
       span Open from URL
     q-card-section.card-border
-      q-card-section
+      q-card-section.q-pa-sm
         q-input(
           autofocus
-          color='white'
+          color='light-blue-4'
           outlined
           label='Document URL'
           clearable

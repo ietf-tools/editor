@@ -9,8 +9,9 @@ contextBridge.exposeInMainWorld('ipcBridge', {
     ipcRenderer.on(channel, callback)
   },
 
-  promptWorkingDirectory: (current) => ipcRenderer.invoke('promptWorkingDirectory', { current }),
+  promptSelectDirectory: (current, title) => ipcRenderer.invoke('promptSelectDirectory', { current, title }),
   readDirectory: (dirPath) => ipcRenderer.invoke('readDirectory', { dirPath }),
   fetchGitConfig: () => ipcRenderer.invoke('fetchGitConfig'),
-  clearGitKey: () => ipcRenderer.invoke('clearGitKey')
+  clearGitKey: () => ipcRenderer.invoke('clearGitKey'),
+  cloneRepository: (url, target) => ipcRenderer.invoke('cloneRepository', { url, target })
 })

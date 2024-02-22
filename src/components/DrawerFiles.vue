@@ -90,7 +90,7 @@ function collapse () {
 }
 
 async function setWorkingDirectory () {
-  const wdPath = await window.ipcBridge.promptWorkingDirectory(editorStore.workingDirectory)
+  const wdPath = await window.ipcBridge.promptSelectDirectory(editorStore.workingDirectory, 'Select Working Directory...')
   if (wdPath) {
     editorStore.workingDirectory = wdPath
   }

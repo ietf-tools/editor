@@ -1,11 +1,11 @@
 <template lang="pug">
-q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss)
+q-dialog(ref='dialogRef' @hide='onDialogHide' persistent)
   q-card.mica(style='min-width: 800px;')
     q-card-section.flex.items-center.bg-light-blue-10
       q-icon(name='mdi-git', left, size='sm')
       span Clone Repository
     q-card-section.card-border
-      q-card-section
+      q-card-section.q-pa-sm
         .row
           .col-12
             .text-body2 Git Repository URL
@@ -13,7 +13,7 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss)
           .col-12
             q-input.q-mt-sm(
               autofocus
-              color='white'
+              color='light-blue-4'
               outlined
               dense
               placeholder='e.g. https://github.com/rfc-editor/draft-abc-def-ghi'
@@ -28,33 +28,58 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss)
             .text-body2 Local Target Directory
             .text-caption.text-grey-5 The destination folder will be created automatically if it doesn't exist.
           .col-12
-            q-input.q-mt-sm(
+            q-input.q-mt-sm.q-pr-none(
               autofocus
-              color='white'
+              color='light-blue-4'
               dense
               outlined
-              clearable
               v-model='state.target'
               tabindex='1'
               )
               template(#prepend)
                 q-icon(name='mdi-folder-wrench-outline')
+              template(#append)
+                q-separator.q-mx-sm(vertical inset)
+                q-btn(
+                  tabindex='2'
+                  flat
+                  label='Browse...'
+                  color='white'
+                  icon='mdi-folder-open'
+                  no-caps
+                  @click='browseTargetDir'
+                )
         .row.q-mt-lg
           .col
             .text-body2 Switch Working Directory
             .text-caption.text-grey-5 Automatically set the local target directory as the working directory.
           .col-auto
             q-toggle(
-              v-model='editorStore.formatOnType'
+              tabindex='3'
+              v-model='state.switchWorkDir'
+              checked-icon='mdi-check'
+              unchecked-icon='mdi-close'
             )
-      q-card-actions(align='right')
+      q-separator.q-my-md
+      q-card-actions
+        q-btn(
+          outline
+          label='Git Configuration'
+          icon='mdi-git'
+          color='grey-5'
+          padding='xs md'
+          @click='gitSettings'
+          tabindex='6'
+          no-caps
+          )
+        q-space
         q-btn(
           outline
           label='Cancel'
           color='grey-5'
           padding='xs md'
           @click='onDialogCancel'
-          tabindex='4'
+          tabindex='5'
           )
         q-btn(
           unelevated
@@ -62,15 +87,14 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss)
           color='primary'
           padding='xs md'
           @click='cloneRepo'
-          tabindex='3'
+          tabindex='4'
+          :disabled='state.isLoading'
           )
-
 </template>
 
 <script setup>
-import { useDialogPluginComponent, useQuasar } from 'quasar'
-import { reactive } from 'vue'
-// import { useDocsStore } from 'src/stores/docs'
+import { useDialogPluginComponent, useQuasar, QSpinnerTail } from 'quasar'
+import { defineAsyncComponent, reactive } from 'vue'
 import { useEditorStore } from 'src/stores/editor'
 
 const $q = useQuasar()
@@ -83,7 +107,6 @@ defineEmits([
 
 // STORES
 
-// const docsStore = useDocsStore()
 const editorStore = useEditorStore()
 
 // QUASAR
@@ -94,28 +117,51 @@ const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } = useDialogPluginC
 
 const state = reactive({
   url: '',
-  target: editorStore.workingDirectory
+  target: editorStore.workingDirectory,
+  switchWorkDir: true,
+  isLoading: false
 })
 
 // METHODS
 
 async function cloneRepo () {
+  let progressDialog
   try {
     if (!state.url) {
-      throw new Error('You must enter a valid URL!')
+      throw new Error('You must enter a valid HTTPS git repository URL!')
     }
     if (!state.target) {
       throw new Error('You must enter a valid local target directory!')
     }
 
-    $q.notify({
-      message: 'Not yet implemented!',
-      color: 'negative',
-      icon: 'mdi-alert'
+    progressDialog = $q.dialog({
+      message: 'Cloning repository...',
+      progress: {
+        spinner: QSpinnerTail,
+        color: 'white'
+      },
+      persistent: true,
+      ok: false
     })
 
-    onDialogOK()
+    await window.ipcBridge.cloneRepository(state.url, state.target)
+    state.isLoading = false
+
+    if (state.switchWorkDir) {
+      editorStore.workingDirectory = state.target
+      editorStore.drawerPane = 'DrawerFiles'
+    }
+    setTimeout(() => {
+      progressDialog.hide()
+      $q.notify({
+        message: 'Git repository cloned successfully.',
+        color: 'positive',
+        icon: 'mdi-check'
+      })
+      onDialogOK()
+    }, 400)
   } catch (err) {
+    progressDialog.hide()
     $q.notify({
       message: 'Failed to clone repository',
       caption: err.message,
@@ -123,6 +169,22 @@ async function cloneRepo () {
       icon: 'mdi-alert'
     })
   }
+}
+
+async function browseTargetDir () {
+  const wdPath = await window.ipcBridge.promptSelectDirectory(state.target, 'Select Target Directory...')
+  if (wdPath) {
+    state.target = wdPath
+  }
+}
+
+function gitSettings () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('components/PreferencesDialog.vue')),
+    componentProps: {
+      tab: 'git'
+    }
+  })
 }
 
 </script>
