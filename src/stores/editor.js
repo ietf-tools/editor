@@ -31,7 +31,8 @@ export const useEditorStore = defineStore('editor', {
   }),
   getters: {
     hasErrors: (state) => state.errors?.length > 0,
-    isDarkTheme: (state) => ['ietf-dark', 'hc-black'].includes(state.theme)
+    isDarkTheme: (state) => ['ietf-dark', 'hc-black'].includes(state.theme),
+    isGitRepo: (state) => state.workingDirFiles.some(f => f.name === '.git')
   },
   actions: {
     async fetchGitConfig () {
@@ -65,7 +66,6 @@ export const useEditorStore = defineStore('editor', {
     paths: [
       'cursorBlinking',
       'cursorStyle',
-      'drawerPane',
       'fontSize',
       'formatOnType',
       'previewPaneShown',

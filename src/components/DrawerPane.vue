@@ -8,7 +8,8 @@ q-drawer.bg-dark-4(
   q-scroll-area.fit(
     :horizontal-thumb-style='{ opacity: 0 }'
     )
-    component(:is='panes[editorStore.drawerPane]')
+    keep-alive
+      component(:is='panes[editorStore.drawerPane]')
 </template>
 
 <script setup>

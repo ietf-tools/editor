@@ -1,7 +1,7 @@
 import { Menu, app, shell } from 'electron'
 import os from 'node:os'
 
-import { openDocument } from './handlers'
+import { openDocument, selectDirectory } from './handlers'
 
 export function registerMenu (mainWindow) {
   const platform = process.platform || os.platform()
@@ -47,6 +47,18 @@ export function registerMenu (mainWindow) {
               }
             }
           ]
+        },
+        {
+          type: 'separator'
+        },
+        {
+          label: 'Set Working Directory...',
+          async click () {
+            const wdPath = await selectDirectory(mainWindow, null, 'Select Working Directory...')
+            if (wdPath) {
+              mainWindow.webContents.send('setWorkingDirectory', wdPath)
+            }
+          }
         },
         {
           type: 'separator'
