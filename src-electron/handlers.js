@@ -180,7 +180,16 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
   ipcMain.handle('clearGitKey', async (ev) => {
     return git.clearSigningKey()
   })
-  ipcMain.handle('cloneRepository', async (ev, opts) => {
+  ipcMain.handle('gitFetchOrigin', async (ev, opts) => {
+    return git.fetchOrigin({ dir: opts.dir })
+  })
+  ipcMain.handle('gitCommitsLog', async (ev, opts) => {
+    return git.commitsLog({ dir: opts.dir })
+  })
+  ipcMain.handle('gitStatusMatrix', async (ev, opts) => {
+    return git.statusMatrix({ dir: opts.dir })
+  })
+  ipcMain.handle('gitCloneRepository', async (ev, opts) => {
     return git.repoClone({
       dir: opts.target,
       url: opts.url

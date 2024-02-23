@@ -4,6 +4,7 @@ import fs from 'node:fs/promises'
 import http from 'isomorphic-git/http/node/index.js'
 import { spawn } from 'node:child_process'
 import { app, clipboard, safeStorage } from 'electron'
+import { createHash } from 'node:crypto'
 
 export default {
   conf: {
@@ -147,6 +148,55 @@ export default {
       dir,
       defaultBranch: branch
     })
+  },
+  /**
+   * Perform fetch on origin remote
+   */
+  async fetchOrigin ({ dir }) {
+    return git.fetch({
+      fs,
+      http,
+      dir
+    })
+  },
+  /**
+   * Fetch commits history
+   *
+   * @param {Object} param0 Options
+   * @returns {Promise<Array>} List of commits
+   */
+  async commitsLog ({ dir, depth = 500 }) {
+    return git.log({
+      fs,
+      dir,
+      depth
+    }).then(commits => commits.map(c => {
+      const normalizedEmail = c.commit?.author?.email?.toLowerCase() ?? 'unknown'
+      c.commit.author.emailHash = createHash('sha256').update(normalizedEmail).digest('hex')
+      return c
+    }))
+  },
+  /**
+   * Get the status of files in the working directory
+   * Reference: https://isomorphic-git.org/docs/en/statusMatrix
+   *
+   * @param {object} param0 Options
+   * @returns {Promise<Array>} Array of changes
+   */
+  async statusMatrix ({ dir }) {
+    return git.statusMatrix({
+      fs,
+      dir
+    }).then(changes => changes.filter(row => !(row[1] === row[2] && row[1] === row[3])).map(row => {
+      return {
+        path: row[0],
+        isStaged: row[2] === row[3] || (row[2] === 2 && row[3] === 3),
+        isUnstaged: row[2] !== row[3], // can be both staged with unstaged changes
+        isAdded: row[1] === 0 && row[2] === 2,
+        isModified: row[1] === 1 && row[2] === 2,
+        isDeleted: row[1] === 1 && row[2] === 0
+      }
+    }))
   },
   /**
    * Authentication event handler

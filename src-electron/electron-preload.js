@@ -13,5 +13,8 @@ contextBridge.exposeInMainWorld('ipcBridge', {
   readDirectory: (dirPath) => ipcRenderer.invoke('readDirectory', { dirPath }),
   fetchGitConfig: () => ipcRenderer.invoke('fetchGitConfig'),
   clearGitKey: () => ipcRenderer.invoke('clearGitKey'),
-  cloneRepository: (url, target) => ipcRenderer.invoke('cloneRepository', { url, target })
+  gitCloneRepository: (url, target) => ipcRenderer.invoke('gitCloneRepository', { url, target }),
+  gitFetchOrigin: (dir) => ipcRenderer.invoke('gitFetchOrigin', { dir }),
+  gitCommitsLog: (dir) => ipcRenderer.invoke('gitCommitsLog', { dir }),
+  gitStatusMatrix: (dir) => ipcRenderer.invoke('gitStatusMatrix', { dir })
 })

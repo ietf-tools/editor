@@ -144,7 +144,7 @@ async function cloneRepo () {
       ok: false
     })
 
-    await window.ipcBridge.cloneRepository(state.url, state.target)
+    await window.ipcBridge.gitCloneRepository(state.url, state.target)
     state.isLoading = false
 
     if (state.switchWorkDir) {
