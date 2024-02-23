@@ -20,6 +20,9 @@ export const useEditorStore = defineStore('editor', {
     gitPgpKeySet: false,
     gitFingerprint: '',
     gitSafeStorageEnabled: false,
+    gitCurrentBranch: '',
+    gitLocalBranches: [],
+    gitRemoteBranches: [],
     lastChangeTimestamp: null,
     line: 1,
     previewPaneShown: true,
@@ -60,6 +63,12 @@ export const useEditorStore = defineStore('editor', {
         username: this.gitUsername,
         password: this.gitPassword
       })
+    },
+    async fetchBranches () {
+      const branches = await window.ipcBridge.gitListBranches(this.workingDirectory)
+      this.gitCurrentBranch = branches.current ?? ''
+      this.gitLocalBranches = branches.local ?? []
+      this.gitRemoteBranches = branches.remote ?? []
     }
   },
   persist: {

@@ -160,6 +160,33 @@ export default {
     })
   },
   /**
+   * List branches
+   *
+   * @param {Object} param0 Options
+   * @returns {Promise<Array>} List of branches
+   */
+  async listBranches ({ dir }) {
+    const currentBranch = await git.currentBranch({
+      fs,
+      dir
+    })
+    const localBranches = await git.listBranches({
+      fs,
+      dir
+    })
+    const remoteBranches = await git.listBranches({
+      fs,
+      dir,
+      remote: 'origin'
+    })
+
+    return {
+      current: currentBranch,
+      local: localBranches,
+      remote: remoteBranches.filter(br => br !== 'HEAD')
+    }
+  },
+  /**
    * Fetch commits history
    *
    * @param {Object} param0 Options
@@ -197,6 +224,60 @@ export default {
         isDeleted: row[1] === 1 && row[2] === 0
       }
     }))
+  },
+  /**
+   * Stage Files
+   *
+   * @param {Object} param0 Options
+   * @returns {Promise<void>} Promise
+   */
+  async stageFiles ({ dir, files }) {
+    const toAdd = files.filter(f => !f.isDeleted).map(f => f.path)
+    const toRemove = files.filter(f => f.isDeleted).map(f => f.path)
+    if (toAdd.length > 0) {
+      await git.add({
+        fs,
+        dir,
+        filepath: toAdd
+      })
+    }
+    if (toRemove.length > 0) {
+      for (const fl of toRemove) {
+        await git.remove({
+          fs,
+          dir,
+          filepath: fl
+        })
+      }
+    }
+  },
+  /**
+   * Unstage Files
+   *
+   * @param {Object} param0 Options
+   * @returns {Promise<void>} Promise
+   */
+  async unstageFiles ({ dir, files }) {
+    const toUndelete = files.filter(f => f.isDeleted).map(f => f.path)
+    const toRemove = files.filter(f => !f.isDeleted).map(f => f.path)
+    if (toUndelete.length > 0) {
+      for (const fl of toUndelete) {
+        await git.resetIndex({
+          fs,
+          dir,
+          filepath: fl
+        })
+      }
+    }
+    if (toRemove.length > 0) {
+      for (const fl of toRemove) {
+        await git.remove({
+          fs,
+          dir,
+          filepath: fl
+        })
+      }
+    }
   },
   /**
    * Authentication event handler

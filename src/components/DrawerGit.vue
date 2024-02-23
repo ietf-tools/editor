@@ -3,8 +3,12 @@
   .flex.items-center
     .text-caption.text-light-blue-3
       strong Git
-    q-space
     template(v-if='editorStore.isGitRepo')
+      q-icon.q-ml-sm(name='mdi-information-outline' color='light-blue-3')
+        q-tooltip
+          span {{ editorStore.workingDirectory }}
+          .text-caption Test
+      q-space
       q-btn(
         flat
         size='sm'
@@ -60,7 +64,7 @@
   template(v-else)
     .drawer-git-branch.q-mt-sm
       q-icon.q-mr-sm(name='mdi-source-branch')
-      span Branch: #[strong main]
+      span.text-grey-4 Branch: #[strong.text-white {{ editorStore.gitCurrentBranch }}]
       q-space
       q-btn(
         flat
@@ -70,11 +74,85 @@
         text-color='grey-5'
         )
         q-tooltip Checkout Branch...
-    .drawer-git-changes.q-mt-sm
-      .flex.items-center.text-caption.text-grey-4
-        q-icon.q-mr-sm(name='mdi-list-status')
-        strong Changes
+    .drawer-git-staged.q-mt-sm(v-if='state.staged.length > 0')
+      .flex.items-center.text-caption.q-px-sm
+        q-icon.q-mr-sm(name='mdi-playlist-check')
+        span.text-grey-4 Staged
         q-space
+        q-btn(
+          flat
+          size='sm'
+          icon='mdi-minus'
+          padding='xs xs'
+          text-color='grey-5'
+          @click='unstageAllFiles'
+          )
+          q-tooltip Unstage All Changes
+      .q-pa-sm
+        q-input(
+          placeholder='Commit Message'
+          standout
+          dense
+          color='light-blue-3'
+        )
+        q-btn.full-width.q-mt-xs(
+          color='primary'
+          no-caps
+          size='sm'
+          unelevated
+          )
+          q-icon.q-mr-sm(name='mdi-check')
+          span.text-caption Commit
+      q-list(
+        dense
+        )
+        q-item(
+          v-for='cg of state.staged'
+          :key='cg.path'
+          clickable
+          style='padding-right: 8px'
+          )
+          q-item-section(side)
+            q-icon(v-if='cg.isAdded', name='mdi-plus-box-outline', size='xs', color='positive')
+            q-icon(v-else-if='cg.isModified', name='mdi-pencil-box-outline', size='xs', color='amber')
+            q-icon(v-else-if='cg.isDeleted', name='mdi-minus-box-outline', size='xs', color='red-5')
+          q-item-section
+            q-item-label.text-caption.text-word-break-all {{ cg.path }}
+          q-item-section.drawer-git-changes-hover(side)
+            .flex.items-center
+              q-btn(
+                flat
+                size='sm'
+                icon='mdi-minus'
+                padding='xs xs'
+                text-color='grey-5'
+                @click.stop.prevent='unstageFile(cg)'
+                )
+                q-tooltip Unstage Changes
+    .drawer-git-changes.q-mt-sm
+      .flex.items-center.text-caption.q-px-sm
+        q-icon.q-mr-sm(name='mdi-list-status')
+        span.text-grey-4 Changes
+        q-space
+        q-btn(
+          v-if='state.changes.length > 0'
+          flat
+          size='sm'
+          icon='mdi-arrow-u-left-top'
+          padding='xs xs'
+          text-color='grey-5'
+          )
+          q-tooltip Discard All Changes
+        q-btn(
+          v-if='state.changes.length > 0'
+          flat
+          size='sm'
+          icon='mdi-plus'
+          padding='xs xs'
+          text-color='grey-5'
+          @click='stageAllFiles'
+          )
+          q-tooltip Stage All Changes
         q-btn(
           flat
           size='sm'
@@ -95,6 +173,7 @@
           v-for='cg of state.changes'
           :key='cg.path'
           clickable
+          style='padding-right: 8px'
           )
           q-item-section(side)
             q-icon(v-if='cg.isAdded', name='mdi-plus-box-outline', size='xs', color='positive')
@@ -102,10 +181,29 @@
             q-icon(v-else-if='cg.isDeleted', name='mdi-minus-box-outline', size='xs', color='red-5')
           q-item-section
             q-item-label.text-caption.text-word-break-all {{ cg.path }}
+          q-item-section.drawer-git-changes-hover(side)
+            .flex.items-center
+              q-btn(
+                flat
+                size='sm'
+                icon='mdi-arrow-u-left-top'
+                padding='xs xs'
+                text-color='grey-5'
+                )
+                q-tooltip Discard Changes
+              q-btn(
+                flat
+                size='sm'
+                icon='mdi-plus'
+                padding='xs xs'
+                text-color='grey-5'
+                @click.stop.prevent='stageFile(cg)'
+                )
+                q-tooltip Stage Changes
     .drawer-git-history.q-mt-sm
-      .flex.items-center.text-caption.text-grey-4
+      .flex.items-center.text-caption.q-px-sm
         q-icon.q-mr-sm(name='mdi-list-box-outline')
-        strong History
+        span.text-grey-4 History
         q-space
         q-btn(
           flat
@@ -124,7 +222,7 @@
         separator
         padding
         )
-        q-item(
+        q-item.items-start(
           v-for='cm of state.history'
           :key='cm.oid'
           clickable
@@ -134,7 +232,7 @@
               color='primary'
               size='xs'
               square
-              style='box-shadow: 0 0 0 2px rgba(0,0,0,.5);'
+              style='box-shadow: 1px 1px 0 0 rgba(0,0,0,.5);'
               )
               img(:src='avatarUrl(cm.commit.author.emailHash)')
             q-tooltip #[strong {{ cm.commit.author.name }}] #[br] &lt;{{ cm.commit.author.email }}&gt;
@@ -142,6 +240,8 @@
             q-item-label.ellipsis-3-lines.text-word-break-all {{ cm.commit.message }}
             q-item-label(caption): em {{ humanizeDate(cm.commit.author.timestamp) }}
             q-item-label.text-blue-2(caption) {{ cm.commit.author.name }}
+      .text-center.text-caption.q-mt-sm(v-if='state.history.length > 499')
+        em.text-grey-5 History limited to 500 most recent commits.
 </template>
 
 <script setup>
@@ -149,6 +249,7 @@ import { defineAsyncComponent, onActivated, reactive } from 'vue'
 import { useQuasar } from 'quasar'
 import { useEditorStore } from 'src/stores/editor'
 import { DateTime } from 'luxon'
+import { cloneDeep } from 'lodash-es'
 
 const $q = useQuasar()
 
@@ -160,6 +261,7 @@ const state = reactive({
   fetchLoading: false,
   changesLoading: false,
   historyLoading: false,
+  staged: [],
   changes: [],
   history: []
 })
@@ -193,6 +295,7 @@ async function fetchRemote () {
   state.fetchLoading = true
   try {
     await window.ipcBridge.gitFetchOrigin(editorStore.workingDirectory)
+    editorStore.fetchBranches()
   } catch (err) {
     console.error(err)
     $q.notify({
@@ -208,7 +311,9 @@ async function fetchRemote () {
 async function refreshChanges () {
   state.changesLoading = true
   try {
-    state.changes = await window.ipcBridge.gitStatusMatrix(editorStore.workingDirectory)
+    const changes = await window.ipcBridge.gitStatusMatrix(editorStore.workingDirectory)
+    state.changes = changes.filter(c => c.isUnstaged)
+    state.staged = changes.filter(c => c.isStaged)
   } catch (err) {
     console.error(err)
     $q.notify({
@@ -237,6 +342,78 @@ async function refreshHistory () {
   state.historyLoading = false
 }
 
+async function stageFile (fl) {
+  if (state.changesLoading) { return }
+  state.changesLoading = true
+  try {
+    await window.ipcBridge.gitStageFiles(editorStore.workingDirectory, [cloneDeep(fl)])
+    await refreshChanges()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: `Failed to stage file ${fl.path}`,
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.changesLoading = false
+}
+
+async function stageAllFiles () {
+  if (state.changesLoading) { return }
+  state.changesLoading = true
+  try {
+    await window.ipcBridge.gitStageFiles(editorStore.workingDirectory, cloneDeep(state.changes))
+    await refreshChanges()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to stage all files',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.changesLoading = false
+}
+
+async function unstageFile (fl) {
+  if (state.changesLoading) { return }
+  state.changesLoading = true
+  try {
+    await window.ipcBridge.gitUnstageFiles(editorStore.workingDirectory, [cloneDeep(fl)])
+    await refreshChanges()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: `Failed to unstage file ${fl.path}`,
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.changesLoading = false
+}
+
+async function unstageAllFiles () {
+  if (state.changesLoading) { return }
+  state.changesLoading = true
+  try {
+    await window.ipcBridge.gitUnstageFiles(editorStore.workingDirectory, cloneDeep(state.staged))
+    await refreshChanges()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to unstage all files',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.changesLoading = false
+}
+
 // MOUNTED
 
 onActivated(async () => {
@@ -259,15 +436,23 @@ onActivated(async () => {
     border-radius: 4px;
     padding: 5px 8px;
   }
-  &-changes {
+  &-changes, &-staged {
     background-color: rgba(255,255,255,.1);
     border-radius: 4px;
-    padding: 5px 8px;
+    padding: 5px 0;
+
+    .q-item .drawer-git-changes-hover {
+      display: none;
+    }
+
+    .q-item:hover .drawer-git-changes-hover {
+      display: block;
+    }
   }
   &-history {
     background-color: rgba(255,255,255,.1);
     border-radius: 4px;
-    padding: 5px 8px;
+    padding: 5px 0;
   }
 }
 </style>

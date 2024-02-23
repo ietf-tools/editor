@@ -183,11 +183,20 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
   ipcMain.handle('gitFetchOrigin', async (ev, opts) => {
     return git.fetchOrigin({ dir: opts.dir })
   })
+  ipcMain.handle('gitListBranches', async (ev, opts) => {
+    return git.listBranches({ dir: opts.dir })
+  })
   ipcMain.handle('gitCommitsLog', async (ev, opts) => {
     return git.commitsLog({ dir: opts.dir })
   })
   ipcMain.handle('gitStatusMatrix', async (ev, opts) => {
     return git.statusMatrix({ dir: opts.dir })
+  })
+  ipcMain.handle('gitStageFiles', async (ev, opts) => {
+    return git.stageFiles({ dir: opts.dir, files: opts.files })
+  })
+  ipcMain.handle('gitUnstageFiles', async (ev, opts) => {
+    return git.unstageFiles({ dir: opts.dir, files: opts.files })
   })
   ipcMain.handle('gitCloneRepository', async (ev, opts) => {
     return git.repoClone({
