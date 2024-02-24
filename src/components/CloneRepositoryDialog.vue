@@ -16,7 +16,7 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' persistent)
               color='light-blue-4'
               outlined
               dense
-              placeholder='e.g. https://github.com/rfc-editor/draft-abc-def-ghi'
+              placeholder='e.g. https://github.com/rfc-editor/draft-abc-def-ghi.git'
               clearable
               v-model='state.url'
               tabindex='0'
@@ -24,24 +24,52 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' persistent)
               template(#prepend)
                 q-icon(name='mdi-source-branch')
         .row.q-mt-lg
+          .col
+            .text-body2 Git Repository is a Fork
+            .text-caption.text-grey-5 Indicate whether the repository URL above is a fork of an upstream repository.
+          .col-auto
+            q-toggle(
+              tabindex='1'
+              v-model='state.isFork'
+              checked-icon='mdi-check'
+              unchecked-icon='mdi-close'
+            )
+        .row.q-mt-lg(v-if='state.isFork')
+          .col-12
+            .text-body2 Upstream Git Repository URL
+            .text-caption.text-grey-5 The HTTPS Web URL of the upstream repository.
+          .col-12
+            q-input.q-mt-sm(
+              autofocus
+              color='light-blue-4'
+              outlined
+              dense
+              placeholder='e.g. https://github.com/rfc-editor/draft-abc-def-ghi.git'
+              clearable
+              v-model='state.upstreamUrl'
+              tabindex='2'
+              )
+              template(#prepend)
+                q-icon(name='mdi-source-branch')
+        q-separator.q-my-md
+        .row.q-mt-lg
           .col-12
             .text-body2 Local Target Directory
             .text-caption.text-grey-5 The destination folder will be created automatically if it doesn't exist.
           .col-12
             q-input.q-mt-sm.q-pr-none(
-              autofocus
               color='light-blue-4'
               dense
               outlined
               v-model='state.target'
-              tabindex='1'
+              tabindex='3'
               )
               template(#prepend)
                 q-icon(name='mdi-folder-wrench-outline')
               template(#append)
                 q-separator.q-mx-sm(vertical inset)
                 q-btn(
-                  tabindex='2'
+                  tabindex='3'
                   flat
                   label='Browse...'
                   color='white'
@@ -55,7 +83,7 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' persistent)
             .text-caption.text-grey-5 Automatically set the local target directory as the working directory.
           .col-auto
             q-toggle(
-              tabindex='3'
+              tabindex='4'
               v-model='state.switchWorkDir'
               checked-icon='mdi-check'
               unchecked-icon='mdi-close'
@@ -69,7 +97,7 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' persistent)
           color='grey-5'
           padding='xs md'
           @click='gitSettings'
-          tabindex='6'
+          tabindex='7'
           no-caps
           )
         q-space
@@ -79,7 +107,7 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' persistent)
           color='grey-5'
           padding='xs md'
           @click='onDialogCancel'
-          tabindex='5'
+          tabindex='6'
           )
         q-btn(
           unelevated
@@ -87,7 +115,7 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' persistent)
           color='primary'
           padding='xs md'
           @click='cloneRepo'
-          tabindex='4'
+          tabindex='5'
           :disabled='state.isLoading'
           )
 </template>
@@ -117,6 +145,8 @@ const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } = useDialogPluginC
 
 const state = reactive({
   url: '',
+  isFork: false,
+  upstreamUrl: '',
   target: editorStore.workingDirectory,
   switchWorkDir: true,
   isLoading: false
@@ -144,7 +174,7 @@ async function cloneRepo () {
       ok: false
     })
 
-    await window.ipcBridge.gitCloneRepository(state.url, state.target)
+    await window.ipcBridge.gitCloneRepository(state.url, state.target, state.isFork ? state.upstreamUrl : null)
     state.isLoading = false
 
     if (state.switchWorkDir) {

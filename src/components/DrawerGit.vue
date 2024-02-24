@@ -16,7 +16,7 @@
         padding='xs xs'
         text-color='light-blue-3'
         :loading='state.fetchLoading'
-        @click='fetchRemote'
+        @click='performFetch'
         )
         q-tooltip Fetch
       q-btn(
@@ -62,6 +62,19 @@
       unelevated
     )
   template(v-else)
+    .drawer-git-remote.q-mt-sm
+      q-icon.q-mr-sm(name='mdi-satellite-uplink')
+      span.text-grey-4 Remote: #[strong.text-white {{ editorStore.gitCurrentRemote }}]
+      q-space
+      q-btn(
+        flat
+        size='sm'
+        icon='mdi-menu'
+        padding='xs xs'
+        text-color='grey-5'
+        @click='manageRemotes'
+        )
+        q-tooltip Manage Remotes
     .drawer-git-branch.q-mt-sm
       q-icon.q-mr-sm(name='mdi-source-branch')
       span.text-grey-4 Branch: #[strong.text-white {{ editorStore.gitCurrentBranch }}]
@@ -291,10 +304,11 @@ function cloneRepo () {
   })
 }
 
-async function fetchRemote () {
+async function performFetch () {
   state.fetchLoading = true
   try {
-    await window.ipcBridge.gitFetchOrigin(editorStore.workingDirectory)
+    await window.ipcBridge.gitPerformFetch(editorStore.workingDirectory, editorStore.gitCurrentRemote)
+    await editorStore.fetchRemotes()
     editorStore.fetchBranches()
   } catch (err) {
     console.error(err)
@@ -306,6 +320,12 @@ async function fetchRemote () {
     })
   }
   state.fetchLoading = false
+}
+
+function manageRemotes () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('components/ManageRemotesDialog.vue'))
+  })
 }
 
 async function refreshChanges () {
@@ -418,7 +438,8 @@ async function unstageAllFiles () {
 
 onActivated(async () => {
   if (editorStore.isGitRepo) {
-    await fetchRemote()
+    await performFetch()
+    await editorStore.fetchRemotes()
     refreshChanges()
     refreshHistory()
   }
@@ -428,7 +449,7 @@ onActivated(async () => {
 
 <style lang="scss">
 .drawer-git {
-  &-branch {
+  &-remote, &-branch {
     display: flex;
     align-items: center;
     font-size: 12px;

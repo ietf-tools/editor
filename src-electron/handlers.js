@@ -180,11 +180,20 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
   ipcMain.handle('clearGitKey', async (ev) => {
     return git.clearSigningKey()
   })
-  ipcMain.handle('gitFetchOrigin', async (ev, opts) => {
-    return git.fetchOrigin({ dir: opts.dir })
+  ipcMain.handle('gitPerformFetch', async (ev, opts) => {
+    return git.performFetch({ dir: opts.dir, remote: opts.remote })
+  })
+  ipcMain.handle('gitListRemotes', async (ev, opts) => {
+    return git.listRemotes({ dir: opts.dir })
+  })
+  ipcMain.handle('gitAddRemote', async (ev, opts) => {
+    return git.addRemote({ dir: opts.dir, remote: opts.remote, url: opts.url })
+  })
+  ipcMain.handle('gitDeleteRemote', async (ev, opts) => {
+    return git.deleteRemote({ dir: opts.dir, remote: opts.remote })
   })
   ipcMain.handle('gitListBranches', async (ev, opts) => {
-    return git.listBranches({ dir: opts.dir })
+    return git.listBranches({ dir: opts.dir, remote: opts.remote })
   })
   ipcMain.handle('gitCommitsLog', async (ev, opts) => {
     return git.commitsLog({ dir: opts.dir })
@@ -201,7 +210,8 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
   ipcMain.handle('gitCloneRepository', async (ev, opts) => {
     return git.repoClone({
       dir: opts.target,
-      url: opts.url
+      url: opts.url,
+      upstreamUrl: opts.upstreamUrl
     })
   })
   ipcMain.on('writeToClipboard', (ev, opts) => {

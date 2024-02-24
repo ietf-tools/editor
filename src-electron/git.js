@@ -18,7 +18,8 @@ export default {
     privateKey: '',
     revocationCertificate: '',
     fingerprint: '',
-    safeStorageEnabled: false
+    safeStorageEnabled: false,
+    currentRemote: 'origin'
   },
   /**
    * Initialize Git Integration
@@ -63,7 +64,8 @@ export default {
         name: this.conf.name,
         email: this.conf.email,
         signCommits: this.conf.signCommits,
-        useCredMan: this.conf.useCredMan
+        useCredMan: this.conf.useCredMan,
+        currentRemote: this.conf.currentRemote
       }, null, 2), 'utf8')
     } catch (err) {
       console.log(`Failed to write git config to disk. [${err.message}]`)
@@ -126,15 +128,25 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>} Promise
    */
-  async repoClone ({ dir, url }) {
+  async repoClone ({ dir, url, upstreamUrl }) {
     await fs.mkdir(dir, { recursive: true })
-    return git.clone({
+    await git.clone({
       fs,
       http,
       dir,
       url,
+      remote: 'origin',
       onAuth: this.onAuth
     })
+    this.conf.currentRemote = 'origin'
+    if (upstreamUrl) {
+      await git.addRemote({
+        fs,
+        dir,
+        remote: 'upstream',
+        url: upstreamUrl
+      })
+    }
   },
   /**
    * Initialize a git repository
@@ -150,13 +162,53 @@ export default {
     })
   },
   /**
-   * Perform fetch on origin remote
+   * Perform fetch on remote
    */
-  async fetchOrigin ({ dir }) {
+  async performFetch ({ dir, remote }) {
     return git.fetch({
       fs,
       http,
+      dir,
+      remote
+    })
+  },
+  /**
+   * List remotes
+   *
+   * @param {Object} param0 Options
+   * @returns {Promise<Array>} List of remotes
+   */
+  async listRemotes ({ dir }) {
+    return git.listRemotes({
+      fs,
       dir
+    })
+  },
+  /**
+   * Add a remote
+   *
+   * @param {Object} param0 Options
+   * @returns {Promise<void>}
+   */
+  async addRemote ({ dir, remote, url }) {
+    return git.addRemote({
+      fs,
+      dir,
+      remote,
+      url
+    })
+  },
+  /**
+   * Delete a remote
+   *
+   * @param {Object} param0 Options
+   * @returns {Promise<void>}
+   */
+  async deleteRemote ({ dir, remote }) {
+    return git.deleteRemote({
+      fs,
+      dir,
+      remote
     })
   },
   /**
@@ -165,7 +217,7 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<Array>} List of branches
    */
-  async listBranches ({ dir }) {
+  async listBranches ({ dir, remote }) {
     const currentBranch = await git.currentBranch({
       fs,
       dir
@@ -177,7 +229,7 @@ export default {
     const remoteBranches = await git.listBranches({
       fs,
       dir,
-      remote: 'origin'
+      remote
     })
 
     return {
