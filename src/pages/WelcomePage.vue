@@ -34,9 +34,7 @@ q-page.welcome.bg-dark-5
     .welcome-copyright.q-mt-xl
       .text-caption: strong DraftForge {{ appVersion }}
       .text-caption Brought to you with #[q-icon(name='mdi-heart')] by the IETF Tools team!
-      .text-caption.q-mt-md Licensed under BSD 3-Clause
-      .text-caption Copyright © 2023-{{ currentYear }}, The IETF Trust
-      .text-caption All rights reserved.
+      .text-caption: a(@click.stop.prevent='viewLicense', href='#') View license
 </template>
 
 <script setup>
@@ -48,7 +46,6 @@ import { useDocsStore } from 'src/stores/docs'
 const $q = useQuasar()
 
 const appVersion = process.env.APP_VERSION ?? 'Unknown'
-const currentYear = new Date().getFullYear()
 
 // STORES
 
@@ -82,6 +79,10 @@ function openRemoteDocument () {
   $q.dialog({
     component: defineAsyncComponent(() => import('components/OpenFromUrlDialog.vue'))
   })
+}
+
+function viewLicense () {
+  window.ipcBridge.emit('launchBrowser', { url: 'https://github.com/ietf-tools/editor/blob/main/LICENSE' })
 }
 
 // MOUNTED
