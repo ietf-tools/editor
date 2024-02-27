@@ -110,7 +110,8 @@ function processFiles (files) {
       icon: 'mdi-folder',
       iconColor: 'yellow-8',
       lazy: true,
-      selectable: false
+      selectable: false,
+      disabled: f.name === '.git'
     }),
     ...(!f.isDirectory && {
       ...getFromFileExt(f),

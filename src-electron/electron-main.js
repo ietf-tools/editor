@@ -1,10 +1,11 @@
 import { app, BrowserWindow, Menu, screen } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { registerMenu } from './menu'
-import { loadDocument, registerCallbacks } from './handlers'
-import { mergeWithHeaders } from './helpers'
-import git from './git'
+import { registerMenu } from './menu.js'
+import { loadDocument, registerCallbacks } from './handlers.js'
+import { mergeWithHeaders } from './helpers.js'
+import git from './git.js'
+import lsp from './lsp.js'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
@@ -88,7 +89,7 @@ function createWindow () {
 
   git.init()
 
-  registerCallbacks(mainWindow, mainMenu, git)
+  registerCallbacks(mainWindow, mainMenu, git, lsp)
 }
 
 if (!instanceLock) {
@@ -102,8 +103,9 @@ if (!instanceLock) {
     loadDocument(mainWindow, filePath)
   })
 
-  app.on('window-all-closed', () => {
+  app.on('window-all-closed', async () => {
     // if (platform !== 'darwin') {
+    await lsp.shutdown()
     app.quit()
     // }
   })

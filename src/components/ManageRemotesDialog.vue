@@ -28,97 +28,97 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
         padding='xs'
         @click='onDialogCancel'
         )
-    .remotes-new(v-if='state.newRemoteFormShown')
-      q-form.q-gutter-md.q-pa-lg
-        .row
-          .col-5
-            .text-body2 Name
-            .text-caption.text-grey-5 The name of the new remote
-          .col-7
-            q-input(
-              autofocus
-              v-model.number='state.newRemoteName'
-              placeholder='e.g. upstream'
-              outlined
-              dense
-              clearable
-              color='light-blue-4'
-              tabindex='1'
-            )
-        .row
-          .col-5
-            .text-body2 Repository URL
-            .text-caption.text-grey-5 The HTTPS Web URL of the repository
-          .col-7
-            q-input(
-              v-model.number='state.newRemoteUrl'
-              placeholder='e.g. https://github.com/rfc-editor/draft-abc-def-ghi.git'
-              outlined
-              dense
-              clearable
-              color='light-blue-4'
-              tabindex='2'
-            )
-        .row
-          .col-12.text-right
-            q-btn.q-mr-md(
-              outline
-              label='Cancel'
-              color='grey-5'
-              padding='xs md'
-              @click='state.newRemoteFormShown = false'
-              tabindex='4'
+    .card-border
+      .remotes-new(v-if='state.newRemoteFormShown')
+        q-form.q-gutter-md.q-pa-lg
+          .row
+            .col-5
+              .text-body2 Name
+              .text-caption.text-grey-5 The name of the new remote
+            .col-7
+              q-input(
+                autofocus
+                v-model.number='state.newRemoteName'
+                placeholder='e.g. upstream'
+                outlined
+                dense
+                clearable
+                color='light-blue-4'
+                tabindex='1'
               )
-            q-btn(
-              unelevated
-              label='Add Remote'
-              color='primary'
-              padding='xs md'
-              @click='newRemote'
-              tabindex='3'
-              :loading='state.isLoading'
+          .row
+            .col-5
+              .text-body2 Repository URL
+              .text-caption.text-grey-5 The HTTPS Web URL of the repository
+            .col-7
+              q-input(
+                v-model.number='state.newRemoteUrl'
+                placeholder='e.g. https://github.com/rfc-editor/draft-abc-def-ghi.git'
+                outlined
+                dense
+                clearable
+                color='light-blue-4'
+                tabindex='2'
               )
-    .remotes-main
-      q-list(
-        padding
-        separator
-      )
-        q-item(
-          v-for='remote of editorStore.gitRemotes'
-          :key='remote.remote'
-          )
-          q-item-section(side)
-            q-chip(
-              square
-              :color='editorStore.gitCurrentRemote === remote.remote ? `light-green-8` : `primary`'
-              text-color='white'
-              :label='remote.remote'
-            )
-          q-item-section
-            q-item-label {{ remote.url }}
-            q-item-label.text-light-green-4(v-if='editorStore.gitCurrentRemote === remote.remote', caption): em Active Remote
-          q-item-section(
-            v-if='editorStore.gitCurrentRemote !== remote.remote'
-            side
-            )
-            .flex.items-center
-              q-btn.q-mr-sm(
+          .row
+            .col-12.text-right
+              q-btn.q-mr-md(
                 outline
-                color='light-green-5'
-                padding='xs sm'
-                label='Set Active'
-                no-caps
-                @click='setActive(remote.remote)'
-              )
+                label='Cancel'
+                color='grey-5'
+                padding='xs md'
+                @click='state.newRemoteFormShown = false'
+                tabindex='4'
+                )
               q-btn(
-                outline
-                color='red-5'
-                padding='xs sm'
-                label='Delete'
-                no-caps
-                @click='deleteRemote(remote.remote)'
+                unelevated
+                label='Add Remote'
+                color='primary'
+                padding='xs md'
+                @click='newRemote'
+                tabindex='3'
+                :loading='state.isLoading'
+                )
+      .remotes-main
+        q-list(
+          padding
+          separator
+        )
+          q-item(
+            v-for='remote of editorStore.gitRemotes'
+            :key='remote.remote'
+            )
+            q-item-section(side)
+              q-chip(
+                square
+                :color='editorStore.gitCurrentRemote === remote.remote ? `light-green-8` : `primary`'
+                text-color='white'
+                :label='remote.remote'
               )
-
+            q-item-section
+              q-item-label {{ remote.url }}
+              q-item-label.text-light-green-4(v-if='editorStore.gitCurrentRemote === remote.remote', caption): em Active Remote
+            q-item-section(
+              v-if='editorStore.gitCurrentRemote !== remote.remote'
+              side
+              )
+              .flex.items-center
+                q-btn.q-mr-sm(
+                  outline
+                  color='light-green-5'
+                  padding='xs sm'
+                  label='Set Active'
+                  no-caps
+                  @click='setActive(remote.remote)'
+                )
+                q-btn(
+                  outline
+                  color='red-5'
+                  padding='xs sm'
+                  label='Delete'
+                  no-caps
+                  @click='deleteRemote(remote.remote)'
+                )
 </template>
 
 <script setup>
@@ -251,9 +251,12 @@ onMounted(async () => {
 <style lang="scss">
 .remotes {
   min-width: 1000px;
-  min-height: 300px;
   display: flex;
   flex-direction: column;
+
+  .card-border {
+    min-height: 200px;
+  }
 
   &-new {
     background-color: rgba(255,255,255,.05);

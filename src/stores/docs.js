@@ -1,25 +1,12 @@
 import { defineStore } from 'pinia'
 import { find, last } from 'lodash-es'
 import { DateTime } from 'luxon'
+import { URI } from 'vscode-uri'
 
 export const useDocsStore = defineStore('docs', {
   state: () => ({
-    opened: [
-      // Default document
-      {
-        id: '40a87500-97ae-4889-945d-8b54ea5e7d29',
-        type: 'xml',
-        path: '',
-        fileName: 'untitled-draft.xml',
-        data: '',
-        activeData: '',
-        isModified: false,
-        lastModifiedAt: DateTime.utc(),
-        isDefault: true,
-        language: 'xmlrfc'
-      }
-    ],
-    active: '40a87500-97ae-4889-945d-8b54ea5e7d29'
+    opened: [],
+    active: null
   }),
   getters: {
     activeDocument (state) {
@@ -49,13 +36,9 @@ export const useDocsStore = defineStore('docs', {
           break
         }
       }
-      // Close default doc if unmodified
-      if (this.opened.length === 1 && this.activeDocument.isDefault && this.activeDocument.activeData === '') {
-        this.opened = []
-      }
       // Create new document
       const docId = crypto.randomUUID()
-      this.opened.push({
+      const newDoc = {
         id: docId,
         type: doc.type ?? 'xml',
         path: doc.path ?? '',
@@ -64,9 +47,24 @@ export const useDocsStore = defineStore('docs', {
         activeData: doc.data ?? '',
         isModified: false,
         lastModifiedAt: DateTime.utc(),
-        isDefault: doc.isDefault ?? false,
-        language: lang
+        language: lang,
+        uri: URI.file(doc.path ?? `/${docId}.${doc.type ?? 'xml'}`).toString(),
+        version: 1
+      }
+      this.opened.push(newDoc)
+
+      window.ipcBridge.emit('lspSendNotification', {
+        method: 'textDocument/didOpen',
+        params: {
+          textDocument: {
+            uri: newDoc.uri,
+            languageId: newDoc.type,
+            version: 1,
+            text: newDoc.activeData
+          }
+        }
       })
+
       this.active = docId
     },
     /**
@@ -95,7 +93,7 @@ export const useDocsStore = defineStore('docs', {
     async closeDocument (docId) {
       this.opened = this.opened.filter(d => d.id !== docId)
       if (this.opened.length < 1) {
-        this.loadDocument({ isDefault: true })
+        this.active = null
       } else if (this.active === docId) {
         this.active = this.opened[0].id
       }

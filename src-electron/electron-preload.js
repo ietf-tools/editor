@@ -24,5 +24,6 @@ contextBridge.exposeInMainWorld('ipcBridge', {
   gitCommitsLog: (dir) => ipcRenderer.invoke('gitCommitsLog', { dir }),
   gitStatusMatrix: (dir) => ipcRenderer.invoke('gitStatusMatrix', { dir }),
   gitStageFiles: (dir, files) => ipcRenderer.invoke('gitStageFiles', { dir, files }),
-  gitUnstageFiles: (dir, files) => ipcRenderer.invoke('gitUnstageFiles', { dir, files })
+  gitUnstageFiles: (dir, files) => ipcRenderer.invoke('gitUnstageFiles', { dir, files }),
+  lspSendRequest: (method, params) => ipcRenderer.invoke('lspSendRequest', { method, params })
 })

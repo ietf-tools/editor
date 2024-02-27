@@ -12,7 +12,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
         padding='xs'
         @click='onDialogCancel'
         )
-    q-card-section
+    q-card-section.card-border
       .text-caption Select the type of Internet Draft to create:
       q-list.q-mt-sm(bordered separator)
         q-item(

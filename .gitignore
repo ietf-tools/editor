@@ -27,3 +27,6 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
+
+# Lemminx
+lemminx-*

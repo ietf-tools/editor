@@ -13,6 +13,7 @@ q-page.row.items-stretch
 
 <script setup>
 import { onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import * as monaco from 'monaco-editor'
 import { debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
@@ -27,6 +28,17 @@ import { useDocsStore } from 'src/stores/docs'
 const appStore = useAppStore()
 const docsStore = useDocsStore()
 const editorStore = useEditorStore()
+
+// ROUTER
+
+const router = useRouter()
+
+watch(() => docsStore.active, (newValue) => {
+  if (!newValue) {
+    router.replace('/')
+    editorStore.drawerPane = 'DrawerFiles'
+  }
+})
 
 // MONACO
 
@@ -109,6 +121,17 @@ monaco.languages.setLanguageConfiguration('markdown', {
   wordPattern: /([*_]{1,2}|~~|`+)?[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+(_+[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+)*\1/gu
 })
 
+const updateContentStore = debounce(ev => {
+  docsStore.activeDocument.activeData = editor.getValue()
+  docsStore.activeDocument.version = ev.versionId
+  docsStore.activeDocument.isModified = docsStore.activeDocument.activeData !== docsStore.activeDocument.data
+  docsStore.activeDocument.lastModifiedAt = DateTime.utc()
+  // editorStore.$patch({
+  //   lastChangeTimestamp: DateTime.utc(),
+  //   content: editor.getValue()
+  // })
+}, 500)
+
 onMounted(async () => {
   setTimeout(() => {
     // -> Define Monaco Theme
@@ -151,15 +174,34 @@ onMounted(async () => {
     })
 
     // -> Handle content change
-    editor.onDidChangeModelContent(debounce(ev => {
-      docsStore.activeDocument.activeData = editor.getValue()
-      docsStore.activeDocument.isModified = docsStore.activeDocument.activeData !== docsStore.activeDocument.data
-      docsStore.activeDocument.lastModifiedAt = DateTime.utc()
-      // editorStore.$patch({
-      //   lastChangeTimestamp: DateTime.utc(),
-      //   content: editor.getValue()
-      // })
-    }, 500))
+    editor.onDidChangeModelContent((ev) => {
+      console.info(ev)
+      updateContentStore(ev)
+      window.ipcBridge.emit('lspSendNotification', {
+        method: 'textDocument/didChange',
+        params: {
+          textDocument: {
+            uri: `${docsStore.activeDocument.uri}`, // interpolation required for correct var cloning
+            version: 1
+          },
+          contentChanges: ev.changes.map(chg => ({
+            range: {
+              start: {
+                line: chg.range.startLineNumber + 1,
+                character: chg.range.startColumn + 1
+              },
+              end: {
+                line: chg.range.endLineNumber + 1,
+                character: chg.range.endColumn + 1
+              }
+            },
+            rangeLength: chg.rangeLength,
+            text: chg.text
+            // text: editor.getValue()
+          }))
+        }
+      })
+    })
 
     // -> Handle cursor movement
     editor.onDidChangeCursorPosition(ev => {
@@ -207,18 +249,16 @@ onMounted(async () => {
 
     // -> Post init
     editor.focus()
-
-    document.getElementById('app-loading').remove()
   }, 500)
 
   // WATCHERS
 
   watch(() => docsStore.active, (newValue) => {
     if (newValue && editor) {
-      editor.getModel().setValue(docsStore.activeDocument.activeData)
-      if (editor.getModel().getLanguageId() !== docsStore.activeDocument.language) {
-        monaco.editor.setModelLanguage(editor.getModel(), docsStore.activeDocument.language)
-      }
+      editor.setModel(monaco.editor.createModel(
+        docsStore.activeDocument.activeData,
+        docsStore.activeDocument.language
+      ))
     }
   })
 
@@ -444,6 +484,39 @@ onMounted(async () => {
 })
 EVENT_BUS.on('editorCommand', cmd => {
   editor.trigger('drawer', cmd)
+})
+EVENT_BUS.on('lspCommand', async cmd => {
+  switch (cmd) {
+    case 'formatting': {
+      try {
+        const resp = await window.ipcBridge.lspSendRequest('textDocument/formatting', {
+          textDocument: {
+            uri: `${docsStore.activeDocument.uri}` // interpolation required for correct var cloning
+          },
+          options: {
+            tabSize: editorStore.tabSize ?? 2,
+            insertSpaces: true,
+            trimTrailingWhitespace: true,
+            insertFinalNewline: true,
+            trimFinalNewlines: true
+          }
+        })
+        editor.getModel().pushEditOperations([], resp.map(op => ({
+          range: {
+            endColumn: op.range.end.character + 1,
+            endLineNumber: op.range.end.line + 1,
+            startColumn: op.range.start.character + 1,
+            startLineNumber: op.range.start.line + 1
+          },
+          text: op.newText
+        })), () => null)
+        editor.getModel().pushStackElement()
+      } catch (err) {
+        console.warn(err)
+      }
+      break
+    }
+  }
 })
 
 async function validateContent () {

@@ -3,6 +3,11 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { isNil, orderBy } from 'lodash-es'
 
+/**
+ * Show the Open Dialog
+ *
+ * @param {Object} mainWindow MainWindow instance
+ */
 export async function openDocument (mainWindow) {
   const files = await dialog.showOpenDialog(mainWindow, {
     title: 'Open RFC / Internet Draft...',
@@ -16,11 +21,17 @@ export async function openDocument (mainWindow) {
   })
   if (!files.canceled) {
     for (const fl of files.filePaths) {
-      await loadDocument(fl)
+      await loadDocument(mainWindow, fl)
     }
   }
 }
 
+/**
+ * Load a document from the file system
+ *
+ * @param {Object} mainWindow MainWindow instance
+ * @param {*} filePath Path of the document to load
+ */
 export async function loadDocument (mainWindow, filePath) {
   const fileContents = await fs.readFile(filePath, 'utf8')
   const pathInfo = path.parse(filePath)
@@ -33,6 +44,13 @@ export async function loadDocument (mainWindow, filePath) {
   app.addRecentDocument(filePath)
 }
 
+/**
+ * Save a document to the file system
+ *
+ * @param {Object} mainWindow MainWindow instance
+ * @param {string} filePath Path where to save the document
+ * @param {string} contents Contents of the file
+ */
 export async function saveDocument (mainWindow, filePath, contents) {
   try {
     await fs.writeFile(filePath, contents, 'utf8')
@@ -52,6 +70,13 @@ export async function saveDocument (mainWindow, filePath, contents) {
   }
 }
 
+/**
+ * Save a document as a new file (Save As)
+ *
+ * @param {Object} mainWindow MainWindow instance
+ * @param {string} type File Type
+ * @param {string} defaultFileName Default filename
+ */
 export async function saveDocumentAs (mainWindow, type, defaultFileName) {
   const filters = []
   switch (type) {
@@ -88,6 +113,14 @@ export async function saveDocumentAs (mainWindow, type, defaultFileName) {
   }
 }
 
+/**
+ * Show the Select Directory dialog
+ *
+ * @param {Object} mainWindow MainWindow instance
+ * @param {string} [current] Initial path
+ * @param {string} title Dialog title
+ * @returns {Promise<string>} Selected directory path
+ */
 export async function selectDirectory (mainWindow, current, title) {
   const setWdOpts = await dialog.showOpenDialog(mainWindow, {
     title,
@@ -101,6 +134,12 @@ export async function selectDirectory (mainWindow, current, title) {
   }
 }
 
+/**
+ * List all files / directories in a directory
+ *
+ * @param {string} dirPath Directory path
+ * @returns {Promise<Array>} List of files / directories
+ */
 export async function readDirectory (dirPath) {
   const dirItems = []
   const files = await fs.readdir(dirPath, { withFileTypes: true })
@@ -115,7 +154,21 @@ export async function readDirectory (dirPath) {
   return orderBy(dirItems, ['isDirectory', 'name'], ['desc', 'asc'])
 }
 
-export function registerCallbacks (mainWindow, mainMenu, git) {
+/**
+ * Register callback handlers
+ *
+ * @param {Object} mainWindow MainWindow instance
+ * @param {Object} mainMenu MainMenu instance
+ * @param {Object} git Git instance
+ * @param {Object} lsp LSP instance
+ */
+export function registerCallbacks (mainWindow, mainMenu, git, lsp) {
+  // ----------------------------------------------------------
+  // FILE SYSTEM
+  // ----------------------------------------------------------
+  ipcMain.on('open', (ev) => {
+    openDocument(mainWindow)
+  })
   ipcMain.on('save', (ev, opts) => {
     saveDocument(mainWindow, opts.path, opts.data)
   })
@@ -128,17 +181,12 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
   ipcMain.handle('promptSelectDirectory', async (ev, opts) => {
     return selectDirectory(mainWindow, opts.current, opts.title ?? 'Select Directory...')
   })
-  ipcMain.on('setMenuItemCheckedState', (ev, opts) => {
-    const mItem = mainMenu.getMenuItemById(opts.id)
-    if (mItem) {
-      mItem.checked = opts.value
-    } else {
-      dialog.showErrorBox('Internal Error', `Invalid Menu Item ${opts.id} [checked: ${opts.value}]`)
-    }
-  })
   ipcMain.handle('readDirectory', async (ev, opts) => {
     return readDirectory(opts.dirPath)
   })
+  // ----------------------------------------------------------
+  // GIT
+  // ----------------------------------------------------------
   ipcMain.handle('fetchGitConfig', async (ev) => {
     return {
       ...git.conf,
@@ -213,6 +261,26 @@ export function registerCallbacks (mainWindow, mainMenu, git) {
       url: opts.url,
       upstreamUrl: opts.upstreamUrl
     })
+  })
+  // ----------------------------------------------------------
+  // LSP
+  // ----------------------------------------------------------
+  ipcMain.handle('lspSendRequest', async (ev, opts) => {
+    return lsp.sendRequest(opts.method, opts.params)
+  })
+  ipcMain.on('lspSendNotification', (ev, opts) => {
+    lsp.sendNotification(opts.method, opts.params)
+  })
+  // ----------------------------------------------------------
+  // MISC
+  // ----------------------------------------------------------
+  ipcMain.on('setMenuItemCheckedState', (ev, opts) => {
+    const mItem = mainMenu.getMenuItemById(opts.id)
+    if (mItem) {
+      mItem.checked = opts.value
+    } else {
+      dialog.showErrorBox('Internal Error', `Invalid Menu Item ${opts.id} [checked: ${opts.value}]`)
+    }
   })
   ipcMain.on('writeToClipboard', (ev, opts) => {
     clipboard.writeText(opts.text)

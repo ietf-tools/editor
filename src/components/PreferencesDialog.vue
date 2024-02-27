@@ -12,7 +12,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide')
         padding='xs'
         @click='onDialogCancel'
         )
-    .row.no-wrap.items-stretch.prefs-main
+    .row.no-wrap.items-stretch.prefs-main.card-border
       .col-auto.prefs-sidebar
         q-list(separator)
           q-item(

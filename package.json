@@ -16,6 +16,7 @@
     "@electron/remote": "2.1.2",
     "@ietf-tools/idnits": "3.0.0-alpha.34",
     "@quasar/extras": "1.16.9",
+    "fast-defer": "1.1.8",
     "isomorphic-git": "1.25.5",
     "lodash-es": "4.17.21",
     "luxon": "3.4.4",
@@ -25,6 +26,7 @@
     "pinia": "2.1.7",
     "pinia-plugin-persistedstate": "3.2.1",
     "quasar": "2.14.4",
+    "vscode-uri": "3.0.8",
     "vue": "3.4.19",
     "vue-router": "4.2.5"
   },

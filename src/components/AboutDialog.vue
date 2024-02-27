@@ -43,8 +43,6 @@ const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent()
 
 // INFO
 
-console.info(window.ipcBridge.versions)
-
 const appVersion = process.env.APP_VERSION ?? 'Unknown'
 const currentYear = new Date().getFullYear()
 const chromeVersion = window.ipcBridge.versions.chrome

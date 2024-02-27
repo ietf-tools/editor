@@ -85,8 +85,9 @@
         icon='mdi-swap-horizontal'
         padding='xs xs'
         text-color='grey-5'
+        @click='manageBranches'
         )
-        q-tooltip Checkout Branch...
+        q-tooltip Manage / Checkout Branch...
     .drawer-git-staged.q-mt-sm(v-if='state.staged.length > 0')
       .flex.items-center.text-caption.q-px-sm
         q-icon.q-mr-sm(name='mdi-playlist-check')
@@ -325,6 +326,12 @@ async function performFetch () {
 function manageRemotes () {
   $q.dialog({
     component: defineAsyncComponent(() => import('components/ManageRemotesDialog.vue'))
+  })
+}
+
+function manageBranches () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('components/ManageBranchesDialog.vue'))
   })
 }
 

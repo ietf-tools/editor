@@ -14,6 +14,7 @@ q-bar.toolbar-main
         no-caps
         unelevated
         @click='editorStore.drawerPane = pane.key'
+        :disabled='pane.needDocument && !docsStore.active'
         )
         q-tooltip {{ pane.label }}
   .toolbar-docs
@@ -89,12 +90,14 @@ const drawerPanes = [
   {
     key: 'DrawerTools',
     icon: 'mdi-tools',
-    label: 'Tools'
+    label: 'Tools',
+    needDocument: true
   },
   {
     key: 'DrawerSnippets',
     icon: 'mdi-library-shelves',
-    label: 'Snippets'
+    label: 'Snippets',
+    needDocument: true
   }
 ]
 

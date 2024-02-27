@@ -11,6 +11,6 @@ q-list(padding)
 
 <script setup>
 function reindent () {
-  EVENT_BUS.emit('editorCommand', 'editor.action.reindentlines')
+  EVENT_BUS.emit('lspCommand', 'formatting')
 }
 </script>

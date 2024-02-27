@@ -1,6 +1,10 @@
 <template lang="pug">
 q-footer
-  q-bar.footer-bar(:class='editorStore.hasErrors ? `bg-red-9` : `bg-green-9`')
+  q-bar.bg-blue-grey-8(v-if='!docsStore.active')
+    q-space
+    span.text-caption.text-blue-grey-3 DraftForge
+    q-space
+  q-bar.footer-bar(v-else, :class='editorStore.hasErrors ? `bg-red-9` : `bg-green-9`')
     span.text-caption.text-green-2 {{ docType }}
     q-separator.q-ml-md.q-mr-sm(vertical inset)
     q-btn(padding="xs sm" flat no-caps)
