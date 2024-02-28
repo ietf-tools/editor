@@ -15,6 +15,7 @@
     "@ietf-tools/idnits": "3.0.0-alpha.34",
     "@quasar/extras": "1.16.9",
     "fast-defer": "1.1.8",
+    "got": "14.2.0",
     "isomorphic-git": "1.25.6",
     "lodash-es": "4.17.21",
     "luxon": "3.4.4",
@@ -29,10 +30,10 @@
     "vue-router": "4.3.0"
   },
   "devDependencies": {
-    "@quasar/app-vite": "^2.0.0-beta.1",
+    "@quasar/app-vite": "^2.0.0-beta.2",
     "@vue/language-plugin-pug": "1.8.27",
     "autoprefixer": "10.4.17",
-    "electron": "29.0.1",
+    "electron": "29.1.0",
     "electron-builder": "24.12.0",
     "electron-packager": "17.1.2",
     "eslint": "8.57.0",

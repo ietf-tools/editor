@@ -265,6 +265,9 @@ export function registerCallbacks (mainWindow, mainMenu, git, lsp) {
   // ----------------------------------------------------------
   // LSP
   // ----------------------------------------------------------
+  ipcMain.on('lspInitialize', (ev) => {
+    lsp.init(mainWindow)
+  })
   ipcMain.handle('lspSendRequest', async (ev, opts) => {
     return lsp.sendRequest(opts.method, opts.params)
   })

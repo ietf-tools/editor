@@ -1,6 +1,6 @@
 <template lang="pug">
 q-footer
-  q-bar.bg-blue-grey-8(v-if='!docsStore.active')
+  q-bar.bg-indigo(v-if='!docsStore.active')
     q-space
     span.text-caption.text-blue-grey-3 DraftForge
     q-space

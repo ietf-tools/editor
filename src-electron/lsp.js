@@ -2,6 +2,28 @@ import { dialog } from 'electron'
 import { spawn } from 'node:child_process'
 import { deferred } from 'fast-defer'
 import initOptions from './lsp/init-options.js'
+import { createWriteStream } from 'node:fs'
+import fs from 'node:fs/promises'
+import { pipeline } from 'node:stream/promises'
+import got from 'got'
+import { setTimeout } from 'node:timers/promises'
+
+const platform = {
+  darwin: {
+    exec: 'lemminx-darwin',
+    env: {}
+  },
+  linux: {
+    exec: 'lemminx-linux',
+    env: {}
+  },
+  win32: {
+    exec: 'lemminx-win32.exe',
+    env: {
+      windowsHide: true
+    }
+  }
+}
 
 export default {
   lsp: null,
@@ -13,33 +35,83 @@ export default {
    * Initialize the LSP
    */
   async init (mainWindow) {
-    switch (process.platform) {
-      case 'darwin': {
-        this.lsp = spawn('./lemminx-osx-x86_64')
-        break
-      }
-      case 'linux': {
-        this.lsp = spawn('./lemminx-linux')
-        break
-      }
-      case 'win32': {
-        this.lsp = spawn('lemminx-win32.exe', {
-          env: {
-            windowsHide: true
-          }
-        })
-        break
-      }
-      default: {
-        dialog.showErrorBox('Unsupported Platform', 'The XML language server is not supported on this platform.')
-        console.error('LSP: Unsupported platform')
-        break
-      }
+    const platformOpts = platform[process.platform]
+    if (!platformOpts) {
+      dialog.showErrorBox('Unsupported Platform', 'The XML language server is not supported on this platform.')
+      console.error('LSP: Unsupported platform')
+      return
     }
 
-    // -> Handle stdio
+    let isInstalled = false
+    try {
+      await fs.access(platformOpts.exec, fs.constants.X_OK)
+      isInstalled = true
+    } catch (err) {
+      console.warn('LSP server executable missing. Will download...')
+    }
 
-    // this.lsp.stdout.setEncoding('utf8')
+    if (isInstalled) {
+      try {
+        this.startServer(mainWindow)
+      } catch (err) {
+        dialog.showErrorBox('LSP Server Initialization Failed', err.message)
+      }
+      this.startServer(mainWindow)
+    } else {
+      try {
+        await this.downloadServer(mainWindow)
+        this.startServer(mainWindow)
+      } catch (err) {
+        dialog.showErrorBox('LSP Server Download Failed', err.message)
+      }
+    }
+  },
+  async downloadServer (mainWindow) {
+    const platformOpts = platform[process.platform]
+    mainWindow.webContents.send('setProgressDialog', {
+      isShown: true,
+      message: 'Installing XML Language Server',
+      caption: 'Downloading LemMinX executable...'
+    })
+    await setTimeout(1000)
+    try {
+      let downloadFile = platformOpts.exec
+      if (process.platform === 'darwin') {
+        downloadFile = `${downloadFile}-${process.arch}`
+      }
+      await pipeline(
+        got.stream(`https://github.com/ietf-tools/lemminx/releases/latest/download/${downloadFile}`),
+        createWriteStream(platformOpts.exec)
+      )
+      if (process.platform !== 'win32') {
+        await fs.chmod(platformOpts.exec, '+x')
+      }
+      await fs.access(platformOpts.exec, fs.constants.X_OK)
+    } catch (err) {
+      console.warn(err)
+      mainWindow.webContents.send('setProgressDialog', { isShown: false })
+      try {
+        await fs.unlink(platformOpts.exec)
+      } catch (err) {}
+      throw new Error(`${err.message}: ${err.options?.url?.href}`)
+    }
+    (async () => {
+      mainWindow.webContents.send('setProgressDialog', {
+        isShown: true,
+        message: 'Installing XML Language Server',
+        caption: 'Starting the LSP server...'
+      })
+      await setTimeout(2000)
+      mainWindow.webContents.send('setProgressDialog', { isShown: false })
+    })()
+  },
+  async startServer (mainWindow) {
+    const platformOpts = platform[process.platform]
+
+    // Spawn LSP process
+    this.lsp = spawn(platformOpts.exec)
+
+    // -> Handle stdio
     this.lsp.stdout.on('data', (data) => {
       console.info('--- INCOMING ---')
       console.info(data.toString())

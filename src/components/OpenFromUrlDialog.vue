@@ -1,5 +1,5 @@
 <template lang="pug">
-q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss)
+q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss transition-show='jump-up' transition-hide='jump-down')
   q-card.mica(style='min-width: 800px;')
     q-card-section.flex.items-center.bg-light-blue-10
       q-icon(name='mdi-tray-arrow-down', left, size='sm')

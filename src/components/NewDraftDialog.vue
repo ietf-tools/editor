@@ -1,5 +1,5 @@
 <template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide')
+q-dialog(ref='dialogRef' @hide='onDialogHide' transition-show='jump-up' transition-hide='jump-down')
   q-card.mica(style='min-width: 600px;')
     q-card-section.flex.items-center.bg-light-blue-10
       q-icon(name='mdi-file-document-plus-outline', left, size='sm')

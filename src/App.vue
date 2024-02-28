@@ -13,6 +13,8 @@ const $q = useQuasar()
 const docsStore = useDocsStore()
 const editorStore = useEditorStore()
 
+let progressDiag
+
 window.ipcBridge.subscribe('dialogAction', (evt, action) => {
   switch (action) {
     case 'helpAbout': {
@@ -57,8 +59,26 @@ window.ipcBridge.subscribe('setWorkingDirectory', (evt, dirPath) => {
   editorStore.workingDirectory = dirPath
 })
 
-onMounted(() => {
-  editorStore.fetchGitConfig()
+window.ipcBridge.subscribe('setProgressDialog', (evt, opts) => {
+  if (opts.isShown) {
+    if (progressDiag) {
+      progressDiag.update(opts)
+    } else {
+      progressDiag = $q.dialog({
+        component: defineAsyncComponent(() => import('components/ProgressDialog.vue')),
+        componentProps: opts
+      }).onDismiss(() => {
+        progressDiag = null
+      })
+    }
+  } else {
+    progressDiag.hide()
+  }
+})
+
+onMounted(async () => {
+  await editorStore.fetchGitConfig()
+  window.ipcBridge.emit('lspInitialize')
 })
 
 </script>

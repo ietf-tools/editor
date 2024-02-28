@@ -19,13 +19,11 @@ import { debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
 import { checkNits } from '@ietf-tools/idnits'
 
-import { useAppStore } from 'stores/app'
 import { useEditorStore } from 'stores/editor'
 import { useDocsStore } from 'src/stores/docs'
 
 // STORES
 
-const appStore = useAppStore()
 const docsStore = useDocsStore()
 const editorStore = useEditorStore()
 
@@ -523,7 +521,7 @@ async function validateContent () {
   const enc = new TextEncoder()
   const result = await checkNits(enc.encode(editorStore.content).buffer, 'draft-ietf-ccamp-mw-topo-yang-08.xml', {
     mode: 'normal',
-    offline: !appStore.isElectron
+    offline: false
   })
   console.info(result)
 }
