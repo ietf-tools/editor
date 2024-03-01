@@ -128,8 +128,18 @@ export default {
         cursorIndex = cursorIndex + bodyLength
         bodySepIndex = data.indexOf('\r\n', cursorIndex)
 
+        if (!reqBody) {
+          break
+        }
+
         // -> Convert JSON body
-        const response = JSON.parse(reqBody)
+        let response
+        try {
+          response = JSON.parse(reqBody)
+        } catch (err) {
+          console.info(`Failed to parse LSP request: ${reqBody}`)
+          continue
+        }
         console.info(JSON.stringify(response, null, 2))
         if (response.id) {
           // -> Handle server increasing the request index

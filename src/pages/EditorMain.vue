@@ -18,6 +18,7 @@ import * as monaco from 'monaco-editor'
 import { debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
 import { checkNits } from '@ietf-tools/idnits'
+import { modelStore } from 'src/stores/models'
 
 import { useEditorStore } from 'stores/editor'
 import { useDocsStore } from 'src/stores/docs'
@@ -120,14 +121,8 @@ monaco.languages.setLanguageConfiguration('markdown', {
 })
 
 const updateContentStore = debounce(ev => {
-  docsStore.activeDocument.activeData = editor.getValue()
-  docsStore.activeDocument.version = ev.versionId
-  docsStore.activeDocument.isModified = docsStore.activeDocument.activeData !== docsStore.activeDocument.data
+  docsStore.activeDocument.isModified = modelStore[docsStore.activeDocument.id].getValue() !== docsStore.activeDocument.data
   docsStore.activeDocument.lastModifiedAt = DateTime.utc()
-  // editorStore.$patch({
-  //   lastChangeTimestamp: DateTime.utc(),
-  //   content: editor.getValue()
-  // })
 }, 500)
 
 onMounted(async () => {
@@ -160,6 +155,7 @@ onMounted(async () => {
       formatOnType: editorStore.formatOnType,
       language: 'xmlrfc',
       lineNumbersMinChars: 4,
+      model: modelStore[docsStore.activeDocument.id],
       padding: { top: 10, bottom: 10 },
       scrollBeyondLastLine: false,
       stickyScroll: {
@@ -167,13 +163,15 @@ onMounted(async () => {
       },
       tabSize: editorStore.tabSize,
       theme: editorStore.theme,
-      value: docsStore.activeDocument.activeData,
       wordWrap: editorStore.wordWrap ? 'on' : 'off'
     })
 
     // -> Handle content change
     editor.onDidChangeModelContent((ev) => {
-      console.info(ev)
+      // console.info(ev)
+      if (editorStore.errors.length > 0) {
+        editorStore.errors = []
+      }
       updateContentStore(ev)
       window.ipcBridge.emit('lspSendNotification', {
         method: 'textDocument/didChange',
@@ -253,10 +251,7 @@ onMounted(async () => {
 
   watch(() => docsStore.active, (newValue) => {
     if (newValue && editor) {
-      editor.setModel(monaco.editor.createModel(
-        docsStore.activeDocument.activeData,
-        docsStore.activeDocument.language
-      ))
+      editor.setModel(modelStore[docsStore.activeDocument.id])
     }
   })
 
@@ -308,6 +303,14 @@ onMounted(async () => {
       id: 'viewShowPreviewPane',
       value: newValue
     })
+  })
+
+  watch(() => editorStore.errors, (newValue) => {
+    if (newValue && newValue.length > 0) {
+      monaco.editor.setModelMarkers(modelStore[docsStore.activeDocument.id], 'errors', newValue)
+    } else {
+      monaco.editor.removeAllMarkers('errors')
+    }
   })
 
   window.ipcBridge.subscribe('editorAction', (evt, action) => {
@@ -479,6 +482,8 @@ onMounted(async () => {
       }
     }
   })
+
+  document.getElementById('app-loading')?.remove()
 })
 EVENT_BUS.on('editorCommand', cmd => {
   editor.trigger('drawer', cmd)

@@ -5,16 +5,36 @@ q-footer
     span.text-caption.text-blue-grey-3 DraftForge
     q-space
   q-bar.footer-bar(v-else, :class='editorStore.hasErrors ? `bg-red-9` : `bg-green-9`')
-    span.text-caption.text-green-2 {{ docType }}
+    span.text-caption {{ docType }}
     q-separator.q-ml-md.q-mr-sm(vertical inset)
-    q-btn(padding="xs sm" flat no-caps)
-      span.text-caption No Error
+    template(v-if='editorStore.hasErrors')
+      q-btn(
+        padding="xs sm"
+        flat
+        no-caps
+        color='white'
+        @click='showNextError'
+        )
+        q-icon.q-mr-sm(name='mdi-alert-box' size='xs')
+        span.text-caption #[strong {{ editorStore.errors.length }}] {{ editorStore.errors.length > 1 ? 'errors/warnings' : 'error/warning' }} found
+        q-tooltip Show Next Error
+      q-btn(
+        padding="none sm"
+        outline
+        no-caps
+        color='white'
+        label='Clear'
+        @click='clearErrors'
+        )
+    template(v-else)
+      q-icon.q-mr-sm(name='mdi-check' size='14px')
+      span.text-caption: em No Schema Validation Error
     q-space
-    span.text-caption.text-green-2 Ln {{ editorStore.line }}, Col {{ editorStore.col }}
+    span.text-caption Ln {{ editorStore.line }}, Col {{ editorStore.col }}
     q-separator.q-mx-md(vertical inset)
-    span.text-caption.text-green-2 Spaces: {{ editorStore.tabSize }}
+    span.text-caption Spaces: {{ editorStore.tabSize }}
     q-separator.q-mx-md(vertical inset)
-    span.text-caption.text-green-2 UTF-8
+    span.text-caption UTF-8
 </template>
 
 <script setup>
@@ -42,10 +62,26 @@ const docType = computed(() => {
       return 'Unknown Format'
   }
 })
+
+// METHODS
+
+function showNextError () {
+  EVENT_BUS.emit('editorCommand', 'editor.action.marker.next')
+}
+function clearErrors () {
+  editorStore.errors = []
+}
 </script>
 
 <style lang="scss">
 .footer-bar {
-  border-top: 1px solid $green-6;
+  &.bg-green-9 {
+    border-top: 1px solid $green-6;
+    color: $green-2;
+  }
+  &.bg-red-9 {
+    border-top: 1px solid $red-6;
+    color: $red-2;
+  }
 }
 </style>

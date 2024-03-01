@@ -1,7 +1,8 @@
 import { defineStore } from 'pinia'
 import { find, last } from 'lodash-es'
 import { DateTime } from 'luxon'
-import { URI } from 'vscode-uri'
+import * as monaco from 'monaco-editor'
+import { modelStore } from 'src/stores/models'
 
 export const useDocsStore = defineStore('docs', {
   state: () => ({
@@ -38,19 +39,19 @@ export const useDocsStore = defineStore('docs', {
       }
       // Create new document
       const docId = crypto.randomUUID()
+      const docURI = doc.path ? monaco.Uri.file(doc.path) : monaco.Uri.parse(`inmemory://${docId}.${doc.type ?? 'xml'}`)
       const newDoc = {
         id: docId,
         type: doc.type ?? 'xml',
         path: doc.path ?? '',
         fileName: doc.fileName ?? 'untitled-draft.xml',
         data: doc.data ?? '',
-        activeData: doc.data ?? '',
         isModified: false,
         lastModifiedAt: DateTime.utc(),
         language: lang,
-        uri: URI.file(doc.path ?? `/${docId}.${doc.type ?? 'xml'}`).toString(),
-        version: 1
+        uri: docURI.toString()
       }
+      modelStore[docId] = monaco.editor.createModel(doc.data, lang, monaco.Uri.parse(docURI))
       this.opened.push(newDoc)
 
       window.ipcBridge.emit('lspSendNotification', {
@@ -60,7 +61,7 @@ export const useDocsStore = defineStore('docs', {
             uri: newDoc.uri,
             languageId: newDoc.type,
             version: 1,
-            text: newDoc.activeData
+            text: newDoc.data
           }
         }
       })
@@ -91,11 +92,32 @@ export const useDocsStore = defineStore('docs', {
      * @param {string} docId Document UUID
      */
     async closeDocument (docId) {
+      const docToClose = find(this.opened, ['id', docId])
+
+      // -> Remove from opened documents
       this.opened = this.opened.filter(d => d.id !== docId)
       if (this.opened.length < 1) {
         this.active = null
       } else if (this.active === docId) {
         this.active = this.opened[0].id
+      }
+
+      // -> Dispose of model
+      if (modelStore[docId]) {
+        modelStore[docId].dispose()
+        delete modelStore[docId]
+      }
+
+      // -> Notify LSP
+      if (docToClose) {
+        window.ipcBridge.emit('lspSendNotification', {
+          method: 'textDocument/didClose',
+          params: {
+            textDocument: {
+              uri: docToClose.uri
+            }
+          }
+        })
       }
     },
     /**
@@ -117,11 +139,20 @@ export const useDocsStore = defineStore('docs', {
       } else {
         window.ipcBridge.emit('save', {
           path: this.activeDocument.path,
-          data: this.activeDocument.activeData
+          data: modelStore[this.activeDocument.id].getValue()
         })
-        this.activeDocument.data = this.activeDocument.activeData
+        this.activeDocument.data = modelStore[this.activeDocument.id].getValue()
         this.activeDocument.isModified = false
         this.activeDocument.lastModifiedAt = DateTime.utc()
+
+        window.ipcBridge.emit('lspSendNotification', {
+          method: 'textDocument/didSave',
+          params: {
+            textDocument: {
+              uri: this.activeDocument.uri
+            }
+          }
+        })
       }
     }
   },

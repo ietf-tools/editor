@@ -55,6 +55,14 @@ const docsStore = useDocsStore()
 
 const router = useRouter()
 
+if (docsStore.active) {
+  if (docsStore.opened.length > 0) {
+    router.replace('/editor')
+  } else {
+    docsStore.active = null
+  }
+}
+
 // WATCH
 
 watch(() => docsStore.active, (newValue) => {
