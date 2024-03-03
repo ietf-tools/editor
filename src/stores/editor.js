@@ -3,9 +3,11 @@ import { defineStore } from 'pinia'
 export const useEditorStore = defineStore('editor', {
   state: () => ({
     col: 1,
+    confirmExit: true,
     content: '',
     cursorBlinking: 'blink',
     cursorStyle: 'line',
+    debugDisableUnload: false,
     drawerPane: 'DrawerFiles',
     errors: [],
     fontSize: 16,
@@ -27,7 +29,8 @@ export const useEditorStore = defineStore('editor', {
     gitRemoteBranches: [],
     lastChangeTimestamp: null,
     line: 1,
-    previewPaneShown: true,
+    persistSession: true,
+    previewPaneShown: false,
     tabSize: 2,
     theme: 'ietf-dark',
     validationChecksDirty: false,
@@ -96,10 +99,13 @@ export const useEditorStore = defineStore('editor', {
   },
   persist: {
     paths: [
+      'confirmExit',
       'cursorBlinking',
       'cursorStyle',
+      'debugDisableUnload',
       'fontSize',
       'formatOnType',
+      'persistSession',
       'previewPaneShown',
       'tabSize',
       'theme',

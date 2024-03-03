@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { find, last } from 'lodash-es'
+import { cloneDeep, find, last } from 'lodash-es'
 import { DateTime } from 'luxon'
 import * as monaco from 'monaco-editor'
 import { modelStore } from 'src/stores/models'
@@ -51,7 +51,7 @@ export const useDocsStore = defineStore('docs', {
         language: lang,
         uri: docURI.toString()
       }
-      modelStore[docId] = monaco.editor.createModel(doc.data, lang, monaco.Uri.parse(docURI))
+      modelStore[docId] = monaco.editor.createModel(doc.data, lang, docURI)
       this.opened.push(newDoc)
 
       window.ipcBridge.emit('lspSendNotification', {
@@ -154,12 +154,34 @@ export const useDocsStore = defineStore('docs', {
           }
         })
       }
+    },
+    async persistSession () {
+      const modelContents = {}
+      for (const doc of this.opened) {
+        if (modelStore[doc.id]) {
+          modelContents[doc.id] = modelStore[doc.id].getValue()
+        }
+      }
+      await window.ipcBridge.persistSession({
+        active: cloneDeep(this.active),
+        opened: cloneDeep(this.opened),
+        models: modelContents
+      })
+    },
+    async restoreSession () {
+      const data = await window.ipcBridge.restoreSession()
+      if (data?.active) {
+        for (const doc of data.opened) {
+          modelStore[doc.id] = monaco.editor.createModel(data.models[doc.id], doc.language, monaco.Uri.parse(doc.uri))
+          this.opened.push(doc)
+        }
+        this.active = data.active
+      } else {
+        throw new Error('No previous session to restore.')
+      }
     }
   },
   persist: {
-    paths: [
-      // 'opened',
-      // 'active'
-    ]
+    paths: []
   }
 })

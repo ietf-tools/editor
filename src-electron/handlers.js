@@ -2,6 +2,7 @@ import { app, clipboard, dialog, ipcMain, shell } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { isNil, orderBy } from 'lodash-es'
+import { encode, decode } from '@msgpack/msgpack'
 
 /**
  * Show the Open Dialog
@@ -293,6 +294,25 @@ export function registerCallbacks (mainWindow, mainMenu, git, lsp) {
       shell.openExternal(opts.url, {
         activate: true
       })
+    }
+  })
+  ipcMain.handle('persistSession', async (ev, data) => {
+    const sessionPath = path.join(app.getPath('userData'), 'draftforge-session.bin')
+    try {
+      await fs.writeFile(sessionPath, encode(data))
+    } catch (err) {
+      console.error(err)
+      throw err
+    }
+  })
+  ipcMain.handle('restoreSession', async (ev) => {
+    const sessionPath = path.join(app.getPath('userData'), 'draftforge-session.bin')
+    try {
+      const restoredData = await fs.readFile(sessionPath)
+      return decode(restoredData)
+    } catch (err) {
+      console.error(err)
+      return null
     }
   })
 }

@@ -28,7 +28,29 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', trans
             q-item-section
               q-item-label {{ tab.label }}
       .col
-        template(v-if='state.tab === `editor`')
+        template(v-if='state.tab === `general`')
+          q-form.q-gutter-md.q-pa-lg
+            .row
+              .col
+                .text-body2 Persist Session on Close
+                .text-caption.text-grey-5 Save your current session on close to be able to restore it the next time you launch the editor.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.persistSession'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
+            .row
+              .col
+                .text-body2 Confirm Before Closing
+                .text-caption.text-grey-5 Whether to prompt for confirmation before exiting.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.confirmExit'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
+        template(v-else-if='state.tab === `editor`')
           q-form.q-gutter-md.q-pa-lg
             .row
               .col-8
@@ -74,10 +96,10 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', trans
                   map-options
                   )
             .row
-              .col-8
+              .col
                 .text-body2 Font Size
                 .text-caption.text-grey-5 Note that you can still zoom in / out on the editor regardless of this setting.
-              .col-4
+              .col-auto
                 q-input(
                   v-model.number='editorStore.fontSize'
                   type='number'
@@ -88,30 +110,30 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', trans
                   style='width: 200px'
                 )
             .row
-              .col-8
+              .col
                 .text-body2 Format on Type
                 .text-caption.text-grey-5 Controls whether the editor should automatically format the line after typing.
-              .col-4
+              .col-auto
                 q-toggle(
                   v-model='editorStore.formatOnType'
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
             .row
-              .col-8
+              .col
                 .text-body2 Preview Pane
                 .text-caption.text-grey-5 Controls whether the preview pane should be displayed.
-              .col-4
+              .col-auto
                 q-toggle(
                   v-model='editorStore.previewPaneShown'
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
             .row
-              .col-8
+              .col
                 .text-body2 Tab Size
                 .text-caption.text-grey-5 The number of spaces a tab is equal to.
-              .col-4
+              .col-auto
                 q-input(
                   v-model.number='editorStore.tabSize'
                   type='number'
@@ -122,10 +144,10 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', trans
                   style='width: 200px'
                 )
             .row
-              .col-8
+              .col
                 .text-body2 Word Wrap
                 .text-caption.text-grey-5 Control the wrapping of the editor.
-              .col-4
+              .col-auto
                 q-toggle(
                   v-model='editorStore.wordWrap'
                   checked-icon='mdi-check'
@@ -172,10 +194,10 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', trans
                 )
             q-separator
             .row
-              .col-8
+              .col
                 .text-body2 Use Git Credential Manager
                 .text-caption.text-grey-5 Use the native git credential manager for authentication. Git must be installed on the system.
-              .col-4
+              .col-auto
                 q-toggle(
                   v-model='editorStore.gitUseCredMan'
                   checked-icon='mdi-check'
@@ -206,17 +228,17 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', trans
                 )
             q-separator
             .row
-              .col-8
+              .col
                 .text-body2 Sign Commits
                 .text-caption.text-grey-5 Use OpenPGP signing when creating commits.
-              .col-4
+              .col-auto
                 q-toggle(
                   v-model='editorStore.gitSignCommits'
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
             .row(v-if='editorStore.gitSignCommits')
-              .col-8
+              .col
                 .text-body2 OpenPGP Signing Key
                 .text-caption.text-grey-5 Set the key to use for signing commits.
                 .text-caption.flex(v-if='editorStore.gitPgpKeySet')
@@ -225,7 +247,7 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', trans
                   .text-uppercase.text-purple-2 {{ editorStore.gitFingerprint }}
                   q-separator.q-mx-sm(vertical)
                   a.text-light-blue-3(href='#', @click.stop.prevent='copyPublicKey') Copy Public Key
-              .col-4
+              .col-auto
                 q-btn(
                   :label='editorStore.gitPgpKeySet ? `Generate New` : `Setup`'
                   color='primary'
@@ -240,6 +262,26 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', trans
                   @click='clearPGPKey'
                 )
 
+        template(v-else-if='state.tab === `profile`')
+          .q-pa-md: em Beep boop
+
+        template(v-if='state.tab === `dev`')
+          q-form.q-gutter-md.q-pa-lg
+            .flex.items-center.text-red-5
+              q-icon.animated.fadeIn.infinite.slower.q-mr-sm(name='mdi-alert' size='sm')
+              span These settings are for development / debugging purposes only.
+            q-separator.q-my-md(inset)
+            .row
+              .col
+                .text-body2 Disable Unload Handlers
+                .text-caption.text-grey-5 Prevent beforeUnload handlers from running.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.debugDisableUnload'
+                  color='red'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
 </template>
 
 <script setup>
@@ -252,7 +294,7 @@ const editorStore = useEditorStore()
 const props = defineProps({
   tab: {
     type: String,
-    default: 'editor'
+    default: 'general'
   }
 })
 
@@ -276,6 +318,11 @@ const state = reactive({
 
 const tabs = [
   {
+    key: 'general',
+    icon: 'mdi-dots-hexagon',
+    label: 'General'
+  },
+  {
     key: 'editor',
     icon: 'mdi-square-edit-outline',
     label: 'Editor'
@@ -289,6 +336,11 @@ const tabs = [
     key: 'profile',
     icon: 'mdi-account',
     label: 'Profile'
+  },
+  {
+    key: 'dev',
+    icon: 'mdi-flask',
+    label: 'Dev / Debug'
   }
 ]
 

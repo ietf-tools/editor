@@ -13,6 +13,7 @@
   "dependencies": {
     "@electron/remote": "2.1.2",
     "@ietf-tools/idnits": "3.0.0-alpha.34",
+    "@msgpack/msgpack": "3.0.0-beta2",
     "@quasar/extras": "1.16.9",
     "fast-defer": "1.1.8",
     "got": "14.2.0",

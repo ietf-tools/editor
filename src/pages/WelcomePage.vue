@@ -31,10 +31,22 @@ q-page.welcome.bg-dark-5
           q-item-label Open from URL...
         q-item-section(side)
           q-icon(name='mdi-chevron-right', color='blue-grey-7')
+
+    q-list.q-mt-md.rounded-borders(
+      separator
+      bordered
+      )
+      q-item(clickable, @click='restoreSession')
+        q-item-section(side)
+          q-icon(name='mdi-history', color='indigo-3')
+        q-item-section
+          q-item-label.text-indigo-3 Restore last session...
+        q-item-section(side)
+          q-icon(name='mdi-chevron-right', color='blue-grey-7')
     .welcome-copyright.q-mt-xl
       .text-caption: strong DraftForge {{ appVersion }}
       .text-caption Brought to you with #[q-icon(name='mdi-heart')] by the IETF Tools team!
-      .text-caption: a(@click.stop.prevent='viewLicense', href='#') View license
+      .text-caption #[a(@click.stop.prevent='viewGitHub', href='#') GitHub] | #[a(@click.stop.prevent='reportBug', href='#') Report Bug] | #[a(@click.stop.prevent='viewLicense', href='#') View license]
 </template>
 
 <script setup>
@@ -89,6 +101,25 @@ function openRemoteDocument () {
   })
 }
 
+async function restoreSession () {
+  try {
+    await docsStore.restoreSession()
+  } catch (err) {
+    $q.notify({
+      message: 'Could not restore',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+}
+
+function viewGitHub () {
+  window.ipcBridge.emit('launchBrowser', { url: 'https://github.com/ietf-tools/editor' })
+}
+function reportBug () {
+  window.ipcBridge.emit('launchBrowser', { url: 'https://github.com/ietf-tools/editor/issues' })
+}
 function viewLicense () {
   window.ipcBridge.emit('launchBrowser', { url: 'https://github.com/ietf-tools/editor/blob/main/LICENSE' })
 }

@@ -14,6 +14,7 @@ const docsStore = useDocsStore()
 const editorStore = useEditorStore()
 
 let progressDiag
+let shouldExit = false
 
 window.ipcBridge.subscribe('dialogAction', (evt, action) => {
   switch (action) {
@@ -80,5 +81,42 @@ onMounted(async () => {
   await editorStore.fetchGitConfig()
   window.ipcBridge.emit('lspInitialize')
 })
+
+window.onbeforeunload = (ev) => {
+  if (shouldExit || (!editorStore.confirmExit && !editorStore.persistSession) || editorStore.debugDisableUnload) {
+    return
+  }
+  ev.returnValue = false
+
+  if (editorStore.confirmExit) {
+    $q.dialog({
+      title: 'Confirm',
+      message: 'Are you sure you want to close DraftEditor?',
+      persistent: true,
+      ok: {
+        label: 'Exit',
+        color: 'negative',
+        unelevated: true
+      },
+      cancel: {
+        label: 'Cancel',
+        color: 'grey',
+        flat: true
+      }
+    }).onOk(async () => {
+      if (editorStore.persistSession) {
+        await docsStore.persistSession()
+      }
+      shouldExit = true
+      window.close()
+    })
+  } else {
+    (async () => {
+      await docsStore.persistSession()
+      shouldExit = true
+      window.close()
+    })()
+  }
+}
 
 </script>

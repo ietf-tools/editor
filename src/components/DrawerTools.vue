@@ -128,9 +128,9 @@ function runAllChecks () {
   if (editorStore.errors.length < 1) {
     $q.notify({
       message: 'Looks good!',
-      caption: 'No non-ASCII characters found.',
+      caption: 'No validation errors found.',
       color: 'positive',
-      icon: 'mdi-translate'
+      icon: 'mdi-check'
     })
   } else {
     setTimeout(() => {
