@@ -1,9 +1,10 @@
-import { dialog } from 'electron'
+import { app, dialog } from 'electron'
 import { spawn } from 'node:child_process'
 import { deferred } from 'fast-defer'
 import initOptions from './lsp/init-options.js'
 import { createWriteStream } from 'node:fs'
 import fs from 'node:fs/promises'
+import path from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import got from 'got'
 import { setTimeout } from 'node:timers/promises'
@@ -11,14 +12,17 @@ import { setTimeout } from 'node:timers/promises'
 const platform = {
   darwin: {
     exec: 'lemminx-darwin',
+    execPath: path.join(app.getPath('appData'), app.name, 'lemminx-darwin'),
     env: {}
   },
   linux: {
     exec: 'lemminx-linux',
+    execPath: path.join(app.getPath('appData'), app.name, 'lemminx-linux'),
     env: {}
   },
   win32: {
     exec: 'lemminx-win32.exe',
+    execPath: path.join(app.getPath('appData'), app.name, 'lemminx-win32.exe'),
     env: {
       windowsHide: true
     }
@@ -44,7 +48,7 @@ export default {
 
     let isInstalled = false
     try {
-      await fs.access(platformOpts.exec, fs.constants.X_OK)
+      await fs.access(platformOpts.execPath, fs.constants.X_OK)
       isInstalled = true
     } catch (err) {
       console.warn('LSP server executable missing. Will download...')
@@ -81,17 +85,17 @@ export default {
       }
       await pipeline(
         got.stream(`https://github.com/ietf-tools/lemminx/releases/latest/download/${downloadFile}`),
-        createWriteStream(platformOpts.exec)
+        createWriteStream(platformOpts.execPath)
       )
       if (process.platform !== 'win32') {
-        await fs.chmod(platformOpts.exec, '+x')
+        await fs.chmod(platformOpts.execPath, '+x')
       }
-      await fs.access(platformOpts.exec, fs.constants.X_OK)
+      await fs.access(platformOpts.execPath, fs.constants.X_OK)
     } catch (err) {
       console.warn(err)
       mainWindow.webContents.send('setProgressDialog', { isShown: false })
       try {
-        await fs.unlink(platformOpts.exec)
+        await fs.unlink(platformOpts.execPath)
       } catch (err) {}
       throw new Error(`${err.message}: ${err.options?.url?.href}`)
     }
@@ -109,7 +113,7 @@ export default {
     const platformOpts = platform[process.platform]
 
     // Spawn LSP process
-    this.lsp = spawn(platformOpts.exec)
+    this.lsp = spawn(platformOpts.execPath)
 
     // -> Handle stdio
     this.lsp.stdout.on('data', (data) => {

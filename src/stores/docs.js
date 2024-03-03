@@ -158,8 +158,8 @@ export const useDocsStore = defineStore('docs', {
   },
   persist: {
     paths: [
-      'opened',
-      'active'
+      // 'opened',
+      // 'active'
     ]
   }
 })
