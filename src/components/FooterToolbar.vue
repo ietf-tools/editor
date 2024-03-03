@@ -24,7 +24,7 @@ q-footer
         no-caps
         color='white'
         label='Clear'
-        @click='clearErrors'
+        @click='editorStore.clearErrors'
         )
     template(v-else)
       q-icon.q-mr-sm(name='mdi-check' size='14px')
@@ -67,9 +67,6 @@ const docType = computed(() => {
 
 function showNextError () {
   EVENT_BUS.emit('editorCommand', 'editor.action.marker.next')
-}
-function clearErrors () {
-  editorStore.errors = []
 }
 </script>
 

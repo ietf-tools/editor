@@ -30,6 +30,11 @@ export const useEditorStore = defineStore('editor', {
     previewPaneShown: true,
     tabSize: 2,
     theme: 'ietf-dark',
+    validationChecksDirty: false,
+    validationChecks: {
+      inclusiveLanguage: 0,
+      nonAscii: 0
+    },
     wordWrap: true,
     workingDirectory: '',
     workingDirFiles: []
@@ -76,6 +81,17 @@ export const useEditorStore = defineStore('editor', {
     },
     async fetchRemotes () {
       this.gitRemotes = await window.ipcBridge.gitListRemotes(this.workingDirectory)
+    },
+    async clearErrors () {
+      this.errors = []
+      for (const key in this.validationChecks) {
+        this.validationChecks[key] = 0
+      }
+      this.validationChecksDirty = false
+    },
+    setValidationCheckState (key, newState) {
+      this.validationChecks[key] = newState
+      this.validationChecksDirty = true
     }
   },
   persist: {

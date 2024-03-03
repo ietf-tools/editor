@@ -169,8 +169,9 @@ onMounted(async () => {
     // -> Handle content change
     editor.onDidChangeModelContent((ev) => {
       // console.info(ev)
-      if (editorStore.errors.length > 0) {
-        editorStore.errors = []
+      if (editorStore.errors.length > 0 || editorStore.validationChecksDirty) {
+        console.info('BOB')
+        editorStore.clearErrors()
       }
       updateContentStore(ev)
       window.ipcBridge.emit('lspSendNotification', {
@@ -486,7 +487,9 @@ onMounted(async () => {
   document.getElementById('app-loading')?.remove()
 })
 EVENT_BUS.on('editorCommand', cmd => {
-  editor.trigger('drawer', cmd)
+  if (editor) {
+    editor.trigger('drawer', cmd)
+  }
 })
 EVENT_BUS.on('lspCommand', async cmd => {
   switch (cmd) {
