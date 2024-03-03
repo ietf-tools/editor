@@ -88,7 +88,7 @@ export default {
         createWriteStream(platformOpts.execPath)
       )
       if (process.platform !== 'win32') {
-        await fs.chmod(platformOpts.execPath, '+x')
+        await fs.chmod(platformOpts.execPath, 0o775)
       }
       await fs.access(platformOpts.execPath, fs.constants.X_OK)
     } catch (err) {
