@@ -40,6 +40,16 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', trans
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
+            .row(v-if='editorStore.persistSession')
+              .col
+                .text-body2 Restore Last Session on Launch
+                .text-caption.text-grey-5 Automatically restore the last session when launching the editor.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.restoreSession'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
             .row
               .col
                 .text-body2 Confirm Before Closing

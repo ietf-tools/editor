@@ -31,6 +31,7 @@ export const useEditorStore = defineStore('editor', {
     line: 1,
     persistSession: true,
     previewPaneShown: false,
+    restoreSession: false,
     tabSize: 2,
     theme: 'ietf-dark',
     validationChecksDirty: false,

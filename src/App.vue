@@ -80,6 +80,13 @@ window.ipcBridge.subscribe('setProgressDialog', (evt, opts) => {
 onMounted(async () => {
   await editorStore.fetchGitConfig()
   window.ipcBridge.emit('lspInitialize')
+
+  // -> Auto-restore last session
+  if (editorStore.persistSession && editorStore.restoreSession) {
+    try {
+      await docsStore.restoreSession()
+    } catch (err) {}
+  }
 })
 
 window.onbeforeunload = (ev) => {
