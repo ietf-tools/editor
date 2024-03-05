@@ -170,7 +170,6 @@ onMounted(async () => {
     editor.onDidChangeModelContent((ev) => {
       // console.info(ev)
       if (editorStore.errors.length > 0 || editorStore.validationChecksDirty) {
-        console.info('BOB')
         editorStore.clearErrors()
       }
       updateContentStore(ev)
@@ -252,6 +251,9 @@ onMounted(async () => {
 
   watch(() => docsStore.active, (newValue) => {
     if (newValue && editor) {
+      if (editorStore.validationChecksDirty) {
+        editorStore.clearErrors()
+      }
       editor.setModel(modelStore[docsStore.activeDocument.id])
     }
   })

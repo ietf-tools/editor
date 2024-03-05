@@ -1,5 +1,11 @@
 <template lang="pug">
-q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss)
+q-dialog(
+  ref='dialogRef'
+  @hide='onDialogHide'
+  :transition-show='editorStore.animationEffects ? `jump-up` : `none`'
+  :transition-hide='editorStore.animationEffects ? `jump-down` : `none`'
+  no-backdrop-dismiss
+  )
   q-card.mica(style='min-width: 800px;')
     q-card-section.flex.items-center.bg-light-blue-10
       q-icon(name='mdi-key-variant', left, size='sm')

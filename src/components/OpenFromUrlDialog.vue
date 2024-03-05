@@ -1,5 +1,10 @@
 <template lang="pug">
-q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss transition-show='jump-up' transition-hide='jump-down')
+q-dialog(
+  ref='dialogRef'
+  @hide='onDialogHide'
+  :transition-show='editorStore.animationEffects ? `jump-up` : `none`'
+  :transition-hide='editorStore.animationEffects ? `jump-down` : `none`'
+  )
   q-card.mica(style='min-width: 800px;')
     q-card-section.flex.items-center.bg-light-blue-10
       q-icon(name='mdi-tray-arrow-down', left, size='sm')
@@ -42,6 +47,7 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' no-backdrop-dismiss transition-sho
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { reactive } from 'vue'
 import { useDocsStore } from 'src/stores/docs'
+import { useEditorStore } from 'src/stores/editor'
 import { last } from 'lodash-es'
 
 const $q = useQuasar()
@@ -55,6 +61,7 @@ defineEmits([
 // STORES
 
 const docsStore = useDocsStore()
+const editorStore = useEditorStore()
 
 // QUASAR
 

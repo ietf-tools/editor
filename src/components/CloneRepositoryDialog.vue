@@ -1,5 +1,10 @@
 <template lang="pug">
-q-dialog(ref='dialogRef' @hide='onDialogHide' persistent transition-show='jump-up' transition-hide='jump-down')
+q-dialog(
+  ref='dialogRef'
+  @hide='onDialogHide'
+  :transition-show='editorStore.animationEffects ? `jump-up` : `none`'
+  :transition-hide='editorStore.animationEffects ? `jump-down` : `none`'
+  )
   q-card.mica(style='min-width: 800px;')
     q-card-section.flex.items-center.bg-light-blue-10
       q-icon(name='mdi-git', left, size='sm')

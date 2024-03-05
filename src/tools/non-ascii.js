@@ -10,7 +10,7 @@ export function checkNonAscii (text) {
     for (const match of line.matchAll(matchRgx)) {
       occurences.push({
         message: 'Non-ASCII character(s) detected.',
-        severity: MarkerSeverity.Error,
+        severity: MarkerSeverity.Info,
         startLineNumber: lineIdx + 1,
         startColumn: match.index + 1,
         endLineNumber: lineIdx + 1,

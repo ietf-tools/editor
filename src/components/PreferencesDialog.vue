@@ -1,5 +1,10 @@
 <template lang="pug">
-q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', transition-hide='jump-down')
+q-dialog(
+  ref='dialogRef'
+  @hide='onDialogHide'
+  :transition-show='editorStore.animationEffects ? `jump-up` : `none`'
+  :transition-hide='editorStore.animationEffects ? `jump-down` : `none`'
+  )
   q-card.mica.prefs
     q-card-section.flex.items-center.bg-light-blue-10
       q-icon(name='mdi-cog', left, size='sm')
@@ -57,6 +62,27 @@ q-dialog(ref='dialogRef', @hide='onDialogHide', transition-show='jump-up', trans
               .col-auto
                 q-toggle(
                   v-model='editorStore.confirmExit'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
+            q-separator
+            .row
+              .col
+                .text-body2 Enable Translucency Effects
+                .text-caption.text-grey-5 Show translucent background effects on modals and menu UI elements.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.translucencyEffects'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
+            .row
+              .col
+                .text-body2 Enable Animations
+                .text-caption.text-grey-5 Use transition animations for modals and dialogs.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.animationEffects'
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )

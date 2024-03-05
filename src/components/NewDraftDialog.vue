@@ -1,5 +1,10 @@
 <template lang="pug">
-q-dialog(ref='dialogRef' @hide='onDialogHide' transition-show='jump-up' transition-hide='jump-down')
+q-dialog(
+  ref='dialogRef'
+  @hide='onDialogHide'
+  :transition-show='editorStore.animationEffects ? `jump-up` : `none`'
+  :transition-hide='editorStore.animationEffects ? `jump-down` : `none`'
+  )
   q-card.mica(style='min-width: 600px;')
     q-card-section.flex.items-center.bg-light-blue-10
       q-icon(name='mdi-file-document-plus-outline', left, size='sm')
@@ -25,8 +30,8 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' transition-show='jump-up' transiti
             q-item-label(caption): em.text-grey Recommended
           q-menu(
             touch-position
-            transition-show='jump-down'
-            transition-hide='jump-up'
+            :transition-show='editorStore.animationEffects ? `jump-up` : `none`'
+            :transition-hide='editorStore.animationEffects ? `jump-down` : `none`'
             )
             q-list(separator bordered)
               q-item(clickable @click='selectType(`xml`)')
@@ -75,8 +80,10 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' transition-show='jump-up' transiti
 <script setup>
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { useDocsStore } from 'src/stores/docs'
+import { useEditorStore } from 'src/stores/editor'
 
 const docsStore = useDocsStore()
+const editorStore = useEditorStore()
 
 const $q = useQuasar()
 

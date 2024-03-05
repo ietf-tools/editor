@@ -1,9 +1,9 @@
-<template>
-  <router-view />
+<template lang='pug'>
+router-view
 </template>
 
 <script setup>
-import { defineAsyncComponent, onMounted } from 'vue'
+import { defineAsyncComponent, onMounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { useDocsStore } from 'src/stores/docs'
 import { useEditorStore } from 'src/stores/editor'
@@ -76,6 +76,24 @@ window.ipcBridge.subscribe('setProgressDialog', (evt, opts) => {
     progressDiag.hide()
   }
 })
+
+// -> Handle translucency flags
+watch(() => editorStore.translucencyEffects, (newValue) => {
+  if (newValue) {
+    document.body.classList.remove('no-translucency')
+  } else {
+    document.body.classList.add('no-translucency')
+  }
+}, { immediate: true })
+
+// -> Handle animation flags
+watch(() => editorStore.animationEffects, (newValue) => {
+  if (newValue) {
+    document.body.classList.remove('no-animations')
+  } else {
+    document.body.classList.add('no-animations')
+  }
+}, { immediate: true })
 
 onMounted(async () => {
   await editorStore.fetchGitConfig()

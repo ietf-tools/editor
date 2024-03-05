@@ -1,5 +1,10 @@
 <template lang="pug">
-q-dialog(ref='dialogRef' @hide='onDialogHide' transition-show='jump-up' transition-hide='jump-down')
+q-dialog(
+  ref='dialogRef'
+  @hide='onDialogHide'
+  :transition-show='editorStore.animationEffects ? `jump-up` : `none`'
+  :transition-hide='editorStore.animationEffects ? `jump-down` : `none`'
+  )
   q-card.mica.branches
     q-card-section.flex.items-center.bg-light-blue-10
       q-icon(name='mdi-source-branch', left, size='sm')

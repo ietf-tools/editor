@@ -36,8 +36,9 @@ function createWindow () {
     // useContentSize: true,
     center: true,
     frame: true,
+    backgroundColor: '#000',
     // backgroundMaterial: 'auto',
-    vibrancy: 'under-window',
+    // vibrancy: 'under-window',
     darkTheme: true,
     webPreferences: {
       contextIsolation: true,

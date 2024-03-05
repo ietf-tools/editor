@@ -18,8 +18,16 @@ a {
 
   backdrop-filter: blur(10px) saturate(180%);
 
+  @at-root .no-translucency & {
+    backdrop-filter: none !important;
+  }
+
   > .q-card {
     background-color: transparent !important;
+
+    @at-root .no-translucency & {
+      backdrop-filter: none !important;
+    }
   }
 }
 
@@ -49,10 +57,20 @@ a {
   &.q-card {
     background-color: rgba(20,20,20,.7);
     backdrop-filter: blur(10px);
+
+    @at-root .no-translucency & {
+      background-color: rgba(20,20,20);
+      backdrop-filter: none !important;
+    }
   }
   &.q-menu {
     background-color: rgba(20,20,20,.7);
     backdrop-filter: blur(10px);
+
+    @at-root .no-translucency & {
+      background-color: rgba(20,20,20);
+      backdrop-filter: none !important;
+    }
   }
 }
 
@@ -63,10 +81,19 @@ a {
 
 .q-dialog__backdrop {
   backdrop-filter: blur(1px);
+
+  @at-root .no-translucency & {
+    backdrop-filter: none !important;
+  }
 }
 .q-inner-loading--dark {
   backdrop-filter: blur(2px);
   background-color: rgba(0,0,0,.5);
+
+  @at-root .no-translucency & {
+    backdrop-filter: none !important;
+    background-color: rgba(0,0,0,.75);
+  }
 }
 
 .text-word-break-all {

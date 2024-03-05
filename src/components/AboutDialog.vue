@@ -1,5 +1,10 @@
 <template lang="pug">
-q-dialog(ref='dialogRef' @hide='onDialogHide' transition-show='jump-up' transition-hide='jump-down')
+q-dialog(
+  ref='dialogRef'
+  @hide='onDialogHide'
+  :transition-show='editorStore.animationEffects ? `jump-up` : `none`'
+  :transition-hide='editorStore.animationEffects ? `jump-down` : `none`'
+  )
   q-card(style='min-width: 600px;')
     q-card-section.flex.items-center.bg-light-blue-10
       q-icon(name='mdi-information-outline', left, size='sm')
@@ -28,6 +33,9 @@ q-dialog(ref='dialogRef' @hide='onDialogHide' transition-show='jump-up' transiti
 
 <script setup>
 import { useDialogPluginComponent, useQuasar } from 'quasar'
+import { useEditorStore } from 'src/stores/editor'
+
+const editorStore = useEditorStore()
 
 const $q = useQuasar()
 

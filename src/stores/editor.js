@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
+    animationEffects: true,
     col: 1,
     confirmExit: true,
     content: '',
@@ -34,8 +35,10 @@ export const useEditorStore = defineStore('editor', {
     restoreSession: false,
     tabSize: 2,
     theme: 'ietf-dark',
+    translucencyEffects: true,
     validationChecksDirty: false,
     validationChecks: {
+      articles: 0,
       inclusiveLanguage: 0,
       nonAscii: 0
     },
@@ -100,6 +103,7 @@ export const useEditorStore = defineStore('editor', {
   },
   persist: {
     paths: [
+      'animationEffects',
       'confirmExit',
       'cursorBlinking',
       'cursorStyle',
@@ -110,6 +114,7 @@ export const useEditorStore = defineStore('editor', {
       'previewPaneShown',
       'tabSize',
       'theme',
+      'translucencyEffects',
       'wordWrap',
       'workingDirectory'
     ]

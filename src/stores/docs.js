@@ -3,6 +3,7 @@ import { cloneDeep, find, last } from 'lodash-es'
 import { DateTime } from 'luxon'
 import * as monaco from 'monaco-editor'
 import { modelStore } from 'src/stores/models'
+import { useEditorStore } from 'src/stores/editor'
 
 export const useDocsStore = defineStore('docs', {
   state: () => ({
@@ -92,7 +93,13 @@ export const useDocsStore = defineStore('docs', {
      * @param {string} docId Document UUID
      */
     async closeDocument (docId) {
+      const editorStore = useEditorStore()
       const docToClose = find(this.opened, ['id', docId])
+
+      // -> Clear validation checks
+      if (editorStore.validationChecksDirty) {
+        editorStore.clearErrors()
+      }
 
       // -> Remove from opened documents
       this.opened = this.opened.filter(d => d.id !== docId)

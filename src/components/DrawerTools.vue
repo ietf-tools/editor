@@ -28,7 +28,9 @@ q-list
     q-item-section(side)
       q-icon(v-if='editorStore.validationChecks[chk.key] === 0' name='mdi-circle-outline' size='xs' color='blue-grey')
       q-icon(v-else-if='editorStore.validationChecks[chk.key] === 1' name='mdi-check-circle' size='xs' color='positive')
+      q-icon(v-else-if='editorStore.validationChecks[chk.key] === 2' name='mdi-information' size='xs' color='light-blue-5')
       q-icon(v-else-if='editorStore.validationChecks[chk.key] === -1' name='mdi-close-circle' size='xs' color='red-5')
+      q-icon(v-else-if='editorStore.validationChecks[chk.key] === -2' name='mdi-alert-circle' size='xs' color='orange-5')
 q-separator.q-my-sm(inset)
 .q-px-md.q-pt-sm.q-pb-sm
   .flex.items-center
@@ -45,6 +47,7 @@ q-list
 
 <script setup>
 import { useQuasar } from 'quasar'
+import { checkArticles } from 'src/tools/articles'
 import { checkInclusiveLanguage } from 'src/tools/inclusive-language'
 import { checkNonAscii } from 'src/tools/non-ascii'
 import { useDocsStore } from 'src/stores/docs'
@@ -59,6 +62,13 @@ const docsStore = useDocsStore()
 const editorStore = useEditorStore()
 
 const valChecks = [
+  {
+    key: 'articles',
+    title: 'Articles Check',
+    description: 'Check for bad indefinite articles usage',
+    icon: 'mdi-alpha-a-box-outline',
+    click: () => articlesCheck()
+  },
   {
     key: 'inclusiveLanguage',
     title: 'Inclusive Language Check',
@@ -77,9 +87,37 @@ const valChecks = [
 
 // METHODS
 
+function articlesCheck (silent) {
+  const warnings = checkArticles(modelStore[docsStore.activeDocument.id].getValue())
+  if (warnings.length < 1) {
+    editorStore.setValidationCheckState('articles', 1)
+    if (!silent) {
+      $q.notify({
+        message: 'Looks good!',
+        caption: 'No bad usage of indefinite articles found.',
+        color: 'positive',
+        icon: 'mdi-alpha-a-box-outline'
+      })
+    }
+  } else {
+    editorStore.setValidationCheckState('articles', -2)
+    if (!silent) {
+      setTimeout(() => {
+        EVENT_BUS.emit('editorCommand', 'editor.action.marker.next')
+      })
+    }
+  }
+
+  if (silent) {
+    editorStore.errors.push(...warnings)
+  } else {
+    editorStore.errors = warnings
+  }
+}
+
 function inclusiveLangCheck (silent = false) {
-  editorStore.errors = checkInclusiveLanguage(modelStore[docsStore.activeDocument.id].getValue())
-  if (editorStore.errors.length < 1) {
+  const warnings = checkInclusiveLanguage(modelStore[docsStore.activeDocument.id].getValue())
+  if (warnings.length < 1) {
     editorStore.setValidationCheckState('inclusiveLanguage', 1)
     if (!silent) {
       $q.notify({
@@ -90,18 +128,24 @@ function inclusiveLangCheck (silent = false) {
       })
     }
   } else {
-    editorStore.setValidationCheckState('inclusiveLanguage', -1)
+    editorStore.setValidationCheckState('inclusiveLanguage', -2)
     if (!silent) {
       setTimeout(() => {
         EVENT_BUS.emit('editorCommand', 'editor.action.marker.next')
       })
     }
   }
+
+  if (silent) {
+    editorStore.errors.push(...warnings)
+  } else {
+    editorStore.errors = warnings
+  }
 }
 
 function nonAsciiCheck (silent = false) {
-  editorStore.errors = checkNonAscii(modelStore[docsStore.activeDocument.id].getValue())
-  if (editorStore.errors.length < 1) {
+  const infos = checkNonAscii(modelStore[docsStore.activeDocument.id].getValue())
+  if (infos.length < 1) {
     editorStore.setValidationCheckState('nonAscii', 1)
     if (!silent) {
       $q.notify({
@@ -112,16 +156,24 @@ function nonAsciiCheck (silent = false) {
       })
     }
   } else {
-    editorStore.setValidationCheckState('nonAscii', -1)
+    editorStore.setValidationCheckState('nonAscii', 2)
     if (!silent) {
       setTimeout(() => {
         EVENT_BUS.emit('editorCommand', 'editor.action.marker.next')
       })
     }
   }
+
+  if (silent) {
+    editorStore.errors.push(...infos)
+  } else {
+    editorStore.errors = infos
+  }
 }
 
 function runAllChecks () {
+  editorStore.clearErrors()
+  articlesCheck(true)
   inclusiveLangCheck(true)
   nonAsciiCheck(true)
 
