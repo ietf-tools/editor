@@ -373,49 +373,49 @@ export function registerMenu (mainWindow) {
         }
       ]
     },
-    {
-      label: 'Insert',
-      submenu: [
-        {
-          label: 'Insert BCP14 Tags'
-        },
-        {
-          label: 'Insert Empty Reference'
-        },
-        {
-          label: 'Create Table'
-        }
-      ]
-    },
-    {
-      label: 'Tools',
-      submenu: [
-        {
-          label: 'Validate RFCXML'
-        },
-        {
-          label: 'Check ID Nits',
-          click () {
-            mainWindow.webContents.send('editorAction', 'checkIdNits')
-          }
-        },
-        {
-          label: 'Check References'
-        },
-        {
-          label: 'Check non-ASCII'
-        },
-        {
-          label: 'Check PDF Fonts'
-        },
-        {
-          label: 'Check Inclusive Language'
-        },
-        {
-          label: 'Check SVG'
-        }
-      ]
-    },
+    // {
+    //   label: 'Insert',
+    //   submenu: [
+    //     {
+    //       label: 'Insert BCP14 Tags'
+    //     },
+    //     {
+    //       label: 'Insert Empty Reference'
+    //     },
+    //     {
+    //       label: 'Create Table'
+    //     }
+    //   ]
+    // },
+    // {
+    //   label: 'Tools',
+    //   submenu: [
+    //     {
+    //       label: 'Validate RFCXML'
+    //     },
+    //     {
+    //       label: 'Check ID Nits',
+    //       click () {
+    //         mainWindow.webContents.send('editorAction', 'checkIdNits')
+    //       }
+    //     },
+    //     {
+    //       label: 'Check References'
+    //     },
+    //     {
+    //       label: 'Check non-ASCII'
+    //     },
+    //     {
+    //       label: 'Check PDF Fonts'
+    //     },
+    //     {
+    //       label: 'Check Inclusive Language'
+    //     },
+    //     {
+    //       label: 'Check SVG'
+    //     }
+    //   ]
+    // },
     {
       role: 'help',
       submenu: [

@@ -12,13 +12,14 @@ q-page.row.items-stretch
 </template>
 
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import * as monaco from 'monaco-editor'
 import { debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
 import { checkNits } from '@ietf-tools/idnits'
 import { modelStore } from 'src/stores/models'
+import { convertLSPRangeToMonaco, convertLSPSeverityToMonaco } from 'src/helpers/lsp'
 
 import { useEditorStore } from 'stores/editor'
 import { useDocsStore } from 'src/stores/docs'
@@ -126,7 +127,7 @@ const updateContentStore = debounce(ev => {
 }, 500)
 
 onMounted(async () => {
-  setTimeout(() => {
+  nextTick(() => {
     // -> Define Monaco Theme
     monaco.editor.defineTheme('ietf-dark', {
       base: 'vs-dark',
@@ -181,19 +182,19 @@ onMounted(async () => {
             version: 1
           },
           contentChanges: ev.changes.map(chg => ({
-            range: {
-              start: {
-                line: chg.range.startLineNumber + 1,
-                character: chg.range.startColumn + 1
-              },
-              end: {
-                line: chg.range.endLineNumber + 1,
-                character: chg.range.endColumn + 1
-              }
-            },
-            rangeLength: chg.rangeLength,
-            text: chg.text
-            // text: editor.getValue()
+            // range: {
+            //   start: {
+            //     line: chg.range.startLineNumber + 1,
+            //     character: chg.range.startColumn + 1
+            //   },
+            //   end: {
+            //     line: chg.range.endLineNumber + 1,
+            //     character: chg.range.endColumn + 1
+            //   }
+            // },
+            // rangeLength: chg.rangeLength,
+            // text: chg.text
+            text: editor.getValue()
           }))
         }
       })
@@ -245,7 +246,10 @@ onMounted(async () => {
 
     // -> Post init
     editor.focus()
-  }, 500)
+
+    // -> Finish
+    docOpenFinished(docsStore.activeDocument)
+  })
 
   // WATCHERS
 
@@ -255,6 +259,7 @@ onMounted(async () => {
         editorStore.clearErrors()
       }
       editor.setModel(modelStore[docsStore.activeDocument.id])
+      docOpenFinished(docsStore.activeDocument)
     }
   })
 
@@ -316,184 +321,253 @@ onMounted(async () => {
     }
   })
 
-  window.ipcBridge.subscribe('editorAction', (evt, action) => {
-    switch (action) {
-      case 'addCursorAbove': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.insertCursorAbove')
-        })
-        break
-      }
-      case 'addCursorBelow': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.insertCursorBelow')
-        })
-        break
-      }
-      case 'addCursorsToLineEnds': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.insertCursorAtEndOfEachLineSelected')
-        })
-        break
-      }
-      case 'addNextOccurence': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.addSelectionToNextFindMatch')
-        })
-        break
-      }
-      case 'addPreviousOccurence': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.addSelectionToPreviousFindMatch')
-        })
-        break
-      }
-      case 'checkIdNits': {
-        validateContent()
-        break
-      }
-      case 'commandPalette': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.quickCommand')
-        })
-        break
-      }
-      case 'copyLineDown': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.copyLinesDownAction')
-        })
-        break
-      }
-      case 'copyLineUp': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.copyLinesUpAction')
-        })
-        break
-      }
-      case 'duplicateSelection': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.duplicateSelection')
-        })
-        break
-      }
-      case 'expandSelection': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.smartSelect.expand')
-        })
-        break
-      }
-      case 'find': {
-        editor.trigger('menu', 'actions.find')
-        break
-      }
-      case 'findAndReplace': {
-        editor.trigger('menu', 'editor.action.startFindReplaceAction')
-        break
-      }
-      case 'findNext': {
-        editor.trigger('menu', 'editor.action.nextMatchFindAction')
-        break
-      }
-      case 'findPrevious': {
-        editor.trigger('menu', 'editor.action.previousMatchFindAction')
-        break
-      }
-      case 'moveLineDown': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.moveLinesDownAction')
-        })
-        break
-      }
-      case 'moveLineUp': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.moveLinesUpAction')
-        })
-        break
-      }
-      case 'previewPane': {
-        editorStore.previewPaneShown = !editorStore.previewPaneShown
-        break
-      }
-      case 'redo': {
-        editor.trigger('menu', 'redo')
-        editor.focus()
-        break
-      }
-      case 'selectAll': {
-        editor.focus()
-        setTimeout(() => {
-          const range = editor.getModel().getFullModelRange()
-          editor.setSelection(range)
-        })
-        break
-      }
-      case 'selectAllOccurences': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.selectHighlights')
-        })
-        break
-      }
-      case 'shrinkSelection': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.smartSelect.shrink')
-        })
-        break
-      }
-      case 'undo': {
-        editor.trigger('menu', 'undo')
-        editor.focus()
-        break
-      }
-      case 'wordWrap': {
-        editorStore.wordWrap = !editorStore.wordWrap
-        break
-      }
-      case 'zoomIn': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.fontZoomIn')
-        })
-        break
-      }
-      case 'zoomOut': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.fontZoomOut')
-        })
-        break
-      }
-      case 'zoomReset': {
-        editor.focus()
-        setTimeout(() => {
-          editor.trigger('menu', 'editor.action.fontZoomReset')
-        })
-        break
+  // -> Register handlers
+  window.ipcBridge.subscribe('editorAction', handleEditorActions)
+  window.ipcBridge.subscribe('lspNotification', handleLspNotification)
+  EVENT_BUS.on('editorCommand', handleEditorCommand)
+  EVENT_BUS.on('lspCommand', handleLspCommand)
+
+  // -> Remove initial loading screen
+  document.getElementById('app-loading')?.remove()
+})
+
+// BEFORE UNMOUNT
+
+onBeforeUnmount(() => {
+  // -> Deregister handlers
+  window.ipcBridge.unsubscribe('lspNotification', handleLspNotification)
+  EVENT_BUS.off('editorCommand', handleEditorCommand)
+  EVENT_BUS.off('lspCommand', handleLspCommand)
+})
+
+// METHODS
+
+function docOpenFinished (doc) {
+  window.ipcBridge.emit('lspSendNotification', {
+    method: 'textDocument/didOpen',
+    params: {
+      textDocument: {
+        uri: doc.uri,
+        languageId: doc.type,
+        version: 1,
+        text: doc.data
       }
     }
   })
+}
 
-  document.getElementById('app-loading')?.remove()
-})
-EVENT_BUS.on('editorCommand', cmd => {
+function handleEditorActions (evt, action) {
+  switch (action) {
+    case 'addCursorAbove': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.insertCursorAbove')
+      })
+      break
+    }
+    case 'addCursorBelow': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.insertCursorBelow')
+      })
+      break
+    }
+    case 'addCursorsToLineEnds': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.insertCursorAtEndOfEachLineSelected')
+      })
+      break
+    }
+    case 'addNextOccurence': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.addSelectionToNextFindMatch')
+      })
+      break
+    }
+    case 'addPreviousOccurence': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.addSelectionToPreviousFindMatch')
+      })
+      break
+    }
+    case 'checkIdNits': {
+      validateContent()
+      break
+    }
+    case 'commandPalette': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.quickCommand')
+      })
+      break
+    }
+    case 'copyLineDown': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.copyLinesDownAction')
+      })
+      break
+    }
+    case 'copyLineUp': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.copyLinesUpAction')
+      })
+      break
+    }
+    case 'duplicateSelection': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.duplicateSelection')
+      })
+      break
+    }
+    case 'expandSelection': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.smartSelect.expand')
+      })
+      break
+    }
+    case 'find': {
+      editor.trigger('menu', 'actions.find')
+      break
+    }
+    case 'findAndReplace': {
+      editor.trigger('menu', 'editor.action.startFindReplaceAction')
+      break
+    }
+    case 'findNext': {
+      editor.trigger('menu', 'editor.action.nextMatchFindAction')
+      break
+    }
+    case 'findPrevious': {
+      editor.trigger('menu', 'editor.action.previousMatchFindAction')
+      break
+    }
+    case 'moveLineDown': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.moveLinesDownAction')
+      })
+      break
+    }
+    case 'moveLineUp': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.moveLinesUpAction')
+      })
+      break
+    }
+    case 'previewPane': {
+      editorStore.previewPaneShown = !editorStore.previewPaneShown
+      break
+    }
+    case 'redo': {
+      editor.trigger('menu', 'redo')
+      editor.focus()
+      break
+    }
+    case 'selectAll': {
+      editor.focus()
+      setTimeout(() => {
+        const range = editor.getModel().getFullModelRange()
+        editor.setSelection(range)
+      })
+      break
+    }
+    case 'selectAllOccurences': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.selectHighlights')
+      })
+      break
+    }
+    case 'shrinkSelection': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.smartSelect.shrink')
+      })
+      break
+    }
+    case 'undo': {
+      editor.trigger('menu', 'undo')
+      editor.focus()
+      break
+    }
+    case 'wordWrap': {
+      editorStore.wordWrap = !editorStore.wordWrap
+      break
+    }
+    case 'zoomIn': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.fontZoomIn')
+      })
+      break
+    }
+    case 'zoomOut': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.fontZoomOut')
+      })
+      break
+    }
+    case 'zoomReset': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'editor.action.fontZoomReset')
+      })
+      break
+    }
+  }
+}
+
+async function validateContent () {
+  const enc = new TextEncoder()
+  const result = await checkNits(enc.encode(editorStore.content).buffer, 'draft-ietf-ccamp-mw-topo-yang-08.xml', {
+    mode: 'normal',
+    offline: false
+  })
+  console.info(result)
+}
+
+async function handleLspNotification (evt, data) {
+  switch (data.method) {
+    case 'textDocument/publishDiagnostics': {
+      const modelId = docsStore.getDocumentByURI(data.params.uri)?.id
+      if (modelId) {
+        monaco.editor.setModelMarkers(modelStore[modelId], 'lsp', data.params.diagnostics.map(d => {
+          return {
+            code: d.code,
+            message: d.message,
+            source: d.source,
+            severity: convertLSPSeverityToMonaco(d.severity),
+            ...convertLSPRangeToMonaco(d.range)
+          }
+        }))
+      } else {
+        console.warn(`textDocument/publishDiagnostics: opened document ${data.params.uri} not found.`)
+      }
+      break
+    }
+    default: {
+      console.info(data)
+      break
+    }
+  }
+}
+
+function handleEditorCommand (cmd) {
   if (editor) {
     editor.trigger('drawer', cmd)
   }
-})
-EVENT_BUS.on('lspCommand', async cmd => {
+}
+
+async function handleLspCommand (cmd) {
   switch (cmd) {
     case 'formatting': {
       try {
@@ -525,14 +599,5 @@ EVENT_BUS.on('lspCommand', async cmd => {
       break
     }
   }
-})
-
-async function validateContent () {
-  const enc = new TextEncoder()
-  const result = await checkNits(enc.encode(editorStore.content).buffer, 'draft-ietf-ccamp-mw-topo-yang-08.xml', {
-    mode: 'normal',
-    offline: false
-  })
-  console.info(result)
 }
 </script>

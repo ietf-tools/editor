@@ -4,19 +4,19 @@ import { MarkerSeverity } from 'monaco-editor/esm/vs/editor/editor.api'
 const dictionnary = [
   {
     triggers: ['whitelist'],
-    suggestion: 'allowlist, passlist'
+    suggestion: 'allowlist or passlist'
   },
   {
     triggers: ['blacklist'],
-    suggestion: 'denylist, blocklist'
+    suggestion: 'denylist or blocklist'
   },
   {
     triggers: ['master'],
-    suggestion: 'primary, main, host, leader, orchestrator'
+    suggestion: 'primary, main, host, leader or orchestrator'
   },
   {
     triggers: ['slave'],
-    suggestion: 'secondary, replica, target, follower, worker'
+    suggestion: 'secondary, replica, target, follower or worker'
   },
   {
     triggers: ['native'],
@@ -24,7 +24,7 @@ const dictionnary = [
   },
   {
     triggers: ['grandfather'],
-    suggestion: 'exemption, approve'
+    suggestion: 'exemption or approve'
   },
   {
     triggers: ['he/she', 'he or she'],
@@ -32,7 +32,7 @@ const dictionnary = [
   },
   {
     triggers: ['cripple', 'handicap'],
-    suggestion: 'impair, impeded'
+    suggestion: 'impair or impeded'
   }
 ]
 

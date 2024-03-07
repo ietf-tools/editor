@@ -9,6 +9,10 @@ contextBridge.exposeInMainWorld('ipcBridge', {
     ipcRenderer.on(channel, callback)
   },
 
+  unsubscribe (channel, callback) {
+    ipcRenderer.off(channel, callback)
+  },
+
   versions: process.versions,
 
   promptSelectDirectory: (current, title) => ipcRenderer.invoke('promptSelectDirectory', { current, title }),

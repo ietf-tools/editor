@@ -82,10 +82,10 @@ jobs:
             platform: darwin
             arch: x64
             ext: dmg
-          - os: macos-latest
-            platform: darwin
-            arch: arm64
-            ext: dmg
+          # - os: macos-latest
+          #   platform: darwin
+          #   arch: arm64
+          #   ext: dmg
           - os: windows-latest
             platform: win32
             arch: x64

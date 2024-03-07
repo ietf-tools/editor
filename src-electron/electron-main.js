@@ -75,7 +75,12 @@ function createWindow () {
 
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
-    // mainWindow.webContents.openDevTools()
+    mainWindow.webContents.openDevTools({
+      activate: false
+    })
+    setTimeout(() => {
+      mainWindow.moveTop()
+    }, 500)
   }
   // } else {
   //   // we're on production; no access to devtools pls

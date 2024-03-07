@@ -17,6 +17,15 @@ export const useDocsStore = defineStore('docs', {
   },
   actions: {
     /**
+     * Retrieves a document from the opened documents list based on the provided URI.
+     *
+     * @param {string} uri - The URI of the document to retrieve.
+     * @returns {Object|null} - The document object if found, or null if not found.
+     */
+    getDocumentByURI (uri) {
+      return find(this.opened, ['uri', uri])
+    },
+    /**
      * Open / Create a New Document
      *
      * @param {Object} doc Document options
@@ -54,18 +63,6 @@ export const useDocsStore = defineStore('docs', {
       }
       modelStore[docId] = monaco.editor.createModel(doc.data, lang, docURI)
       this.opened.push(newDoc)
-
-      window.ipcBridge.emit('lspSendNotification', {
-        method: 'textDocument/didOpen',
-        params: {
-          textDocument: {
-            uri: newDoc.uri,
-            languageId: newDoc.type,
-            version: 1,
-            text: newDoc.data
-          }
-        }
-      })
 
       this.active = docId
     },
