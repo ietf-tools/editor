@@ -19,7 +19,7 @@ import { debounce } from 'lodash-es'
 import { DateTime } from 'luxon'
 import { checkNits } from '@ietf-tools/idnits'
 import { modelStore } from 'src/stores/models'
-import { convertLSPRangeToMonaco, convertLSPSeverityToMonaco } from 'src/helpers/lsp'
+import * as lspHelpers from 'src/helpers/lsp'
 
 import { useEditorStore } from 'stores/editor'
 import { useDocsStore } from 'src/stores/docs'
@@ -109,10 +109,109 @@ monaco.languages.setMonarchTokensProvider('xmlrfc', {
     ]
   }
 })
-monaco.languages.setLanguageConfiguration('xmlrfc', {
-  indentationRules: {
-    increaseIndentPattern: /<(?!\?|[^>]*\/>)([-_.A-Za-z0-9]+)(?=\s|>)\b[^>]*>(?!.*<\/\1>)|<!--(?!.*-->)|\{[^}"']*$/,
-    decreaseIndentPattern: /^\s*(<\/(?!html)[-_.A-Za-z0-9]+\b[^>]*>|-->|})/
+// monaco.languages.setLanguageConfiguration('xmlrfc', {
+//   indentationRules: {
+//     increaseIndentPattern: /<(?!\?|[^>]*\/>)([-_.A-Za-z0-9]+)(?=\s|>)\b[^>]*>(?!.*<\/\1>)|<!--(?!.*-->)|\{[^}"']*$/,
+//     decreaseIndentPattern: /^\s*(<\/(?!html)[-_.A-Za-z0-9]+\b[^>]*>|-->|})/
+//   }
+// })
+
+monaco.languages.registerFoldingRangeProvider('xmlrfc', {
+  provideFoldingRanges: async (model, ctx, cancelToken) => {
+    const foldingInfo = await window.ipcBridge.lspSendRequest('textDocument/foldingRange', {
+      textDocument: {
+        uri: model.uri.toString()
+      }
+    })
+    if (foldingInfo) {
+      return foldingInfo.map(f => ({
+        start: f.startLine + 1,
+        end: f.endLine + 1,
+        kind: lspHelpers.convertLSPFoldingRangeKindToMonaco(f.kind)
+      }))
+    } else {
+      return []
+    }
+  }
+})
+
+monaco.languages.registerDocumentFormattingEditProvider('xmlrfc', {
+  provideDocumentFormattingEdits: async (model, opts, cancelToken) => {
+    const formattingInfo = await window.ipcBridge.lspSendRequest('textDocument/formatting', {
+      textDocument: {
+        uri: model.uri.toString()
+      },
+      options: {
+        tabSize: opts.tabSize,
+        insertSpaces: opts.insertSpaces,
+        trimTrailingWhitespace: true,
+        insertFinalNewline: true,
+        trimFinalNewlines: true
+      }
+    })
+    return formattingInfo?.map(f => ({
+      range: {
+        endColumn: f.range.end.character + 1,
+        endLineNumber: f.range.end.line + 1,
+        startColumn: f.range.start.character + 1,
+        startLineNumber: f.range.start.line + 1
+      },
+      text: f.newText
+    }))
+  }
+})
+
+monaco.languages.registerDocumentRangeFormattingEditProvider('xmlrfc', {
+  provideDocumentRangeFormattingEdits: async (model, range, opts, cancelToken) => {
+    const formattingInfo = await window.ipcBridge.lspSendRequest('textDocument/rangeFormatting', {
+      textDocument: {
+        uri: model.uri.toString()
+      },
+      range: {
+        start: {
+          line: range.startLineNumber - 1,
+          character: range.startColumn - 1
+        },
+        end: {
+          line: range.endLineNumber - 1,
+          character: range.endColumn - 1
+        }
+      },
+      options: {
+        tabSize: opts.tabSize,
+        insertSpaces: opts.insertSpaces,
+        trimTrailingWhitespace: true,
+        insertFinalNewline: true,
+        trimFinalNewlines: true
+      }
+    })
+    return formattingInfo?.map(f => ({
+      range: {
+        endColumn: f.range.end.character + 1,
+        endLineNumber: f.range.end.line + 1,
+        startColumn: f.range.start.character + 1,
+        startLineNumber: f.range.start.line + 1
+      },
+      text: f.newText
+    }))
+  }
+})
+
+monaco.languages.registerHoverProvider('xmlrfc', {
+  provideHover: async (model, position, cancelToken) => {
+    const hoverInfo = await window.ipcBridge.lspSendRequest('textDocument/hover', {
+      textDocument: {
+        uri: model.uri.toString()
+      },
+      position: {
+        line: position.lineNumber - 1,
+        character: position.column - 1
+      }
+    })
+    if (hoverInfo) {
+      // TODO: Handle hover info
+      console.info(hoverInfo)
+    }
   }
 })
 // Allow `*` in word pattern for quick styling (toggle bold/italic without selection)
@@ -203,8 +302,8 @@ onMounted(async () => {
     // -> Handle cursor movement
     editor.onDidChangeCursorPosition(ev => {
       editorStore.$patch({
-        line: editor.getPosition().lineNumber,
-        col: editor.getPosition().column
+        line: ev.position.lineNumber,
+        col: ev.position.column
       })
     })
 
@@ -324,7 +423,7 @@ onMounted(async () => {
   // -> Register handlers
   window.ipcBridge.subscribe('editorAction', handleEditorActions)
   window.ipcBridge.subscribe('lspNotification', handleLspNotification)
-  EVENT_BUS.on('editorCommand', handleEditorCommand)
+  EVENT_BUS.on('editorAction', handleEditorActions)
   EVENT_BUS.on('lspCommand', handleLspCommand)
 
   // -> Remove initial loading screen
@@ -335,8 +434,9 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   // -> Deregister handlers
+  window.ipcBridge.subscribe('editorAction', handleEditorActions)
   window.ipcBridge.unsubscribe('lspNotification', handleLspNotification)
-  EVENT_BUS.off('editorCommand', handleEditorCommand)
+  EVENT_BUS.off('editorAction', handleEditorActions)
   EVENT_BUS.off('lspCommand', handleLspCommand)
 })
 
@@ -357,7 +457,8 @@ function docOpenFinished (doc) {
 }
 
 function handleEditorActions (evt, action) {
-  switch (action) {
+  const properAction = action ?? evt
+  switch (properAction) {
     case 'addCursorAbove': {
       editor.focus()
       setTimeout(() => {
@@ -446,6 +547,14 @@ function handleEditorActions (evt, action) {
     }
     case 'findPrevious': {
       editor.trigger('menu', 'editor.action.previousMatchFindAction')
+      break
+    }
+    case 'format': {
+      editor.trigger('menu', 'editor.action.formatDocument')
+      break
+    }
+    case 'markerNext': {
+      editor.trigger('menu', 'editor.action.marker.next')
       break
     }
     case 'moveLineDown': {
@@ -545,8 +654,8 @@ async function handleLspNotification (evt, data) {
             code: d.code,
             message: d.message,
             source: d.source,
-            severity: convertLSPSeverityToMonaco(d.severity),
-            ...convertLSPRangeToMonaco(d.range)
+            severity: lspHelpers.convertLSPSeverityToMonaco(d.severity),
+            ...lspHelpers.convertLSPRangeToMonaco(d.range)
           }
         }))
       } else {
@@ -561,43 +670,7 @@ async function handleLspNotification (evt, data) {
   }
 }
 
-function handleEditorCommand (cmd) {
-  if (editor) {
-    editor.trigger('drawer', cmd)
-  }
-}
-
 async function handleLspCommand (cmd) {
-  switch (cmd) {
-    case 'formatting': {
-      try {
-        const resp = await window.ipcBridge.lspSendRequest('textDocument/formatting', {
-          textDocument: {
-            uri: `${docsStore.activeDocument.uri}` // interpolation required for correct var cloning
-          },
-          options: {
-            tabSize: editorStore.tabSize ?? 2,
-            insertSpaces: true,
-            trimTrailingWhitespace: true,
-            insertFinalNewline: true,
-            trimFinalNewlines: true
-          }
-        })
-        editor.getModel().pushEditOperations([], resp.map(op => ({
-          range: {
-            endColumn: op.range.end.character + 1,
-            endLineNumber: op.range.end.line + 1,
-            startColumn: op.range.start.character + 1,
-            startLineNumber: op.range.start.line + 1
-          },
-          text: op.newText
-        })), () => null)
-        editor.getModel().pushStackElement()
-      } catch (err) {
-        console.warn(err)
-      }
-      break
-    }
-  }
+
 }
 </script>

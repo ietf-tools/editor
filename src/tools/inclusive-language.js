@@ -45,7 +45,7 @@ export function checkInclusiveLanguage (text) {
     for (const match of line.matchAll(matchRgx)) {
       const dictEntry = find(dictionnary, d => d.triggers.includes(match[1].toLowerCase()))
       occurences.push({
-        message: `Consider using "${dictEntry.suggestion}" instead.`,
+        message: `Consider using ${dictEntry.suggestion} instead.`,
         severity: MarkerSeverity.Warning,
         startLineNumber: lineIdx + 1,
         startColumn: match.index + 2,

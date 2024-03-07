@@ -66,7 +66,7 @@ const docType = computed(() => {
 // METHODS
 
 function showNextError () {
-  EVENT_BUS.emit('editorCommand', 'editor.action.marker.next')
+  EVENT_BUS.emit('editorAction', 'markerNext')
 }
 </script>
 

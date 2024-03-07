@@ -231,6 +231,7 @@ export default {
     console.info('--- OUTGOING - REQUEST ---')
     console.info(JSON.stringify({
       jsonrpc: '2.0',
+      id: this.requestIndex,
       method,
       ...(params && { params })
     }, null, 2))

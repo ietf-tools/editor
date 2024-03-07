@@ -37,12 +37,12 @@ q-separator.q-my-sm(inset)
     .text-caption.text-light-blue-3
       strong Tools
 q-list
-  q-item(clickable @click='reindent')
+  q-item(clickable @click='reformat')
     q-item-section(side)
       q-icon(name='mdi-page-previous-outline' size='xs' color='purple-2')
     q-item-section
-      q-item-label Reindent
-      q-item-label.text-purple-2(caption) Reformat Document Indentation
+      q-item-label Reformat
+      q-item-label.text-purple-2(caption) Reformat Document and Fix Indentation
 </template>
 
 <script setup>
@@ -103,7 +103,7 @@ function articlesCheck (silent) {
     editorStore.setValidationCheckState('articles', -2)
     if (!silent) {
       setTimeout(() => {
-        EVENT_BUS.emit('editorCommand', 'editor.action.marker.next')
+        EVENT_BUS.emit('editorAction', 'markerNext')
       })
     }
   }
@@ -131,7 +131,7 @@ function inclusiveLangCheck (silent = false) {
     editorStore.setValidationCheckState('inclusiveLanguage', -2)
     if (!silent) {
       setTimeout(() => {
-        EVENT_BUS.emit('editorCommand', 'editor.action.marker.next')
+        EVENT_BUS.emit('editorAction', 'markerNext')
       })
     }
   }
@@ -159,7 +159,7 @@ function nonAsciiCheck (silent = false) {
     editorStore.setValidationCheckState('nonAscii', 2)
     if (!silent) {
       setTimeout(() => {
-        EVENT_BUS.emit('editorCommand', 'editor.action.marker.next')
+        EVENT_BUS.emit('editorAction', 'markerNext')
       })
     }
   }
@@ -186,12 +186,17 @@ function runAllChecks () {
     })
   } else {
     setTimeout(() => {
-      EVENT_BUS.emit('editorCommand', 'editor.action.marker.next')
+      EVENT_BUS.emit('editorAction', 'markerNext')
     })
   }
 }
 
-function reindent () {
-  EVENT_BUS.emit('lspCommand', 'formatting')
+function reformat () {
+  EVENT_BUS.emit('editorAction', 'format')
+  $q.notify({
+    message: 'Document reformatted succesfully',
+    color: 'positive',
+    icon: 'mdi-page-previous-outline'
+  })
 }
 </script>
