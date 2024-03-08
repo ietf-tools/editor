@@ -116,6 +116,25 @@ monaco.languages.setMonarchTokensProvider('xmlrfc', {
 //   }
 // })
 
+monaco.languages.registerCompletionItemProvider('xmlrfc', {
+  provideCompletionItems: async (model, pos, ctx, cancelToken) => {
+    const completionInfo = await window.ipcBridge.lspSendRequest('textDocument/completion', {
+      textDocument: {
+        uri: model.uri.toString()
+      },
+      position: {
+        line: pos.lineNumber - 1,
+        character: pos.column - 1
+      },
+      context: {
+        triggerCharacter: ctx.triggerCharacter,
+        triggerKind: ctx.triggerKind + 1
+      }
+    })
+    return completionInfo ? lspHelpers.convertLSPCompletionItemsToMonaco(completionInfo) : null
+  }
+})
+
 monaco.languages.registerFoldingRangeProvider('xmlrfc', {
   provideFoldingRanges: async (model, ctx, cancelToken) => {
     const foldingInfo = await window.ipcBridge.lspSendRequest('textDocument/foldingRange', {
@@ -198,14 +217,14 @@ monaco.languages.registerDocumentRangeFormattingEditProvider('xmlrfc', {
 })
 
 monaco.languages.registerHoverProvider('xmlrfc', {
-  provideHover: async (model, position, cancelToken) => {
+  provideHover: async (model, pos, cancelToken) => {
     const hoverInfo = await window.ipcBridge.lspSendRequest('textDocument/hover', {
       textDocument: {
         uri: model.uri.toString()
       },
       position: {
-        line: position.lineNumber - 1,
-        character: position.column - 1
+        line: pos.lineNumber - 1,
+        character: pos.column - 1
       }
     })
     if (hoverInfo) {

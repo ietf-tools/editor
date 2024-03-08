@@ -1,5 +1,33 @@
-import { MarkerSeverity } from 'monaco-editor/esm/vs/editor/editor.api'
-import { FoldingRangeKind } from 'monaco-editor/esm/vs/editor/common/languages'
+import * as monaco from 'monaco-editor'
+
+const completionItemKindMapping = [
+  null,
+  monaco.languages.CompletionItemKind.Text,
+  monaco.languages.CompletionItemKind.Method,
+  monaco.languages.CompletionItemKind.Function,
+  monaco.languages.CompletionItemKind.Constructor,
+  monaco.languages.CompletionItemKind.Field,
+  monaco.languages.CompletionItemKind.Variable,
+  monaco.languages.CompletionItemKind.Class,
+  monaco.languages.CompletionItemKind.Interface,
+  monaco.languages.CompletionItemKind.Module,
+  monaco.languages.CompletionItemKind.Property,
+  monaco.languages.CompletionItemKind.Unit,
+  monaco.languages.CompletionItemKind.Value,
+  monaco.languages.CompletionItemKind.Enum,
+  monaco.languages.CompletionItemKind.Keyword,
+  monaco.languages.CompletionItemKind.Snippet,
+  monaco.languages.CompletionItemKind.Color,
+  monaco.languages.CompletionItemKind.File,
+  monaco.languages.CompletionItemKind.Reference,
+  monaco.languages.CompletionItemKind.Folder,
+  monaco.languages.CompletionItemKind.EnumMember,
+  monaco.languages.CompletionItemKind.Constant,
+  monaco.languages.CompletionItemKind.Struct,
+  monaco.languages.CompletionItemKind.Event,
+  monaco.languages.CompletionItemKind.Operator,
+  monaco.languages.CompletionItemKind.TypeParameter
+]
 
 /**
  * Convert a marker severity from an LSP server to a Monaco editor marker severity
@@ -10,13 +38,13 @@ import { FoldingRangeKind } from 'monaco-editor/esm/vs/editor/common/languages'
 export function convertLSPSeverityToMonaco (severity) {
   switch (severity) {
     case 1:
-      return MarkerSeverity.Error
+      return monaco.MarkerSeverity.Error
     case 2:
-      return MarkerSeverity.Warning
+      return monaco.MarkerSeverity.Warning
     case 3:
-      return MarkerSeverity.Info
+      return monaco.MarkerSeverity.Info
     default:
-      return MarkerSeverity.Hint
+      return monaco.MarkerSeverity.Hint
   }
 }
 
@@ -44,12 +72,102 @@ export function convertLSPRangeToMonaco (range) {
 export function convertLSPFoldingRangeKindToMonaco (kind) {
   switch (kind) {
     case 'comment':
-      return FoldingRangeKind.Comment
+      return monaco.languages.FoldingRangeKind.Comment
     case 'imports':
-      return FoldingRangeKind.Imports
+      return monaco.languages.FoldingRangeKind.Imports
     case 'region':
-      return FoldingRangeKind.Region
+      return monaco.languages.FoldingRangeKind.Region
     default:
-      return FoldingRangeKind.Other
+      return monaco.languages.FoldingRangeKind.Other
   }
+}
+
+/**
+ * Convert a completion item kind from LSP server to Monaco editor completion item kind
+ *
+ * @param {number} kind LSP Completion Item Kind
+ * @returns Monaco Completion Item Kind
+ */
+export function convertLSPCompletionItemKindToMonaco (kind) {
+  return completionItemKindMapping[kind] ?? monaco.languages.CompletionItemKind.Text
+}
+
+/**
+ * Converts LSP completion items to Monaco suggestions.
+ *
+ * @param {Object} resp The response object containing LSP completion items.
+ * @returns {Object} Monaco CompletionList.
+ */
+export function convertLSPCompletionItemsToMonaco (resp) {
+  const itemDefaults = handleCompletionItemProperties({}, resp.itemDefaults)
+
+  return {
+    incomplete: resp.isIncomplete,
+    suggestions: resp.items.map(c => ({
+      ...itemDefaults,
+      ...handleCompletionItemProperties(itemDefaults, c)
+    }))
+  }
+}
+
+/**
+ * Converts a LSP completion item into a Monaco CompletionItem
+ *
+ * @param {Object} props LSP completion item.
+ * @returns {Object} Monaco CompletionItem
+ */
+function handleCompletionItemProperties (itemDefaults, props) {
+  const item = {
+    insertTextRules: itemDefaults.insertTextRules ?? 0
+  }
+
+  if (props.commitCharacters?.length) {
+    item.commitCharacters = props.commitCharacters
+  }
+  if (props.detail) {
+    item.detail = props.detail
+  }
+  if (props.documentation) {
+    if (typeof props.documentation === 'string' || props.documentation?.kind === 'plaintext') {
+      item.documentation = props.documentation
+    } else if (props.documentation?.kind === 'markdown') {
+      item.documentation = {
+        value: props.documentation.value
+      }
+    }
+  }
+  if (props.filterText) {
+    item.filterText = props.filterText
+  }
+  if (props.textEditText) {
+    item.insertText = props.textEditText
+  }
+  if (props.insertTextFormat === 2) {
+    item.insertTextRules = item.insertTextRules | 4
+  }
+  if (props.insertTextMode === 2) {
+    item.insertTextRules = item.insertTextRules | 1
+  }
+  if (props.kind) {
+    item.kind = completionItemKindMapping[props.kind] ?? monaco.languages.CompletionItemKind.Text
+  }
+  if (props.label) {
+    item.label = props.label
+  }
+  if (props.preselect) {
+    item.preselect = props.preselect
+  }
+  if (props.editRange) {
+    item.range = {
+      startLineNumber: props.editRange.start.line + 1,
+      startColumn: props.editRange.start.character + 1,
+      endLineNumber: props.editRange.end.line + 1,
+      endColumn: props.editRange.end.character + 1
+    }
+  }
+  if (props.sortText) {
+    item.sortText = props.sortText
+  }
+
+  return item
 }
