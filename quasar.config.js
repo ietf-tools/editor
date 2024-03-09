@@ -217,27 +217,27 @@ export default configure((/* ctx */) => {
 
       bundler: 'builder', // 'packager' or 'builder'
 
-      packager: {
-        // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
+      // packager: {
+      //   // https://github.com/electron-userland/electron-packager/blob/master/docs/api.md#options
 
-        appCopyright: 'IETF Trust',
-        arch: ['x64', 'arm64'],
-        // executableName: 'draftforge',
-        name: 'ietf-draftforge',
-        overwrite: true,
-        // platform: ['darwin', 'linux', 'win32'],
+      //   appCopyright: 'IETF Trust',
+      //   arch: ['x64', 'arm64'],
+      //   // executableName: 'draftforge',
+      //   name: 'ietf-draftforge',
+      //   overwrite: true,
+      //   // platform: ['darwin', 'linux', 'win32'],
 
-        // OS X / Mac App Store
-        // appBundleId: '',
-        appCategoryType: 'public.app-category.productivity',
-        // osxSign: '',
-        // protocol: 'myapp://path',
+      //   // OS X / Mac App Store
+      //   // appBundleId: '',
+      //   appCategoryType: 'public.app-category.productivity',
+      //   // osxSign: '',
+      //   // protocol: 'myapp://path',
 
-        // Windows only
-        win32metadata: {
-          CompanyName: 'IETF'
-        }
-      },
+      //   // Windows only
+      //   win32metadata: {
+      //     CompanyName: 'IETF'
+      //   }
+      // },
 
       builder: {
         // https://www.electron.build/configuration/configuration

@@ -100,7 +100,7 @@ const { dialogRef, onDialogHide, onDialogOK, onDialogCancel } = useDialogPluginC
 // METHODS
 
 async function selectType (docType, tmpl) {
-  let data = ''
+  let data = '<?xml version="1.0" encoding="utf-8"?>'
 
   if (tmpl) {
     let tmplUrl = ''

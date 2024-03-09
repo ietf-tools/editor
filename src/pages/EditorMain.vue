@@ -117,6 +117,7 @@ monaco.languages.setMonarchTokensProvider('xmlrfc', {
 // })
 
 monaco.languages.registerCompletionItemProvider('xmlrfc', {
+  triggerCharacters: ['.', ':', '<', '"', '=', '/', '\\', '?', "'", '&', '#'],
   provideCompletionItems: async (model, pos, ctx, cancelToken) => {
     const completionInfo = await window.ipcBridge.lspSendRequest('textDocument/completion', {
       textDocument: {
@@ -218,19 +219,19 @@ monaco.languages.registerDocumentRangeFormattingEditProvider('xmlrfc', {
 
 monaco.languages.registerHoverProvider('xmlrfc', {
   provideHover: async (model, pos, cancelToken) => {
-    const hoverInfo = await window.ipcBridge.lspSendRequest('textDocument/hover', {
-      textDocument: {
-        uri: model.uri.toString()
-      },
-      position: {
-        line: pos.lineNumber - 1,
-        character: pos.column - 1
-      }
-    })
-    if (hoverInfo) {
-      // TODO: Handle hover info
-      console.info(hoverInfo)
-    }
+    // const hoverInfo = await window.ipcBridge.lspSendRequest('textDocument/hover', {
+    //   textDocument: {
+    //     uri: model.uri.toString()
+    //   },
+    //   position: {
+    //     line: pos.lineNumber - 1,
+    //     character: pos.column - 1
+    //   }
+    // })
+    // if (hoverInfo) {
+    //   // TODO: Handle hover info
+    //   console.info(hoverInfo)
+    // }
   }
 })
 // Allow `*` in word pattern for quick styling (toggle bold/italic without selection)
@@ -242,7 +243,7 @@ monaco.languages.setLanguageConfiguration('markdown', {
 const updateContentStore = debounce(ev => {
   docsStore.activeDocument.isModified = modelStore[docsStore.activeDocument.id].getValue() !== docsStore.activeDocument.data
   docsStore.activeDocument.lastModifiedAt = DateTime.utc()
-}, 500)
+}, 100)
 
 onMounted(async () => {
   nextTick(() => {
@@ -291,31 +292,32 @@ onMounted(async () => {
       if (editorStore.errors.length > 0 || editorStore.validationChecksDirty) {
         editorStore.clearErrors()
       }
-      updateContentStore(ev)
+
       window.ipcBridge.emit('lspSendNotification', {
         method: 'textDocument/didChange',
         params: {
           textDocument: {
-            uri: `${docsStore.activeDocument.uri}`, // interpolation required for correct var cloning
-            version: 1
+            uri: modelStore[docsStore.activeDocument.id].uri.toString(),
+            version: ev.versionId
           },
           contentChanges: ev.changes.map(chg => ({
-            // range: {
-            //   start: {
-            //     line: chg.range.startLineNumber + 1,
-            //     character: chg.range.startColumn + 1
-            //   },
-            //   end: {
-            //     line: chg.range.endLineNumber + 1,
-            //     character: chg.range.endColumn + 1
-            //   }
-            // },
-            // rangeLength: chg.rangeLength,
-            // text: chg.text
-            text: editor.getValue()
+            range: {
+              start: {
+                line: chg.range.startLineNumber - 1,
+                character: chg.range.startColumn - 1
+              },
+              end: {
+                line: chg.range.endLineNumber - 1,
+                character: chg.range.endColumn - 1
+              }
+            },
+            rangeLength: chg.rangeLength,
+            text: chg.text
           }))
         }
       })
+
+      updateContentStore(ev)
     })
 
     // -> Handle cursor movement

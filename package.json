@@ -15,6 +15,7 @@
     "@ietf-tools/idnits": "3.0.0-alpha.34",
     "@msgpack/msgpack": "3.0.0-beta2",
     "@quasar/extras": "1.16.9",
+    "ansicolor": "2.0.3",
     "fast-defer": "1.1.8",
     "got": "14.2.0",
     "isomorphic-git": "1.25.6",
