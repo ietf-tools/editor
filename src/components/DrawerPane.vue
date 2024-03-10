@@ -18,6 +18,7 @@ import { useEditorStore } from 'src/stores/editor'
 
 import DrawerFiles from 'src/components/DrawerFiles.vue'
 import DrawerGit from 'src/components/DrawerGit.vue'
+import DrawerChecks from 'src/components/DrawerChecks.vue'
 import DrawerTools from 'src/components/DrawerTools.vue'
 import DrawerSnippets from 'src/components/DrawerSnippets.vue'
 
@@ -26,6 +27,7 @@ const editorStore = useEditorStore()
 const panes = {
   DrawerFiles,
   DrawerGit,
+  DrawerChecks,
   DrawerTools,
   DrawerSnippets
 }

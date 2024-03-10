@@ -33,6 +33,7 @@ export const useEditorStore = defineStore('editor', {
     persistSession: true,
     previewPaneShown: false,
     restoreSession: false,
+    schemaValidationErrors: 0,
     tabSize: 2,
     theme: 'ietf-dark',
     translucencyEffects: true,

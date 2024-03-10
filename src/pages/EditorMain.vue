@@ -109,12 +109,6 @@ monaco.languages.setMonarchTokensProvider('xmlrfc', {
     ]
   }
 })
-// monaco.languages.setLanguageConfiguration('xmlrfc', {
-//   indentationRules: {
-//     increaseIndentPattern: /<(?!\?|[^>]*\/>)([-_.A-Za-z0-9]+)(?=\s|>)\b[^>]*>(?!.*<\/\1>)|<!--(?!.*-->)|\{[^}"']*$/,
-//     decreaseIndentPattern: /^\s*(<\/(?!html)[-_.A-Za-z0-9]+\b[^>]*>|-->|})/
-//   }
-// })
 
 monaco.languages.registerCompletionItemProvider('xmlrfc', {
   triggerCharacters: ['.', ':', '<', '"', '=', '/', '\\', '?', "'", '&', '#'],
@@ -679,6 +673,7 @@ async function handleLspNotification (evt, data) {
             ...lspHelpers.convertLSPRangeToMonaco(d.range)
           }
         }))
+        editorStore.schemaValidationErrors = data.params.diagnostics?.length ?? 0
       } else {
         console.warn(`textDocument/publishDiagnostics: opened document ${data.params.uri} not found.`)
       }

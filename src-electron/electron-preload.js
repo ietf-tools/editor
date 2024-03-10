@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('ipcBridge', {
 
   versions: process.versions,
 
+  createNewDocument: (type, filename, data) => ipcRenderer.invoke('createNewDocument', { type, filename, data }),
   promptSelectDirectory: (current, title) => ipcRenderer.invoke('promptSelectDirectory', { current, title }),
   readDirectory: (dirPath) => ipcRenderer.invoke('readDirectory', { dirPath }),
   fetchGitConfig: () => ipcRenderer.invoke('fetchGitConfig'),

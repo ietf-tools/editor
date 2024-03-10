@@ -131,11 +131,25 @@ async function selectType (docType, tmpl) {
     }
   }
 
-  docsStore.loadDocument({
-    type: docType,
-    fileName: `untitled-draft.${docType}`,
-    data
-  })
+  try {
+    const fileParts = await window.ipcBridge.createNewDocument(docType, `untitled-draft.${docType}`, data)
+    if (fileParts) {
+      docsStore.loadDocument({
+        type: docType,
+        path: fileParts.filePath,
+        fileName: fileParts.fileName,
+        data
+      })
+    }
+  } catch (err) {
+    $q.notify({
+      message: 'Failed to create document',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-page-previous-outline'
+    })
+  }
+
   onDialogOK()
 }
 </script>

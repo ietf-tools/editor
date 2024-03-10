@@ -405,8 +405,7 @@ export function makeInitConfig ({ rootPath = app.getPath('home'), fileAssociatio
           },
           validation: {
             noGrammar: 'hint',
-            enabled: true,
-            schema: true
+            enabled: true
           },
           fileAssociations,
           preferences: {

@@ -255,7 +255,7 @@ export default {
         fileAssociations: [
           {
             systemId: path.join(app.getPath('appData'), app.name, 'rnc/rfc7991bis.rnc'),
-            pattern: '*'
+            pattern: '**/*.xml'
           }
         ]
       }))

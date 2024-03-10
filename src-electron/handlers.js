@@ -79,38 +79,40 @@ export async function saveDocument (mainWindow, filePath, contents) {
  * @param {string} defaultFileName Default filename
  */
 export async function saveDocumentAs (mainWindow, type, defaultFileName) {
-  const filters = []
-  switch (type) {
-    case 'xml': {
-      filters.push({
-        name: 'XML RFC v3',
-        extensions: ['xml']
-      })
-      break
-    }
-    case 'md': {
-      filters.push({
-        name: 'Markdown',
-        extensions: ['md']
-      })
-      break
-    }
-    case 'txt': {
-      filters.push({
-        name: 'Plain Text',
-        extensions: ['txt']
-      })
-      break
-    }
-  }
   const saveOpts = await dialog.showSaveDialog(mainWindow, {
     title: 'Save As...',
     defaultPath: defaultFileName,
-    filters,
+    filters: getFiltersForType(type),
     properties: ['showOverwriteConfirmation', 'createDirectory']
   })
   if (!saveOpts.canceled) {
     mainWindow.webContents.send('save', saveOpts.filePath)
+  }
+}
+
+/**
+ * Create new document
+ *
+ * @param {Object} mainWindow MainWindow instance
+ * @param {string} type File Type
+ * @param {string} defaultFileName Default filename
+ */
+export async function createNewDocument (mainWindow, type, defaultFileName, contents) {
+  const saveOpts = await dialog.showSaveDialog(mainWindow, {
+    title: 'New Document',
+    defaultPath: defaultFileName,
+    filters: getFiltersForType(type),
+    properties: ['showOverwriteConfirmation', 'createDirectory']
+  })
+  if (!saveOpts.canceled) {
+    const pathParts = path.parse(saveOpts.filePath)
+    await fs.writeFile(saveOpts.filePath, contents, 'utf8')
+    return {
+      fileName: pathParts.base,
+      filePath: saveOpts.filePath
+    }
+  } else {
+    return null
   }
 }
 
@@ -156,6 +158,40 @@ export async function readDirectory (dirPath) {
 }
 
 /**
+ * Get Save Dialog filters based on the provided type.
+ *
+ * @param {string} type - The type of filters to retrieve.
+ * @returns {Array} - An array of filters.
+ */
+function getFiltersForType (type) {
+  const filters = []
+  switch (type) {
+    case 'xml': {
+      filters.push({
+        name: 'XML RFC v3',
+        extensions: ['xml']
+      })
+      break
+    }
+    case 'md': {
+      filters.push({
+        name: 'Markdown',
+        extensions: ['md']
+      })
+      break
+    }
+    case 'txt': {
+      filters.push({
+        name: 'Plain Text',
+        extensions: ['txt']
+      })
+      break
+    }
+  }
+  return filters
+}
+
+/**
  * Register callback handlers
  *
  * @param {Object} mainWindow MainWindow instance
@@ -167,11 +203,17 @@ export function registerCallbacks (mainWindow, mainMenu, git, lsp) {
   // ----------------------------------------------------------
   // FILE SYSTEM
   // ----------------------------------------------------------
+  ipcMain.handle('createNewDocument', (ev, opts) => {
+    return createNewDocument(mainWindow, opts.type, opts.filename, opts.data)
+  })
   ipcMain.on('open', (ev) => {
     openDocument(mainWindow)
   })
   ipcMain.on('save', (ev, opts) => {
     saveDocument(mainWindow, opts.path, opts.data)
+  })
+  ipcMain.handle('promptSave', async (ev, opts) => {
+    return git.performFetch({ dir: opts.dir, remote: opts.remote })
   })
   ipcMain.on('promptSaveAs', (ev, opts) => {
     saveDocumentAs(mainWindow, opts.type, opts.fileName)
