@@ -29,6 +29,36 @@ const completionItemKindMapping = [
   monaco.languages.CompletionItemKind.TypeParameter
 ]
 
+const symbolKindMapping = [
+  null,
+  monaco.languages.SymbolKind.File,
+  monaco.languages.SymbolKind.Module,
+  monaco.languages.SymbolKind.Namespace,
+  monaco.languages.SymbolKind.Package,
+  monaco.languages.SymbolKind.Class,
+  monaco.languages.SymbolKind.Method,
+  monaco.languages.SymbolKind.Property,
+  monaco.languages.SymbolKind.Field,
+  monaco.languages.SymbolKind.Constructor,
+  monaco.languages.SymbolKind.Enum,
+  monaco.languages.SymbolKind.Interface,
+  monaco.languages.SymbolKind.Function,
+  monaco.languages.SymbolKind.Variable,
+  monaco.languages.SymbolKind.Constant,
+  monaco.languages.SymbolKind.String,
+  monaco.languages.SymbolKind.Number,
+  monaco.languages.SymbolKind.Boolean,
+  monaco.languages.SymbolKind.Array,
+  monaco.languages.SymbolKind.Object,
+  monaco.languages.SymbolKind.Key,
+  monaco.languages.SymbolKind.Null,
+  monaco.languages.SymbolKind.EnumMember,
+  monaco.languages.SymbolKind.Struct,
+  monaco.languages.SymbolKind.Event,
+  monaco.languages.SymbolKind.Operator,
+  monaco.languages.SymbolKind.TypeParameter
+]
+
 /**
  * Convert a marker severity from an LSP server to a Monaco editor marker severity
  *
@@ -170,4 +200,41 @@ function handleCompletionItemProperties (itemDefaults, props) {
   }
 
   return item
+}
+
+/**
+ * Convert an LSP SymbolKind to Monaco editor SymbolKind
+ *
+ * @param {number} kind LSP SymbolKind
+ * @returns Monaco SymbolKind
+ */
+export function convertLSPSymbolKindToMonaco (kind) {
+  return symbolKindMapping[kind] ?? monaco.languages.SymbolKind.Property
+}
+
+/**
+ * Converts LSP document symbols to Monaco symbols.
+ *
+ * @param {Array} items - The array of LSP document symbols to be converted.
+ * @returns {Array} - The array of converted Monaco symbols.
+ */
+export function convertLSPDocumentSymbolsToMonaco (items) {
+  return items.map(s => ({
+    name: s.name,
+    range: {
+      endColumn: s.range.end.character + 1,
+      endLineNumber: s.range.end.line + 1,
+      startColumn: s.range.start.character + 1,
+      startLineNumber: s.range.start.line + 1
+    },
+    selectionRange: {
+      endColumn: s.selectionRange.end.character + 1,
+      endLineNumber: s.selectionRange.end.line + 1,
+      startColumn: s.selectionRange.start.character + 1,
+      startLineNumber: s.selectionRange.start.line + 1
+    },
+    kind: symbolKindMapping[s.kind] ?? monaco.languages.SymbolKind.Property,
+    ...s.detail && { detail: s.detail },
+    ...s.children && { children: convertLSPDocumentSymbolsToMonaco(s.children) }
+  }))
 }

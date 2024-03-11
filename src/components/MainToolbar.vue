@@ -88,6 +88,12 @@ const drawerPanes = [
     label: 'Git'
   },
   {
+    key: 'DrawerSymbols',
+    icon: 'mdi-alpha-s-box',
+    label: 'Document Symbols',
+    needDocument: true
+  },
+  {
     key: 'DrawerChecks',
     icon: 'mdi-marker-check',
     label: 'Validation Checks',

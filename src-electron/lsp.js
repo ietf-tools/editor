@@ -1,4 +1,4 @@
-import { app, dialog } from 'electron'
+import { app, dialog, net } from 'electron'
 import { spawn } from 'node:child_process'
 import { deferred } from 'fast-defer'
 import { makeInitConfig } from './lsp/init-options.js'
@@ -140,22 +140,30 @@ export default {
   async startServer (mainWindow) {
     const platformOpts = platform[process.platform]
 
-    // Install RNC files
-
+    // Download RNC files
+    const schemasUrlBase = 'https://github.com/ietf-tools/rfcxml-templates-and-schemas/raw/main/'
+    const schemasPathBase = path.join(app.getPath('appData'), app.name, 'rnc/')
     try {
-      await fs.cp(
-        path.join(process.cwd(), 'public/rnc/'),
-        path.join(app.getPath('appData'), app.name, 'rnc/'),
-        {
-          mode: fs.constants.COPYFILE_FICLONE,
-          errorOnExist: false,
-          force: true,
-          recursive: true
-        }
-      )
+      await fs.access(path.join(schemasPathBase, 'rfc7991bis.rnc'), fs.constants.R_OK)
+      await fs.access(path.join(schemasPathBase, 'SVG-1.2-RFC.rnc'), fs.constants.R_OK)
     } catch (err) {
-      console.error(err)
-      dialog.showErrorBox('XML Schema RelaxNG copy failed.', err.message)
+      if (net.isOnline()) {
+        try {
+          await pipeline(
+            got.stream(`${schemasUrlBase}/rfc7991bis.rnc`),
+            createWriteStream(path.join(schemasPathBase, 'rfc7991bis.rnc'))
+          )
+          await pipeline(
+            got.stream(`${schemasUrlBase}/SVG-1.2-RFC.rnc`),
+            createWriteStream(path.join(schemasPathBase, 'SVG-1.2-RFC.rnc'))
+          )
+        } catch (err) {
+          console.warn(err)
+          dialog.showErrorBox('XML RelaxNG Schema files download failed.', 'Schema validation will not be available.')
+        }
+      } else {
+        dialog.showErrorBox('XML RelaxNG Schema files are missing and you are currently offline.', 'Schema validation will not be available.')
+      }
     }
 
     // Spawn LSP process

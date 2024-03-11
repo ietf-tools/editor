@@ -35,8 +35,8 @@ const router = useRouter()
 
 watch(() => docsStore.active, (newValue) => {
   if (!newValue) {
-    router.replace('/')
     editorStore.drawerPane = 'DrawerFiles'
+    router.replace('/')
   }
 })
 
@@ -149,6 +149,20 @@ monaco.languages.registerFoldingRangeProvider('xmlrfc', {
   }
 })
 
+monaco.languages.registerDocumentSymbolProvider('xmlrfc', {
+  provideDocumentSymbols: async (model, cancelToken) => {
+    const symbolInfo = await window.ipcBridge.lspSendRequest('textDocument/documentSymbol', {
+      textDocument: {
+        uri: model.uri.toString()
+      }
+    })
+    editorStore.symbols = symbolInfo ?? []
+    if (symbolInfo) {
+      return lspHelpers.convertLSPDocumentSymbolsToMonaco(symbolInfo)
+    }
+  }
+})
+
 monaco.languages.registerDocumentFormattingEditProvider('xmlrfc', {
   provideDocumentFormattingEdits: async (model, opts, cancelToken) => {
     const formattingInfo = await window.ipcBridge.lspSendRequest('textDocument/formatting', {
@@ -211,23 +225,23 @@ monaco.languages.registerDocumentRangeFormattingEditProvider('xmlrfc', {
   }
 })
 
-monaco.languages.registerHoverProvider('xmlrfc', {
-  provideHover: async (model, pos, cancelToken) => {
-    // const hoverInfo = await window.ipcBridge.lspSendRequest('textDocument/hover', {
-    //   textDocument: {
-    //     uri: model.uri.toString()
-    //   },
-    //   position: {
-    //     line: pos.lineNumber - 1,
-    //     character: pos.column - 1
-    //   }
-    // })
-    // if (hoverInfo) {
-    //   // TODO: Handle hover info
-    //   console.info(hoverInfo)
-    // }
-  }
-})
+// monaco.languages.registerHoverProvider('xmlrfc', {
+//   provideHover: async (model, pos, cancelToken) => {
+//     const hoverInfo = await window.ipcBridge.lspSendRequest('textDocument/hover', {
+//       textDocument: {
+//         uri: model.uri.toString()
+//       },
+//       position: {
+//         line: pos.lineNumber - 1,
+//         character: pos.column - 1
+//       }
+//     })
+//     if (hoverInfo) {
+//       console.info(hoverInfo)
+//     }
+//   }
+// })
+
 // Allow `*` in word pattern for quick styling (toggle bold/italic without selection)
 // original https://github.com/microsoft/vscode/blob/3e5c7e2c570a729e664253baceaf443b69e82da6/extensions/markdown-basics/language-configuration.json#L55
 monaco.languages.setLanguageConfiguration('markdown', {
@@ -440,6 +454,7 @@ onMounted(async () => {
   window.ipcBridge.subscribe('lspNotification', handleLspNotification)
   EVENT_BUS.on('editorAction', handleEditorActions)
   EVENT_BUS.on('lspCommand', handleLspCommand)
+  EVENT_BUS.on('revealPosition', handleRevealPosition)
 
   // -> Remove initial loading screen
   document.getElementById('app-loading')?.remove()
@@ -453,6 +468,7 @@ onBeforeUnmount(() => {
   window.ipcBridge.unsubscribe('lspNotification', handleLspNotification)
   EVENT_BUS.off('editorAction', handleEditorActions)
   EVENT_BUS.off('lspCommand', handleLspCommand)
+  EVENT_BUS.off('revealPosition', handleRevealPosition)
 })
 
 // METHODS
@@ -688,5 +704,13 @@ async function handleLspNotification (evt, data) {
 
 async function handleLspCommand (cmd) {
 
+}
+
+function handleRevealPosition (pos) {
+  if (editor) {
+    editor.focus()
+    editor.revealPositionNearTop(pos, monaco.editor.ScrollType.Smooth)
+    editor.setPosition(pos, 'DrawerSymbols')
+  }
 }
 </script>
