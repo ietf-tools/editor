@@ -142,8 +142,9 @@ export default {
 
     // Download RNC files
     const schemasUrlBase = 'https://github.com/ietf-tools/rfcxml-templates-and-schemas/raw/main/'
-    const schemasPathBase = path.join(app.getPath('appData'), app.name, 'rnc/')
+    const schemasPathBase = path.join(app.getPath('appData'), app.name, 'rnc')
     try {
+      await fs.mkdir(schemasPathBase)
       await fs.access(path.join(schemasPathBase, 'rfc7991bis.rnc'), fs.constants.R_OK)
       await fs.access(path.join(schemasPathBase, 'SVG-1.2-RFC.rnc'), fs.constants.R_OK)
     } catch (err) {
@@ -258,7 +259,6 @@ export default {
 
     // -> Send initialization sequence
     try {
-      console.info(path.join(app.getPath('appData'), app.name, 'rnc/rfc7991bis.rnc'))
       const initResult = await this.sendRequest('initialize', makeInitConfig({
         fileAssociations: [
           {
