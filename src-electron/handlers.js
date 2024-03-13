@@ -362,7 +362,10 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp) {
   // AUTH
   // ----------------------------------------------------------
   ipcMain.on('login', () => {
-    auth.login(mainWindow)
+    auth.login()
+  })
+  ipcMain.on('logout', () => {
+    auth.logout()
   })
   ipcMain.on('authFetchInfo', () => {
     auth.notify()

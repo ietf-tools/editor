@@ -9,6 +9,7 @@ export default {
   tokenUrl: 'https://auth.ietf.org/api/openid/token',
   redirectUrl: 'https://draftforge.internal/oidc/callback',
   userInfoUrl: 'https://auth.ietf.org/api/openid/userinfo',
+  logoutUrl: 'https://auth.ietf.org/api/openid/end-session',
   scope: ['openid', 'profile', 'email', 'roles'],
   accessToken: null,
   refreshToken: null,
@@ -61,12 +62,12 @@ export default {
    * @param {BrowserWindow} mainWindow - The main window of the application.
    * @returns {Promise<void>} - A promise that resolves when the login process is complete.
    */
-  async login (mainWindow) {
+  async login () {
     const state = crypto.randomUUID()
 
     // -> Show login modal
     const loginWindow = new BrowserWindow({
-      parent: mainWindow,
+      parent: this.refMainWindow,
       modal: true,
       width: 1024,
       height: 768,
@@ -124,6 +125,47 @@ export default {
 
     loginWindow.loadURL(`${this.authorizeUrl}?response_type=code&client_id=${this.clientId}&redirect_uri=${encodeURIComponent(this.redirectUrl)}&scope=${this.scope.join('%20')}&state=${state}`)
     loginWindow.focus()
+  },
+  /**
+   * Logs out the user.
+   */
+  logout () {
+    const endSessionJWT = this.jwt
+    this.clear()
+    this.persist()
+    this.notify()
+
+    // -> Logout from oidc provider
+    const logoutWindow = new BrowserWindow({
+      parent: this.refMainWindow,
+      modal: true,
+      width: 1024,
+      height: 768,
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      fullscreenable: false,
+      title: 'Logout',
+      darkTheme: true,
+      show: false
+    })
+    // -> Intercept logout callback
+    logoutWindow.webContents.on('will-redirect', async ev => {
+      const evUrl = new URL(ev.url)
+      if (evUrl.hostname === 'draftforge.internal' && evUrl.pathname === '/oidc/callback') {
+        console.info('Logged out from OIDC provider.')
+        logoutWindow.close()
+      }
+    })
+    logoutWindow.setMenu(null)
+    logoutWindow.loadURL(`${this.logoutUrl}?id_token_hint=${endSessionJWT}&post_logout_redirect_uri=${encodeURIComponent(this.redirectUrl)}`)
+
+    // -> Success message
+    this.refMainWindow.webContents.send('notify', {
+      message: 'You are now logged out.',
+      color: 'positive',
+      icon: 'mdi-logout'
+    })
   },
   /**
    * Refreshes the user information.
