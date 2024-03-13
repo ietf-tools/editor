@@ -39,8 +39,8 @@ const debugIgnoreCommands = [
   'textDocument/publishDiagnostics',
   'textDocument/didOpen',
   'textDocument/didClose',
-  'textDocument/didChange'
-  // 'client/registerCapability'
+  'textDocument/didChange',
+  'client/registerCapability'
 ]
 
 export default {

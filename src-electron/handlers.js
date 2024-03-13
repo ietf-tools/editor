@@ -196,10 +196,11 @@ function getFiltersForType (type) {
  *
  * @param {Object} mainWindow MainWindow instance
  * @param {Object} mainMenu MainMenu instance
+ * @param {Object} auth Auth instance
  * @param {Object} git Git instance
  * @param {Object} lsp LSP instance
  */
-export function registerCallbacks (mainWindow, mainMenu, git, lsp) {
+export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp) {
   // ----------------------------------------------------------
   // FILE SYSTEM
   // ----------------------------------------------------------
@@ -356,5 +357,14 @@ export function registerCallbacks (mainWindow, mainMenu, git, lsp) {
       console.error(err)
       return null
     }
+  })
+  // ----------------------------------------------------------
+  // AUTH
+  // ----------------------------------------------------------
+  ipcMain.on('login', () => {
+    auth.login(mainWindow)
+  })
+  ipcMain.on('authFetchInfo', () => {
+    auth.notify()
   })
 }

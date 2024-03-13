@@ -59,8 +59,12 @@ q-bar.toolbar-main
     )
     q-tooltip Preferences
   q-separator.q-mx-sm(inset vertical)
-  q-btn(padding="xs sm" flat no-caps)
-    span.text-body2 ada.lovelace@acme.org
+  q-btn(v-if='userStore.isLoggedIn' padding="xs sm" flat no-caps)
+    span.text-body2 {{ userStore.profile.name }}
+    q-avatar.q-ml-sm(size='sm' rounded)
+      img(:src='userStore.profile.picture')
+  q-btn(v-else padding="xs sm" flat no-caps @click='login')
+    span.text-body2 Login
     q-icon.q-ml-sm(name='mdi-account-circle')
 </template>
 
@@ -70,9 +74,11 @@ import { useQuasar } from 'quasar'
 
 import { useDocsStore } from 'src/stores/docs'
 import { useEditorStore } from 'src/stores/editor'
+import { useUserStore } from 'src/stores/user'
 
 const docsStore = useDocsStore()
 const editorStore = useEditorStore()
+const userStore = useUserStore()
 
 const $q = useQuasar()
 
@@ -149,6 +155,10 @@ function openPreferences () {
   $q.dialog({
     component: defineAsyncComponent(() => import('components/PreferencesDialog.vue'))
   })
+}
+
+function login () {
+  window.ipcBridge.emit('login')
 }
 
 </script>

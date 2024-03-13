@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { registerMenu } from './menu.js'
 import { loadDocument, registerCallbacks } from './handlers.js'
 import { mergeWithHeaders } from './helpers.js'
+import auth from './auth.js'
 import git from './git.js'
 import lsp from './lsp.js'
 
@@ -93,9 +94,10 @@ function createWindow () {
     mainWindow = null
   })
 
+  auth.init(mainWindow)
   git.init()
 
-  registerCallbacks(mainWindow, mainMenu, git, lsp)
+  registerCallbacks(mainWindow, mainMenu, auth, git, lsp)
 }
 
 if (!instanceLock) {

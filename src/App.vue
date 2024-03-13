@@ -7,11 +7,13 @@ import { defineAsyncComponent, onMounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
 import { useDocsStore } from 'src/stores/docs'
 import { useEditorStore } from 'src/stores/editor'
+import { useUserStore } from 'src/stores/user'
 
 const $q = useQuasar()
 
 const docsStore = useDocsStore()
 const editorStore = useEditorStore()
+const userStore = useUserStore()
 
 let progressDiag
 let shouldExit = false
@@ -77,6 +79,18 @@ window.ipcBridge.subscribe('setProgressDialog', (evt, opts) => {
   }
 })
 
+window.ipcBridge.subscribe('authUpdate', (evt, authInfo) => {
+  userStore.$patch({
+    isLoggedIn: authInfo.isLoggedIn,
+    expireAt: authInfo.expireAt,
+    profile: {
+      email: authInfo.email,
+      name: authInfo.name,
+      picture: authInfo.picture
+    }
+  })
+})
+
 // -> Handle translucency flags
 watch(() => editorStore.translucencyEffects, (newValue) => {
   if (newValue) {
@@ -96,6 +110,7 @@ watch(() => editorStore.animationEffects, (newValue) => {
 }, { immediate: true })
 
 onMounted(async () => {
+  window.ipcBridge.emit('authFetchInfo')
   await editorStore.fetchGitConfig()
   window.ipcBridge.emit('lspInitialize')
 
