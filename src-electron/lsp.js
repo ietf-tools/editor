@@ -174,39 +174,43 @@ export default {
 
     // -> Handle stdio
     this.lsp.stdout.on('data', (data) => {
-      let isContinuation = data.indexOf('Content-Length:') !== 0
-
-      // Parse requests
+      let isContinuation = this.responseRemainingBytes > 0
+      let unreadBytes = data.byteLength
       let cursorIndex = 0
       let bodySepIndex = data.indexOf('\r\n')
-      while (bodySepIndex >= 0) {
+
+      // Parse requests
+      while (bodySepIndex >= 0 || isContinuation) {
         let bodyLength = 0
         let body = ''
 
-        // -> Extract header + body length
+        // -> Extract header + body
         if (!isContinuation) {
-          this.responseChunk = ''
+          // -> First or complete chunk
           const reqHeader = data.subarray(cursorIndex, bodySepIndex).toString()
+          unreadBytes -= (bodySepIndex - cursorIndex) + 4
           cursorIndex = bodySepIndex + 4
           bodyLength = parseInt(reqHeader.split(':')[1].trim())
-          if (bodyLength > data.byteLength) {
-            this.responseRemainingBytes = bodyLength - data.byteLength
+          if (bodyLength > unreadBytes) {
+            this.responseRemainingBytes = bodyLength - unreadBytes
+            this.responseChunk = data.subarray(cursorIndex, cursorIndex + unreadBytes).toString()
+            break
+          } else {
+            this.responseChunk = ''
+            this.responseRemainingBytes = 0
+            body = data.subarray(cursorIndex, cursorIndex + bodyLength).toString()
+            unreadBytes -= bodyLength
           }
-        } else if (this.responseRemainingBytes > data.byteLength) {
-          bodyLength = data.byteLength
-        } else {
-          bodyLength = this.responseRemainingBytes
-        }
-
-        // -> Stash incomplete body if in multiple chunks
-        if (bodyLength > data.byteLength) {
-          this.responseChunk += data.subarray(cursorIndex, cursorIndex + bodyLength).toString()
+        } else if (this.responseRemainingBytes > unreadBytes) {
+          // -> More chunks remaining
+          this.responseRemainingBytes -= unreadBytes
+          this.responseChunk += data.subarray(cursorIndex, cursorIndex + unreadBytes).toString()
           break
-        } else if (isContinuation) {
-          body = this.responseChunk + data.subarray(cursorIndex, cursorIndex + bodyLength).toString()
-          isContinuation = false
         } else {
-          body = data.subarray(cursorIndex, cursorIndex + bodyLength).toString()
+          // -> Last chunk
+          body = this.responseChunk + data.subarray(cursorIndex, cursorIndex + this.responseRemainingBytes).toString()
+          unreadBytes -= this.responseRemainingBytes
+          isContinuation = false
         }
 
         cursorIndex = cursorIndex + bodyLength
@@ -221,7 +225,7 @@ export default {
         try {
           response = JSON.parse(body)
         } catch (err) {
-          console.info(`Failed to parse LSP request: ${body}`)
+          console.info(`Failed to parse LSP request: ${Buffer.byteLength(body, 'utf8')} -> ${body}`)
           continue
         }
 
