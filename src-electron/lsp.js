@@ -48,6 +48,8 @@ export default {
   requests: new Map(),
   requestIndex: 0,
   registeredCapabilities: [],
+  responseRemainingBytes: 0,
+  responseChunk: '',
   isReady: deferred(),
   /**
    * Initialize the LSP
@@ -172,28 +174,54 @@ export default {
 
     // -> Handle stdio
     this.lsp.stdout.on('data', (data) => {
+      let isContinuation = data.indexOf('Content-Length:') !== 0
+
       // Parse requests
       let cursorIndex = 0
       let bodySepIndex = data.indexOf('\r\n')
       while (bodySepIndex >= 0) {
-        // -> Extract header + body
-        const reqHeader = data.subarray(cursorIndex, bodySepIndex).toString()
-        cursorIndex = bodySepIndex + 4
-        const bodyLength = parseInt(reqHeader.split(':')[1].trim())
-        const reqBody = data.subarray(cursorIndex, cursorIndex + bodyLength).toString()
+        let bodyLength = 0
+        let body = ''
+
+        // -> Extract header + body length
+        if (!isContinuation) {
+          this.responseChunk = ''
+          const reqHeader = data.subarray(cursorIndex, bodySepIndex).toString()
+          cursorIndex = bodySepIndex + 4
+          bodyLength = parseInt(reqHeader.split(':')[1].trim())
+          if (bodyLength > data.byteLength) {
+            this.responseRemainingBytes = bodyLength - data.byteLength
+          }
+        } else if (this.responseRemainingBytes > data.byteLength) {
+          bodyLength = data.byteLength
+        } else {
+          bodyLength = this.responseRemainingBytes
+        }
+
+        // -> Stash incomplete body if in multiple chunks
+        if (bodyLength > data.byteLength) {
+          this.responseChunk += data.subarray(cursorIndex, cursorIndex + bodyLength).toString()
+          break
+        } else if (isContinuation) {
+          body = this.responseChunk + data.subarray(cursorIndex, cursorIndex + bodyLength).toString()
+          isContinuation = false
+        } else {
+          body = data.subarray(cursorIndex, cursorIndex + bodyLength).toString()
+        }
+
         cursorIndex = cursorIndex + bodyLength
         bodySepIndex = data.indexOf('\r\n', cursorIndex)
 
-        if (!reqBody) {
+        if (!body) {
           break
         }
 
         // -> Convert JSON body
         let response
         try {
-          response = JSON.parse(reqBody)
+          response = JSON.parse(body)
         } catch (err) {
-          console.info(`Failed to parse LSP request: ${reqBody}`)
+          console.info(`Failed to parse LSP request: ${body}`)
           continue
         }
 
