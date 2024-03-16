@@ -7,7 +7,7 @@ q-dialog(
   )
   q-card.mica.prefs
     q-card-section.flex.items-center.bg-light-blue-10
-      q-icon(name='mdi-cog', left, size='sm')
+      q-icon.animated.spin(name='mdi-cog', left, size='sm')
       span Preferences
       q-space
       q-btn(

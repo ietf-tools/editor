@@ -27,6 +27,7 @@
     "pinia": "2.1.7",
     "pinia-plugin-persistedstate": "3.2.1",
     "quasar": "2.14.5",
+    "vscode-jsonrpc": "8.2.0",
     "vscode-uri": "3.0.8",
     "vue": "3.4.20",
     "vue-router": "4.3.0"

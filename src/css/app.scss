@@ -99,3 +99,16 @@ a {
 .text-word-break-all {
   word-break: break-all;
 }
+
+@keyframes spin {
+  from {
+      transform:rotate(0deg);
+  }
+  to {
+      transform:rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 5s infinite linear;
+}

@@ -9,7 +9,7 @@ import { pipeline } from 'node:stream/promises'
 import got from 'got'
 import { setTimeout } from 'node:timers/promises'
 import ansicolor from 'ansicolor'
-// import { URI } from 'vscode-uri'
+import { createMessageConnection, StreamMessageReader, StreamMessageWriter } from 'vscode-jsonrpc'
 
 const platform = {
   darwin: {
@@ -45,6 +45,7 @@ const debugIgnoreCommands = [
 
 export default {
   lsp: null,
+  connection: null,
   requests: new Map(),
   requestIndex: 0,
   registeredCapabilities: [],
@@ -172,126 +173,48 @@ export default {
     // Spawn LSP process
     this.lsp = spawn(platformOpts.execPath)
 
-    // -> Handle stdio
-    this.lsp.stdout.on('data', (data) => {
-      let isContinuation = this.responseRemainingBytes > 0
-      let unreadBytes = data.byteLength
-      let cursorIndex = 0
-      let bodySepIndex = data.indexOf('\r\n')
+    this.connection = createMessageConnection(
+      new StreamMessageReader(this.lsp.stdout),
+      new StreamMessageWriter(this.lsp.stdin)
+    )
 
-      // Parse requests
-      while (bodySepIndex >= 0 || isContinuation) {
-        let bodyLength = 0
-        let body = ''
-
-        // -> Extract header + body
-        if (!isContinuation) {
-          // -> First or complete chunk
-          const reqHeader = data.subarray(cursorIndex, bodySepIndex).toString()
-          unreadBytes -= (bodySepIndex - cursorIndex) + 4
-          cursorIndex = bodySepIndex + 4
-          bodyLength = parseInt(reqHeader.split(':')[1].trim())
-          if (bodyLength > unreadBytes) {
-            this.responseRemainingBytes = bodyLength - unreadBytes
-            this.responseChunk = data.subarray(cursorIndex, cursorIndex + unreadBytes).toString()
-            break
-          } else {
-            this.responseChunk = ''
-            this.responseRemainingBytes = 0
-            body = data.subarray(cursorIndex, cursorIndex + bodyLength).toString()
-            unreadBytes -= bodyLength
-          }
-        } else if (this.responseRemainingBytes > unreadBytes) {
-          // -> More chunks remaining
-          this.responseRemainingBytes -= unreadBytes
-          this.responseChunk += data.subarray(cursorIndex, cursorIndex + unreadBytes).toString()
-          break
-        } else {
-          // -> Last chunk
-          body = this.responseChunk + data.subarray(cursorIndex, cursorIndex + this.responseRemainingBytes).toString()
-          unreadBytes -= this.responseRemainingBytes
-          isContinuation = false
-        }
-
-        cursorIndex = cursorIndex + bodyLength
-        bodySepIndex = data.indexOf('\r\n', cursorIndex)
-
-        if (!body) {
-          break
-        }
-
-        // -> Convert JSON body
-        let response
-        try {
-          response = JSON.parse(body)
-        } catch (err) {
-          console.info(`Failed to parse LSP request: ${Buffer.byteLength(body, 'utf8')} -> ${body}`)
-          continue
-        }
-
-        // -> Debug
-        if (process.env.DEBUGGING) {
-          if (response.method === 'window/logMessage') {
-            console.log(ansicolor.yellow('<<< INCOMING - LOG MSG <<<') + '\n' + response.params.message + '\n')
-          } else if (debugIgnoreCommands.includes(response.method) || (!response.method && response.id)) {
-            if (response.method) {
-              console.log(ansicolor.lightYellow('<<< INCOMING < ') + response.method)
-            }
-          } else {
-            console.log(ansicolor.yellow('<<< INCOMING <<<'))
-            console.log(JSON.stringify(response, null, 2))
-          }
-        }
-
-        // -> Handle callback requests
-        if (response.id) {
-          // -> Handle server increasing the request index
-          const reqId = parseInt(response.id)
-          if (reqId >= this.requestIndex) {
-            this.requestIndex = reqId + 1
-          }
-
-          // -> Handle server requesting to register new capability
-          if (response.method === 'client/registerCapability') {
-            this.registeredCapabilities.push(...response.params.registrations)
-            const ackReply = JSON.stringify({
-              jsonrpc: '2.0',
-              id: reqId
-            })
-            const ackReplyByteLength = Buffer.byteLength(ackReply, 'utf8')
-            this.lsp.stdin.write(`Content-Length: ${ackReplyByteLength}\r\n\r\n${ackReply}`)
-            continue
-          }
-
-          // -> Find corresponding request awaiting callback
-          const cmd = this.requests.get(response.id)
-          if (cmd) {
-            if (response.error) {
-              cmd.reject(response.error)
-            } else {
-              cmd.resolve(response.result)
-            }
-            this.requests.delete(response.id)
-          } else {
-            console.warn(`No matching LSP command ID: ${response.id}`)
-          }
-        } else {
-          mainWindow.webContents.send('lspNotification', response)
-        }
+    this.connection.onRequest((method, params) => {
+      if (method === 'client/registerCapability') {
+        this.registeredCapabilities.push(...params.registrations)
+        console.log(ansicolor.yellow('<<< INCOMING - REGISTER CAPABILITY <<< ') + params.registrations?.map(r => r.method).join(', '))
+        return {}
+      } else {
+        console.warn(ansicolor.red(`Unexpected LSP request: ${method} -> ${JSON.stringify(params)}`))
+        return null
       }
     })
+    this.connection.onNotification((method, params) => {
+      if (process.env.DEBUGGING) {
+        if (method === 'window/logMessage') {
+          console.log(ansicolor.yellow('<<< INCOMING - LOG MSG <<<') + '\n' + params.message + '\n')
+        } else if (debugIgnoreCommands.includes(method)) {
+          console.log(ansicolor.lightYellow('<<< INCOMING < ') + method)
+        } else {
+          console.log(ansicolor.yellow('<<< INCOMING <<< ') + method)
+          console.log(JSON.stringify(params, null, 2))
+        }
+      }
+      mainWindow.webContents.send('lspNotification', { method, params })
+    })
 
-    this.lsp.stderr.on('data', (data) => {
+    this.connection.listen()
+
+    this.connection.onError((data) => {
       console.error(`Lemminx Process Error: ${data}`)
     })
 
-    this.lsp.on('close', (code) => {
-      console.log(`Lemminx process exited with code ${code}`)
+    this.connection.onClose(() => {
+      console.log('Lemminx process exited')
     })
 
     // -> Send initialization sequence
     try {
-      const initResult = await this.sendRequest('initialize', makeInitConfig({
+      const initResult = await this.connection.sendRequest('initialize', makeInitConfig({
         fileAssociations: [
           {
             systemId: path.join(app.getPath('appData'), app.name, 'rnc/rfc7991bis.rnc'),
@@ -300,10 +223,9 @@ export default {
         ]
       }))
       if (initResult?.capabilities?.textDocumentSync === 2) {
-        this.sendNotification('initialized')
+        this.connection.sendNotification('initialized')
         this.isReady.resolve()
         console.info('LSP initialized successfully.')
-        this.registerRNC()
       } else {
         throw new Error(`Unexpected response ${JSON.stringify(initResult)}`)
       }
@@ -321,24 +243,12 @@ export default {
    */
   async sendRequest (method, params) {
     if (!this.lsp) { return }
-    const reqDeferred = deferred()
-
-    this.requestIndex++
-    this.requests.set(this.requestIndex, reqDeferred)
-
-    const request = JSON.stringify({
-      jsonrpc: '2.0',
-      id: this.requestIndex,
-      method,
-      ...(params && { params })
-    })
 
     // -> Debug
     if (process.env.DEBUGGING) {
       if (!debugIgnoreCommands.includes(method)) {
         console.log(ansicolor.lightCyan('>>> OUTGOING >>>'))
         console.log(JSON.stringify({
-          id: this.requestIndex,
           method,
           ...(params && { params })
         }, null, 2))
@@ -347,10 +257,7 @@ export default {
       }
     }
 
-    const requestByteLength = Buffer.byteLength(request, 'utf8')
-    this.lsp.stdin.write(`Content-Length: ${requestByteLength}\r\n\r\n${request}`)
-
-    return reqDeferred
+    return this.connection.sendRequest(method, params)
   },
   /**
    * Send a notification
@@ -360,11 +267,6 @@ export default {
    */
   sendNotification (method, params) {
     if (!this.lsp) { return }
-    const request = JSON.stringify({
-      jsonrpc: '2.0',
-      method,
-      ...(params && { params })
-    })
 
     // -> Debug
     if (process.env.DEBUGGING) {
@@ -379,8 +281,7 @@ export default {
       }
     }
 
-    const requestByteLength = Buffer.byteLength(request, 'utf8')
-    this.lsp.stdin.write(`Content-Length: ${requestByteLength}\r\n\r\n${request}`)
+    this.connection.sendNotification(method, params)
   },
   /**
    * Shutdown the server
@@ -389,38 +290,16 @@ export default {
    */
   async shutdown (cleanup = false) {
     if (!this.lsp) { return }
-    await this.sendRequest('shutdown')
+    await this.sendRequest('shutdown', {})
     this.sendNotification('exit')
     if (cleanup) {
+      this.connection.end()
+      this.connection.dispose()
       this.lsp = null
       this.requests.clear()
       this.requestIndex = 0
       this.registeredCapabilities = []
       this.isReady = deferred()
     }
-  },
-
-  async registerRNC () {
-    // await setTimeout(2000)
-    // this.sendNotification('workspace/didChangeWorkspaceFolders', {
-    //   event: {
-    //     added: [
-    //       {
-    //         uri: URI.file('C:/Users/ngpix/Desktop/testdraft').toString(),
-    //         name: 'workspace'
-    //       }
-    //     ],
-    //     removed: []
-    //   }
-    // })
-    // const rnc = await fs.readFile(path.resolve(app.getAppPath(), process.env.QUASAR_PUBLIC_FOLDER, 'rnc/rfc7991bis.rnc'), 'utf8')
-    // this.sendNotification('textDocument/didOpen', {
-    //   textDocument: {
-    //     uri: 'file:///rfc7991bis.rnc',
-    //     languageId: 'rnc',
-    //     version: 1,
-    //     text: rnc
-    //   }
-    // })
   }
 }
