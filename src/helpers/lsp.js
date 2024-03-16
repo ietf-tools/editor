@@ -79,6 +79,25 @@ export function convertLSPSeverityToMonaco (severity) {
 }
 
 /**
+ * Converts a Monaco severity value to an LSP severity value.
+ *
+ * @param {number} severity - The Monaco severity value.
+ * @returns {number} The corresponding LSP severity value.
+ */
+export function convertMonacoSeverityToLSP (severity) {
+  switch (severity) {
+    case monaco.MarkerSeverity.Error:
+      return 1
+    case monaco.MarkerSeverity.Warning:
+      return 2
+    case monaco.MarkerSeverity.Info:
+      return 3
+    default:
+      return 4
+  }
+}
+
+/**
  * Convert a range from LSP server to Monaco editor range
  *
  * @param {object} range LSP Range object

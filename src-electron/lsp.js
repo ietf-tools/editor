@@ -183,6 +183,21 @@ export default {
         this.registeredCapabilities.push(...params.registrations)
         console.log(ansicolor.yellow('<<< INCOMING - REGISTER CAPABILITY <<< ') + params.registrations?.map(r => r.method).join(', '))
         return {}
+      } else if (method === 'workspace/configuration') {
+        const confArray = []
+        for (const item of params.items) {
+          switch (item.section) {
+            case 'xml.format.insertSpaces': {
+              confArray.push(true)
+              break
+            }
+            case 'xml.format.tabSize': {
+              confArray.push(2)
+              break
+            }
+          }
+        }
+        return confArray
       } else {
         console.warn(ansicolor.red(`Unexpected LSP request: ${method} -> ${JSON.stringify(params)}`))
         return null
