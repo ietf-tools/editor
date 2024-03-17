@@ -12,14 +12,15 @@ q-page.row.items-stretch
 </template>
 
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import * as monaco from 'monaco-editor'
-import { debounce } from 'lodash-es'
-import { DateTime } from 'luxon'
-import { checkNits } from '@ietf-tools/idnits'
 import { modelStore } from 'src/stores/models'
 import * as lspHelpers from 'src/helpers/lsp'
+import { registerThemes } from 'src/helpers/monaco-themes'
+import { registerMarkdownLanguage } from 'src/languages/markdown'
+import { registerXMLRFCLanguage } from 'src/languages/xmlrfc'
+import { handleEditorAction } from 'src/helpers/monaco-handlers'
 
 import { useEditorStore } from 'stores/editor'
 import { useDocsStore } from 'src/stores/docs'
@@ -45,565 +46,52 @@ watch(() => docsStore.active, (newValue) => {
 const monacoContainer = ref(null)
 let editor = null
 
-monaco.languages.register({ id: 'xmlrfc' })
-monaco.languages.setMonarchTokensProvider('xmlrfc', {
-  defaultToken: 'invalid',
-  tokenPostfix: '.xml',
-  qualifiedName: /(?:[\w.-]+:)?[\w.-]+/,
-  tokenizer: {
-    root: [
-      [/[^<&]+/, ''],
-      { include: '@whitespace' },
+registerThemes(monaco)
+registerMarkdownLanguage(monaco)
+registerXMLRFCLanguage(monaco)
 
-      // Standard opening tag
-      [/(<)(@qualifiedName)/, [{ token: 'delimiter' }, { token: 'tag', next: '@tag' }]],
-
-      // Standard closing tag
-      [
-        /(<\/)(@qualifiedName)(\s*)(>)/,
-        [{ token: 'delimiter' }, { token: 'tag' }, '', { token: 'delimiter' }]
-      ],
-
-      // Meta tags - instruction
-      [/(<\?)(@qualifiedName)/, [{ token: 'delimiter' }, { token: 'metatag', next: '@tag' }]],
-
-      // Meta tags - declaration
-      [/(<!)(@qualifiedName)/, [{ token: 'delimiter' }, { token: 'metatag', next: '@tag' }]],
-
-      // CDATA
-      [/<!\[CDATA\[/, { token: 'delimiter.cdata', next: '@cdata' }],
-
-      [/&\w+;/, 'string.escape']
-    ],
-
-    cdata: [
-      [/[^\]]+/, ''],
-      [/\]\]>/, { token: 'delimiter.cdata', next: '@pop' }],
-      [/\]/, '']
-    ],
-
-    tag: [
-      [/[ \t\r\n]+/, ''],
-      [/(@qualifiedName)(\s*=\s*)("[^"]*"|'[^']*')/, ['attribute.name', '', 'attribute.value']],
-      [
-        /(@qualifiedName)(\s*=\s*)("[^">?/]*|'[^'>?/]*)(?=[?/]>)/,
-        ['attribute.name', '', 'attribute.value']
-      ],
-      [/(@qualifiedName)(\s*=\s*)("[^">]*|'[^'>]*)/, ['attribute.name', '', 'attribute.value']],
-      [/@qualifiedName/, 'attribute.name'],
-      [/\?>/, { token: 'delimiter', next: '@pop' }],
-      [/(\/)(>)/, [{ token: 'tag' }, { token: 'delimiter', next: '@pop' }]],
-      [/>/, { token: 'delimiter', next: '@pop' }]
-    ],
-
-    whitespace: [
-      [/[ \t\r\n]+/, ''],
-      [/<!--/, { token: 'comment', next: '@comment' }]
-    ],
-
-    comment: [
-      [/[^<-]+/, 'comment.content'],
-      [/-->/, { token: 'comment', next: '@pop' }],
-      [/<!--/, 'comment.content.invalid'],
-      [/[<-]/, 'comment.content']
-    ]
-  }
-})
-
-monaco.languages.registerCompletionItemProvider('xmlrfc', {
-  triggerCharacters: ['.', ':', '<', '"', '=', '/', '\\', '?', "'", '&', '#'],
-  provideCompletionItems: async (model, pos, ctx, cancelToken) => {
-    const completionInfo = await window.ipcBridge.lspSendRequest('textDocument/completion', {
-      textDocument: {
-        uri: model.uri.toString()
-      },
-      position: {
-        line: pos.lineNumber - 1,
-        character: pos.column - 1
-      },
-      context: {
-        triggerCharacter: ctx.triggerCharacter,
-        triggerKind: ctx.triggerKind + 1
-      }
-    })
-    return completionInfo ? lspHelpers.convertLSPCompletionItemsToMonaco(completionInfo) : null
-  }
-})
-
-monaco.languages.registerFoldingRangeProvider('xmlrfc', {
-  provideFoldingRanges: async (model, ctx, cancelToken) => {
-    const foldingInfo = await window.ipcBridge.lspSendRequest('textDocument/foldingRange', {
-      textDocument: {
-        uri: model.uri.toString()
-      }
-    })
-    if (foldingInfo) {
-      return foldingInfo.map(f => ({
-        start: f.startLine + 1,
-        end: f.endLine + 1,
-        kind: lspHelpers.convertLSPFoldingRangeKindToMonaco(f.kind)
-      }))
-    } else {
-      return []
-    }
-  }
-})
-
-monaco.languages.registerDocumentSymbolProvider('xmlrfc', {
-  provideDocumentSymbols: async (model, cancelToken) => {
-    const symbolInfo = await window.ipcBridge.lspSendRequest('textDocument/documentSymbol', {
-      textDocument: {
-        uri: model.uri.toString()
-      }
-    })
-    editorStore.symbols = symbolInfo ?? []
-    if (symbolInfo) {
-      return lspHelpers.convertLSPDocumentSymbolsToMonaco(symbolInfo)
-    }
-  }
-})
-
-monaco.languages.registerDocumentFormattingEditProvider('xmlrfc', {
-  provideDocumentFormattingEdits: async (model, opts, cancelToken) => {
-    const formattingInfo = await window.ipcBridge.lspSendRequest('textDocument/formatting', {
-      textDocument: {
-        uri: model.uri.toString()
-      },
-      options: {
-        tabSize: opts.tabSize,
-        insertSpaces: opts.insertSpaces,
-        trimTrailingWhitespace: true,
-        insertFinalNewline: true,
-        trimFinalNewlines: true
-      }
-    })
-    return formattingInfo?.map(f => ({
-      range: {
-        endColumn: f.range.end.character + 1,
-        endLineNumber: f.range.end.line + 1,
-        startColumn: f.range.start.character + 1,
-        startLineNumber: f.range.start.line + 1
-      },
-      text: f.newText
-    }))
-  }
-})
-
-monaco.languages.registerDocumentRangeFormattingEditProvider('xmlrfc', {
-  provideDocumentRangeFormattingEdits: async (model, range, opts, cancelToken) => {
-    const formattingInfo = await window.ipcBridge.lspSendRequest('textDocument/rangeFormatting', {
-      textDocument: {
-        uri: model.uri.toString()
-      },
-      range: {
-        start: {
-          line: range.startLineNumber - 1,
-          character: range.startColumn - 1
-        },
-        end: {
-          line: range.endLineNumber - 1,
-          character: range.endColumn - 1
-        }
-      },
-      options: {
-        tabSize: opts.tabSize,
-        insertSpaces: opts.insertSpaces,
-        trimTrailingWhitespace: true,
-        insertFinalNewline: true,
-        trimFinalNewlines: true
-      }
-    })
-    return formattingInfo?.map(f => ({
-      range: {
-        endColumn: f.range.end.character + 1,
-        endLineNumber: f.range.end.line + 1,
-        startColumn: f.range.start.character + 1,
-        startLineNumber: f.range.start.line + 1
-      },
-      text: f.newText
-    }))
-  }
-})
-
-monaco.languages.registerRenameProvider('xmlrfc', {
-  provideRenameEdits: async (model, pos, newName, cancelToken) => {
-    const renameInfo = await window.ipcBridge.lspSendRequest('textDocument/rename', {
-      textDocument: {
-        uri: model.uri.toString()
-      },
-      position: {
-        line: pos.lineNumber - 1,
-        character: pos.column - 1
-      },
-      newName
-    })
-    if (renameInfo.documentChanges?.length > 0) {
-      return {
-        edits: renameInfo.documentChanges[0].edits.map(edit => ({
-          resource: model.uri,
-          textEdit: {
-            text: edit.newText,
-            range: {
-              endColumn: edit.range.end.character + 1,
-              endLineNumber: edit.range.end.line + 1,
-              startColumn: edit.range.start.character + 1,
-              startLineNumber: edit.range.start.line + 1
-            }
-          },
-          versionId: renameInfo.documentChanges[0].textDocument.version
-        }))
-      }
-    }
-  }
-})
-
-monaco.languages.registerDocumentHighlightProvider('xmlrfc', {
-  provideDocumentHighlights: async (model, pos, cancelToken) => {
-    const highlightInfo = await window.ipcBridge.lspSendRequest('textDocument/documentHighlight', {
-      textDocument: {
-        uri: model.uri.toString()
-      },
-      position: {
-        line: pos.lineNumber - 1,
-        character: pos.column - 1
-      }
-    })
-    return highlightInfo.map(hl => ({
-      kind: hl.kind + 1,
-      range: {
-        endColumn: hl.range.end.character + 1,
-        endLineNumber: hl.range.end.line + 1,
-        startColumn: hl.range.start.character + 1,
-        startLineNumber: hl.range.start.line + 1
-      }
-    }))
-  }
-})
-
-monaco.languages.registerLinkProvider('xmlrfc', {
-  provideLinks: async (model, cancelToken) => {
-    const linksInfo = await window.ipcBridge.lspSendRequest('textDocument/documentLink', {
-      textDocument: {
-        uri: model.uri.toString()
-      }
-    })
-    return {
-      links: linksInfo.map(lnk => ({
-        url: lnk.target,
-        range: {
-          endColumn: lnk.range.end.character + 1,
-          endLineNumber: lnk.range.end.line + 1,
-          startColumn: lnk.range.start.character + 1,
-          startLineNumber: lnk.range.start.line + 1
-        },
-        ...(lnk.tooltip && { tooltip: lnk.tooltip })
-      }))
-    }
-  }
-})
-
-monaco.languages.registerCodeActionProvider('xmlrfc', {
-  provideCodeActions: async (model, range, ctx, cancelToken) => {
-    const codeActionsInfo = await window.ipcBridge.lspSendRequest('textDocument/codeAction', {
-      textDocument: {
-        uri: model.uri.toString()
-      },
-      range: {
-        start: {
-          line: range.startLineNumber - 1,
-          character: range.startColumn - 1
-        },
-        end: {
-          line: range.endLineNumber - 1,
-          character: range.endColumn - 1
-        }
-      },
-      context: {
-        diagnostics: ctx.markers.map(m => ({
-          code: m.code,
-          message: m.message,
-          range: {
-            start: {
-              line: m.startLineNumber - 1,
-              character: m.startColumn - 1
-            },
-            end: {
-              line: m.endLineNumber - 1,
-              character: m.endColumn - 1
-            }
-          },
-          severity: lspHelpers.convertMonacoSeverityToLSP(m.severity),
-          source: m.source,
-          tags: m.tags
-        })),
-        only: ctx.only,
-        triggerKind: ctx.trigger
-      }
-    })
-    return {
-      actions: codeActionsInfo.map(c => ({
-        diagnostics: c.diagnostics.map(d => ({
-          code: d.code,
-          message: d.message,
-          severity: lspHelpers.convertLSPSeverityToMonaco(d.severity),
-          source: d.source,
-          endColumn: d.range.end.character + 1,
-          endLineNumber: d.range.end.line + 1,
-          startColumn: d.range.start.character + 1,
-          startLineNumber: d.range.start.line + 1
-        })),
-        edit: {
-          edits: c.edit.documentChanges[0].edits.map(edit => ({
-            resource: model.uri,
-            textEdit: {
-              text: edit.newText,
-              range: {
-                endColumn: edit.range.end.character + 1,
-                endLineNumber: edit.range.end.line + 1,
-                startColumn: edit.range.start.character + 1,
-                startLineNumber: edit.range.start.line + 1
-              }
-            },
-            versionId: c.edit.documentChanges[0].textDocument?.version
-          }))
-        },
-        kind: c.kind,
-        title: c.title
-      })),
-      dispose () { }
-    }
-  }
-})
-
-// monaco.languages.registerHoverProvider('xmlrfc', {
-//   provideHover: async (model, pos, cancelToken) => {
-//     const hoverInfo = await window.ipcBridge.lspSendRequest('textDocument/hover', {
-//       textDocument: {
-//         uri: model.uri.toString()
-//       },
-//       position: {
-//         line: pos.lineNumber - 1,
-//         character: pos.column - 1
-//       }
-//     })
-//     if (hoverInfo) {
-//       console.info(hoverInfo)
-//     }
-//   }
-// })
-
-// Allow `*` in word pattern for quick styling (toggle bold/italic without selection)
-// original https://github.com/microsoft/vscode/blob/3e5c7e2c570a729e664253baceaf443b69e82da6/extensions/markdown-basics/language-configuration.json#L55
-monaco.languages.setLanguageConfiguration('markdown', {
-  wordPattern: /([*_]{1,2}|~~|`+)?[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+(_+[\p{Alphabetic}\p{Number}\p{Nonspacing_Mark}]+)*\1/gu
-})
-
-const updateContentStore = debounce(ev => {
-  docsStore.activeDocument.isModified = modelStore[docsStore.activeDocument.id].getValue() !== docsStore.activeDocument.data
-  docsStore.activeDocument.lastModifiedAt = DateTime.utc()
-}, 100)
+// MOUNTED
 
 onMounted(async () => {
-  nextTick(() => {
-    // -> Define Monaco Theme
-    monaco.editor.defineTheme('ietf-dark', {
-      base: 'vs-dark',
-      inherit: true,
-      rules: [],
-      colors: {
-        'editor.background': '#070a0d',
-        'editor.lineHighlightBackground': '#0d1117',
-        'editorLineNumber.foreground': '#546e7a',
-        'editorGutter.background': '#0d1117'
-      }
-    })
-    monaco.editor.defineTheme('ietf-light', {
-      base: 'vs',
-      inherit: true,
-      rules: [],
-      colors: {}
-    })
-
-    // -> Initialize Monaco editor
-    editor = monaco.editor.create(monacoContainer.value, {
-      automaticLayout: true,
-      cursorStyle: editorStore.cursorStyle,
-      cursorBlinking: editorStore.cursorBlinking,
-      fontSize: editorStore.fontSize,
-      formatOnType: editorStore.formatOnType,
-      language: 'xmlrfc',
-      lineNumbersMinChars: 4,
-      model: modelStore[docsStore.activeDocument.id],
-      padding: { top: 10, bottom: 10 },
-      scrollBeyondLastLine: false,
-      stickyScroll: {
-        enabled: true
-      },
-      tabSize: editorStore.tabSize,
-      theme: editorStore.theme,
-      wordWrap: editorStore.wordWrap ? 'on' : 'off'
-    })
-
-    // -> Handle content change
-    editor.onDidChangeModelContent((ev) => {
-      // console.info(ev)
-      if (editorStore.errors.length > 0 || editorStore.validationChecksDirty) {
-        editorStore.clearErrors()
-      }
-
-      window.ipcBridge.emit('lspSendNotification', {
-        method: 'textDocument/didChange',
-        params: {
-          textDocument: {
-            uri: modelStore[docsStore.activeDocument.id].uri.toString(),
-            version: ev.versionId
-          },
-          contentChanges: ev.changes.map(chg => ({
-            range: {
-              start: {
-                line: chg.range.startLineNumber - 1,
-                character: chg.range.startColumn - 1
-              },
-              end: {
-                line: chg.range.endLineNumber - 1,
-                character: chg.range.endColumn - 1
-              }
-            },
-            rangeLength: chg.rangeLength,
-            text: chg.text
-          }))
-        }
-      })
-
-      updateContentStore(ev)
-    })
-
-    // -> Handle cursor movement
-    editor.onDidChangeCursorPosition(ev => {
-      editorStore.$patch({
-        line: ev.position.lineNumber,
-        col: ev.position.column
-      })
-    })
-
-    // Code Lens
-    // const commandId = editor.addCommand(
-    //   0,
-    //   function () {
-    //     // services available in `ctx`
-    //     alert('my command is executing!')
-    //   },
-    //   ''
-    // )
-
-    // monaco.languages.registerCodeLensProvider('xmlrfc', {
-    //   provideCodeLenses: function (model, token) {
-    //     return {
-    //       lenses: [
-    //         {
-    //           range: {
-    //             startLineNumber: 12,
-    //             startColumn: 1,
-    //             endLineNumber: 13,
-    //             endColumn: 1
-    //           },
-    //           id: 'First Line',
-    //           command: {
-    //             id: commandId,
-    //             title: 'Code Lens Test'
-    //           }
-    //         }
-    //       ],
-    //       dispose: () => { }
-    //     }
-    //   },
-    //   resolveCodeLens: function (model, codeLens, token) {
-    //     return codeLens
-    //   }
-    // })
-
-    // -> Post init
-    editor.focus()
-
-    // -> Finish
-    docOpenFinished(docsStore.activeDocument)
+  // -> Initialize Monaco editor
+  editor = monaco.editor.create(monacoContainer.value, {
+    automaticLayout: true,
+    cursorStyle: editorStore.cursorStyle,
+    cursorBlinking: editorStore.cursorBlinking,
+    fontSize: editorStore.fontSize,
+    formatOnType: editorStore.formatOnType,
+    language: 'xmlrfc',
+    lineNumbersMinChars: 4,
+    linkedEditing: true,
+    model: modelStore[docsStore.activeDocument.id],
+    padding: { top: 10, bottom: 10 },
+    scrollBeyondLastLine: false,
+    stickyScroll: {
+      enabled: true
+    },
+    tabSize: editorStore.tabSize,
+    theme: editorStore.theme,
+    wordWrap: editorStore.wordWrap ? 'on' : 'off'
   })
 
-  // WATCHERS
-
-  watch(() => docsStore.active, (newValue) => {
-    if (newValue && editor) {
-      if (editorStore.validationChecksDirty) {
-        editorStore.clearErrors()
-      }
-      editor.setModel(modelStore[docsStore.activeDocument.id])
-      docOpenFinished(docsStore.activeDocument)
-    }
-  })
-
-  if (docsStore.opened.length < 1) {
-    docsStore.loadDocument({ isDefault: true })
-  }
-
-  watch(() => editorStore.cursorStyle, (newValue) => {
-    if (newValue && editor) {
-      editor.updateOptions({ cursorStyle: newValue })
-    }
-  })
-  watch(() => editorStore.cursorBlinking, (newValue) => {
-    if (newValue && editor) {
-      editor.updateOptions({ cursorBlinking: newValue })
-    }
-  })
-  watch(() => editorStore.fontSize, (newValue) => {
-    if (newValue && editor) {
-      editor.updateOptions({ fontSize: newValue })
-    }
-  })
-  watch(() => editorStore.formatOnType, (newValue) => {
-    if (editor) {
-      editor.updateOptions({ formatOnType: newValue })
-    }
-  })
-  watch(() => editorStore.tabSize, (newValue) => {
-    if (newValue && editor) {
-      editor.updateOptions({ tabSize: newValue })
-    }
-  })
-  watch(() => editorStore.theme, (newValue) => {
-    if (newValue && editor) {
-      editor.updateOptions({ theme: newValue })
-    }
-  })
-  watch(() => editorStore.wordWrap, (newValue) => {
-    if (editor) {
-      editor.updateOptions({ wordWrap: newValue ? 'on' : 'off' })
-    }
-    window.ipcBridge.emit('setMenuItemCheckedState', {
-      id: 'viewWordWrap',
-      value: newValue
-    })
-  })
-  watch(() => editorStore.previewPaneShown, (newValue) => {
-    window.ipcBridge.emit('setMenuItemCheckedState', {
-      id: 'viewShowPreviewPane',
-      value: newValue
+  // -> Handle cursor movement
+  editor.onDidChangeCursorPosition(ev => {
+    editorStore.$patch({
+      line: ev.position.lineNumber,
+      col: ev.position.column
     })
   })
 
-  watch(() => editorStore.errors, (newValue) => {
-    if (newValue && newValue.length > 0) {
-      monaco.editor.setModelMarkers(modelStore[docsStore.activeDocument.id], 'errors', newValue)
-    } else {
-      monaco.editor.removeAllMarkers('errors')
-    }
-  })
+  // -> Post init
+  editor.focus()
+
+  // -> Finish
+  docOpenFinished(docsStore.activeDocument)
 
   // -> Register handlers
   window.ipcBridge.subscribe('editorAction', handleEditorActions)
   window.ipcBridge.subscribe('lspNotification', handleLspNotification)
   EVENT_BUS.on('editorAction', handleEditorActions)
-  EVENT_BUS.on('lspCommand', handleLspCommand)
   EVENT_BUS.on('revealPosition', handleRevealPosition)
 
   // -> Remove initial loading screen
@@ -613,28 +101,99 @@ onMounted(async () => {
 // BEFORE UNMOUNT
 
 onBeforeUnmount(() => {
+  if (editor) {
+    editor.dispose()
+  }
+
   // -> Deregister handlers
   window.ipcBridge.subscribe('editorAction', handleEditorActions)
   window.ipcBridge.unsubscribe('lspNotification', handleLspNotification)
   EVENT_BUS.off('editorAction', handleEditorActions)
-  EVENT_BUS.off('lspCommand', handleLspCommand)
   EVENT_BUS.off('revealPosition', handleRevealPosition)
+})
+
+// WATCHERS
+
+watch(() => docsStore.active, (newValue) => {
+  if (newValue && editor) {
+    if (editorStore.validationChecksDirty) {
+      editorStore.clearErrors()
+    }
+    editor.setModel(modelStore[docsStore.activeDocument.id])
+    docOpenFinished(docsStore.activeDocument)
+  }
+})
+
+watch(() => editorStore.cursorStyle, (newValue) => {
+  if (newValue && editor) {
+    editor.updateOptions({ cursorStyle: newValue })
+  }
+})
+watch(() => editorStore.cursorBlinking, (newValue) => {
+  if (newValue && editor) {
+    editor.updateOptions({ cursorBlinking: newValue })
+  }
+})
+watch(() => editorStore.fontSize, (newValue) => {
+  if (newValue && editor) {
+    editor.updateOptions({ fontSize: newValue })
+  }
+})
+watch(() => editorStore.formatOnType, (newValue) => {
+  if (editor) {
+    editor.updateOptions({ formatOnType: newValue })
+  }
+})
+watch(() => editorStore.tabSize, (newValue) => {
+  if (newValue && editor) {
+    editor.updateOptions({ tabSize: newValue })
+  }
+})
+watch(() => editorStore.theme, (newValue) => {
+  if (newValue && editor) {
+    editor.updateOptions({ theme: newValue })
+  }
+})
+watch(() => editorStore.wordWrap, (newValue) => {
+  if (editor) {
+    editor.updateOptions({ wordWrap: newValue ? 'on' : 'off' })
+  }
+  window.ipcBridge.emit('setMenuItemCheckedState', {
+    id: 'viewWordWrap',
+    value: newValue
+  })
+})
+watch(() => editorStore.previewPaneShown, (newValue) => {
+  window.ipcBridge.emit('setMenuItemCheckedState', {
+    id: 'viewShowPreviewPane',
+    value: newValue
+  })
+})
+
+watch(() => editorStore.errors, (newValue) => {
+  if (newValue && newValue.length > 0) {
+    monaco.editor.setModelMarkers(modelStore[docsStore.activeDocument.id], 'errors', newValue)
+  } else {
+    monaco.editor.removeAllMarkers('errors')
+  }
 })
 
 // METHODS
 
 function docOpenFinished (doc) {
-  window.ipcBridge.emit('lspSendNotification', {
-    method: 'textDocument/didOpen',
-    params: {
-      textDocument: {
-        uri: doc.uri,
-        languageId: doc.type,
-        version: 1,
-        text: doc.data
+  if (doc.language === 'xmlrfc') {
+    window.ipcBridge.emit('lspSendNotification', {
+      method: 'textDocument/didOpen',
+      params: {
+        textDocument: {
+          uri: doc.uri,
+          languageId: doc.type,
+          version: modelStore[doc.id].getVersionId(),
+          text: doc.data
+        }
       }
-    }
-  })
+    })
+  }
   // const banner = document.createElement('div')
   // banner.innerHTML = 'TEST!'
   // editor.setBanner(banner, 50)
@@ -642,190 +201,7 @@ function docOpenFinished (doc) {
 
 function handleEditorActions (evt, action) {
   const properAction = action ?? evt
-  switch (properAction) {
-    case 'addCursorAbove': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.insertCursorAbove')
-      })
-      break
-    }
-    case 'addCursorBelow': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.insertCursorBelow')
-      })
-      break
-    }
-    case 'addCursorsToLineEnds': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.insertCursorAtEndOfEachLineSelected')
-      })
-      break
-    }
-    case 'addNextOccurence': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.addSelectionToNextFindMatch')
-      })
-      break
-    }
-    case 'addPreviousOccurence': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.addSelectionToPreviousFindMatch')
-      })
-      break
-    }
-    case 'checkIdNits': {
-      validateContent()
-      break
-    }
-    case 'commandPalette': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.quickCommand')
-      })
-      break
-    }
-    case 'copyLineDown': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.copyLinesDownAction')
-      })
-      break
-    }
-    case 'copyLineUp': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.copyLinesUpAction')
-      })
-      break
-    }
-    case 'duplicateSelection': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.duplicateSelection')
-      })
-      break
-    }
-    case 'expandSelection': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.smartSelect.expand')
-      })
-      break
-    }
-    case 'find': {
-      editor.trigger('menu', 'actions.find')
-      break
-    }
-    case 'findAndReplace': {
-      editor.trigger('menu', 'editor.action.startFindReplaceAction')
-      break
-    }
-    case 'findNext': {
-      editor.trigger('menu', 'editor.action.nextMatchFindAction')
-      break
-    }
-    case 'findPrevious': {
-      editor.trigger('menu', 'editor.action.previousMatchFindAction')
-      break
-    }
-    case 'format': {
-      editor.trigger('menu', 'editor.action.formatDocument')
-      break
-    }
-    case 'markerNext': {
-      editor.trigger('menu', 'editor.action.marker.next')
-      break
-    }
-    case 'moveLineDown': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.moveLinesDownAction')
-      })
-      break
-    }
-    case 'moveLineUp': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.moveLinesUpAction')
-      })
-      break
-    }
-    case 'previewPane': {
-      editorStore.previewPaneShown = !editorStore.previewPaneShown
-      break
-    }
-    case 'redo': {
-      editor.trigger('menu', 'redo')
-      editor.focus()
-      break
-    }
-    case 'selectAll': {
-      editor.focus()
-      setTimeout(() => {
-        const range = editor.getModel().getFullModelRange()
-        editor.setSelection(range)
-      })
-      break
-    }
-    case 'selectAllOccurences': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.selectHighlights')
-      })
-      break
-    }
-    case 'shrinkSelection': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.smartSelect.shrink')
-      })
-      break
-    }
-    case 'undo': {
-      editor.trigger('menu', 'undo')
-      editor.focus()
-      break
-    }
-    case 'wordWrap': {
-      editorStore.wordWrap = !editorStore.wordWrap
-      break
-    }
-    case 'zoomIn': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.fontZoomIn')
-      })
-      break
-    }
-    case 'zoomOut': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.fontZoomOut')
-      })
-      break
-    }
-    case 'zoomReset': {
-      editor.focus()
-      setTimeout(() => {
-        editor.trigger('menu', 'editor.action.fontZoomReset')
-      })
-      break
-    }
-  }
-}
-
-async function validateContent () {
-  const enc = new TextEncoder()
-  const result = await checkNits(enc.encode(editorStore.content).buffer, 'draft-ietf-ccamp-mw-topo-yang-08.xml', {
-    mode: 'normal',
-    offline: false
-  })
-  console.info(result)
+  handleEditorAction(editor, properAction)
 }
 
 async function handleLspNotification (evt, data) {
@@ -853,10 +229,6 @@ async function handleLspNotification (evt, data) {
       break
     }
   }
-}
-
-async function handleLspCommand (cmd) {
-
 }
 
 function handleRevealPosition (pos) {

@@ -24,10 +24,9 @@ q-dialog(
       .text-caption Electron Version: #[strong {{ electronVersion }}]
       .text-caption Chrome Version: #[strong {{ chromeVersion }}]
       .text-caption Node.js Version: #[strong {{ nodeVersion }}]
-      .q-mt-md.text-amber-5
-        .text-caption Licensed under BSD 3-Clause
-        .text-caption Copyright © 2023-{{ currentYear }}, The IETF Trust
-        .text-caption All rights reserved.
+      .q-mt-md.text-blue-2
+        .text-caption Brought to you with #[q-icon(name='mdi-heart')] by the IETF Tools team!
+        .text-caption #[a(@click.stop.prevent='viewGitHub', href='#') GitHub] | #[a(@click.stop.prevent='reportBug', href='#') Report Bug] | #[a(@click.stop.prevent='viewLicense', href='#') View license]
 
 </template>
 
@@ -52,8 +51,19 @@ const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent()
 // INFO
 
 const appVersion = process.env.APP_VERSION ?? 'Unknown'
-const currentYear = new Date().getFullYear()
 const chromeVersion = window.ipcBridge.versions.chrome
 const electronVersion = window.ipcBridge.versions.electron
 const nodeVersion = window.ipcBridge.versions.node
+
+// METHODS
+
+function viewGitHub () {
+  window.ipcBridge.emit('launchBrowser', { url: 'https://github.com/ietf-tools/editor' })
+}
+function reportBug () {
+  window.ipcBridge.emit('launchBrowser', { url: 'https://github.com/ietf-tools/editor/issues' })
+}
+function viewLicense () {
+  window.ipcBridge.emit('launchBrowser', { url: 'https://github.com/ietf-tools/editor/blob/main/LICENSE' })
+}
 </script>

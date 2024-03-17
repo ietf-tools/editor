@@ -50,6 +50,7 @@ export const useDocsStore = defineStore('docs', {
       // Create new document
       const docId = crypto.randomUUID()
       const docURI = doc.path ? monaco.Uri.file(doc.path) : monaco.Uri.parse(`inmemory://${docId}.${doc.type ?? 'xml'}`)
+      this.createModel(docId, doc.data ?? '', lang, docURI)
       const newDoc = {
         id: docId,
         type: doc.type ?? 'xml',
@@ -58,10 +59,10 @@ export const useDocsStore = defineStore('docs', {
         data: doc.data ?? '',
         isModified: false,
         lastModifiedAt: DateTime.utc(),
+        lastSavedVersion: modelStore[docId].getAlternativeVersionId(),
         language: lang,
         uri: docURI.toString()
       }
-      modelStore[docId] = monaco.editor.createModel(doc.data, lang, docURI)
       this.opened.push(newDoc)
 
       this.active = docId
@@ -148,6 +149,7 @@ export const useDocsStore = defineStore('docs', {
         this.activeDocument.data = modelStore[this.activeDocument.id].getValue()
         this.activeDocument.isModified = false
         this.activeDocument.lastModifiedAt = DateTime.utc()
+        this.activeDocument.lastSavedVersion = modelStore[this.activeDocument.id].getAlternativeVersionId()
 
         window.ipcBridge.emit('lspSendNotification', {
           method: 'textDocument/didSave',
@@ -159,6 +161,11 @@ export const useDocsStore = defineStore('docs', {
         })
       }
     },
+    /**
+     * Persists the session by saving the contents of the opened documents.
+     *
+     * @returns {Promise<void>} A promise that resolves when the session is persisted.
+     */
     async persistSession () {
       const modelContents = {}
       for (const doc of this.opened) {
@@ -172,17 +179,73 @@ export const useDocsStore = defineStore('docs', {
         models: modelContents
       })
     },
+    /**
+     * Restores the previous session by retrieving the session data from the IPC bridge.
+     * If a previous session exists, it creates models for each opened document and sets the active document.
+     * If no previous session exists, it throws an error.
+     *
+     * @throws {Error} If no previous session to restore.
+     * @returns {Promise<void>} A promise that resolves when the session is restored.
+     */
     async restoreSession () {
       const data = await window.ipcBridge.restoreSession()
       if (data?.active) {
         for (const doc of data.opened) {
-          modelStore[doc.id] = monaco.editor.createModel(data.models[doc.id], doc.language, monaco.Uri.parse(doc.uri))
+          this.createModel(doc.id, data.models[doc.id], doc.language, monaco.Uri.parse(doc.uri))
           this.opened.push(doc)
         }
         this.active = data.active
       } else {
         throw new Error('No previous session to restore.')
       }
+    },
+    /**
+     * Creates a new model and stores it in the modelStore.
+     *
+     * @param {string} id - The ID of the model.
+     * @param {string} data - The data for the model.
+     * @param {string} language - The language of the model.
+     * @param {string} uri - The URI of the model.
+     */
+    createModel (id, data, language, uri) {
+      const editorStore = useEditorStore()
+
+      modelStore[id] = monaco.editor.createModel(data, language, uri)
+
+      modelStore[id].onDidChangeContent(ev => {
+        if (editorStore.errors.length > 0 || editorStore.validationChecksDirty) {
+          editorStore.clearErrors()
+        }
+
+        this.activeDocument.isModified = this.activeDocument.lastSavedVersion !== modelStore[id].getAlternativeVersionId()
+        this.activeDocument.lastModifiedAt = DateTime.utc()
+
+        if (language === 'xmlrfc') {
+          window.ipcBridge.emit('lspSendNotification', {
+            method: 'textDocument/didChange',
+            params: {
+              textDocument: {
+                uri: uri.toString(),
+                version: ev.versionId
+              },
+              contentChanges: ev.changes.map(chg => ({
+                range: {
+                  start: {
+                    line: chg.range.startLineNumber - 1,
+                    character: chg.range.startColumn - 1
+                  },
+                  end: {
+                    line: chg.range.endLineNumber - 1,
+                    character: chg.range.endColumn - 1
+                  }
+                },
+                rangeLength: chg.rangeLength,
+                text: chg.text
+              }))
+            }
+          })
+        }
+      })
     }
   },
   persist: {
