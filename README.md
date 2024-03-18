@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-text-dark.png">
-  <img alt="DraftForge" src="docs/assets/logo-text-light.png" height="150">
+  <img alt="DraftForge" src="docs/assets/logo-text-light.png" height="175">
 </picture>
 
 [![Release](https://img.shields.io/github/release/ietf-tools/editor.svg?style=flat&maxAge=300)](https://github.com/ietf-tools/editor/releases)
