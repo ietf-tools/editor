@@ -1,8 +1,29 @@
-![draftforge](https://github.com/ietf-tools/editor/assets/15522395/b70431d7-eec1-4890-923b-70205f6ac126)
+<div align="center">
 
-# DraftForge
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-text-dark.png">
+  <img alt="DraftForge" src="docs/assets/logo-text-light.png" height="150">
+</picture>
 
-A fully featured editor to write, review and publish Internet Drafts / RFCs.
+[![Release](https://img.shields.io/github/release/ietf-tools/editor.svg?style=flat&maxAge=300)](https://github.com/ietf-tools/editor/releases)
+[![GitHub Issues](https://img.shields.io/github/issues/ietf-tools/editor?style=flat&logo=github)](https://github.com/ietf-tools/editor/issues)
+[![Downloads](https://img.shields.io/github/downloads/ietf-tools/editor/total.svg?style=flat&logo=github)](https://github.com/ietf-tools/editor/releases)
+[![Build + Publish](https://github.com/ietf-tools/editor/actions/workflows/build.yml/badge.svg)](https://github.com/ietf-tools/editor/actions/workflows/build.yml)
+
+#### A fully featured editor to write, review and publish Internet Drafts / RFCs.
+
+</div>
+
+- [Install](#install)
+  - [Supported Platforms](#supported-platforms)
+- [Development](#development)
+  - [Prerequisites](#prerequisites)
+  - [Setup](#setup)
+  - [Build](#build)
+
+---
+
+![](docs/assets/draftforge-screenshot.png)
 
 # Install
 
