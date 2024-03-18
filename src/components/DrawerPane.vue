@@ -1,5 +1,6 @@
 <template lang="pug">
-q-drawer.bg-dark-4(
+q-drawer.bg-dark-4.drawer-pane(
+  :class='{ "has-mode-sd": editorStore.modeSidebarShown }'
   :model-value='state.drawerShown'
   show-if-above
   persistent
@@ -38,3 +39,11 @@ const state = reactive({
   drawerShown: true
 })
 </script>
+
+<style lang="scss">
+.drawer-pane {
+  &.has-mode-sd {
+    border-left: 1px solid lighten($dark-1, 10%);
+  }
+}
+</style>

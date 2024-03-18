@@ -1,5 +1,5 @@
 <template lang="pug">
-q-bar.toolbar-main
+q-bar.toolbar-main(:class='{ "has-mode-sd": editorStore.modeSidebarShown }')
   .toolbar-drawer
     q-btn-group(
       unelevated
@@ -50,6 +50,14 @@ q-bar.toolbar-main
       @click='newDocument'
       )
   q-space
+  q-btn(
+    flat
+    icon='mdi-collage'
+    color='light-blue-3'
+    @click='editorStore.modeSidebarShown = !editorStore.modeSidebarShown'
+    padding='xs sm'
+    )
+    q-tooltip Toggle Mode Sidebar
   q-btn(
     flat
     icon='mdi-cog'
@@ -194,6 +202,10 @@ function logout () {
   height: 40px;
   background: radial-gradient(ellipse at bottom, $light-blue-9, darken($light-blue-10, 5%));
   border-bottom: 1px solid $light-blue-5;
+
+  &.has-mode-sd {
+    border-left: 1px solid $light-blue-5;
+  }
 }
 .toolbar-drawer {
   width: 330px;

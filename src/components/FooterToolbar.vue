@@ -1,10 +1,16 @@
 <template lang="pug">
 q-footer
-  q-bar.bg-dark-3(v-if='!docsStore.active', style='height: 40px')
+  q-bar.welcome-footer-bar(
+    v-if='!docsStore.active'
+    :class='{ "has-mode-sd": editorStore.modeSidebarShown }'
+    )
     q-space
     span.text-caption.text-blue-grey-3 DraftForge
     q-space
-  .footer-bar(v-else)
+  .footer-bar(
+    v-else
+    :class='{ "has-mode-sd": editorStore.modeSidebarShown }'
+    )
     .footer-bar-item
       span.text-caption {{ docType }}
     .footer-bar-separator
@@ -104,6 +110,15 @@ function runAllChecks () {
 </script>
 
 <style lang="scss">
+.welcome-footer-bar, .footer-bar {
+  &.has-mode-sd {
+    border-left: 1px solid lighten($dark-1, 10%);
+  }
+}
+.welcome-footer-bar {
+  background-color: $dark-3;
+  height: 40px;
+}
 .footer-bar {
   background-color: $dark-2;
   display: flex;
