@@ -10,7 +10,7 @@
 [![Downloads](https://img.shields.io/github/downloads/ietf-tools/editor/total.svg?style=flat&logo=github)](https://github.com/ietf-tools/editor/releases)
 [![Build + Publish](https://github.com/ietf-tools/editor/actions/workflows/build.yml/badge.svg)](https://github.com/ietf-tools/editor/actions/workflows/build.yml)
 
-#### A fully featured editor to write, review and publish Internet Drafts / RFCs.
+#### A fully featured editor to write, review, refine and submit Internet-Drafts.
 
 </div>
 
