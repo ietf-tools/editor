@@ -1,16 +1,10 @@
 <template lang="pug">
 q-footer
-  q-bar.welcome-footer-bar(
-    v-if='!docsStore.active'
-    :class='{ "has-mode-sd": editorStore.modeSidebarShown }'
-    )
+  q-bar.welcome-footer-bar(v-if='route.name === `welcome`')
     q-space
     span.text-caption.text-blue-grey-3 DraftForge
     q-space
-  .footer-bar(
-    v-else
-    :class='{ "has-mode-sd": editorStore.modeSidebarShown }'
-    )
+  .footer-bar(v-else)
     .footer-bar-item
       span.text-caption {{ docType }}
     .footer-bar-separator
@@ -71,9 +65,12 @@ q-footer
 
 <script setup>
 import { computed, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 
 import { useDocsStore } from 'src/stores/docs'
 import { useEditorStore } from 'src/stores/editor'
+
+const route = useRoute()
 
 // STORES
 
@@ -111,9 +108,7 @@ function runAllChecks () {
 
 <style lang="scss">
 .welcome-footer-bar, .footer-bar {
-  &.has-mode-sd {
-    border-left: 1px solid lighten($dark-1, 10%);
-  }
+  border-left: 1px solid lighten($dark-1, 10%);
 }
 .welcome-footer-bar {
   background-color: $dark-3;

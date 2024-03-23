@@ -81,6 +81,7 @@ export default configure((/* ctx */) => {
       // distDir
 
       extendViteConf (viteConf) {
+        viteConf.build.chunkSizeWarningLimit = 9999999
         // viteConf.build.rollupOptions = {
         //   external: ['monaco-editor'],
         //   output: {

@@ -1,19 +1,36 @@
 <template lang='pug'>
-router-view
+.app-layout(:class='currentModeClass')
+  app-mode-sidebar
+  .app-main
+    router-view
 </template>
 
 <script setup>
-import { defineAsyncComponent, onMounted, watch } from 'vue'
+import { computed, defineAsyncComponent, onMounted, watch } from 'vue'
 import { useQuasar } from 'quasar'
+import { useRouter, useRoute } from 'vue-router'
 import { useDocsStore } from 'src/stores/docs'
 import { useEditorStore } from 'src/stores/editor'
 import { useUserStore } from 'src/stores/user'
+import AppModeSidebar from 'components/AppModeSidebar.vue'
 
 const $q = useQuasar()
 
 const docsStore = useDocsStore()
 const editorStore = useEditorStore()
 const userStore = useUserStore()
+
+const router = useRouter()
+const route = useRoute()
+
+const currentModeClass = computed(() => {
+  if (route.name === 'editor' && route.query.mode === 'review') {
+    return 'route-review'
+  }
+  return `route-${route.name}`
+})
+
+// WATCHERS
 
 let progressDiag
 let shouldExit = false
@@ -109,6 +126,22 @@ watch(() => editorStore.animationEffects, (newValue) => {
   }
 }, { immediate: true })
 
+// -> Handle mode switch
+watch(() => editorStore.mode, (newValue) => {
+  switch (newValue) {
+    case 'submit': {
+      router.push('/submit')
+      break
+    }
+    default: {
+      router.push('/')
+      break
+    }
+  }
+})
+
+// MOUNTED
+
 onMounted(async () => {
   window.ipcBridge.emit('authFetchInfo')
   await editorStore.fetchGitConfig()
@@ -160,3 +193,14 @@ window.onbeforeunload = (ev) => {
 }
 
 </script>
+
+<style lang="scss">
+.app-layout {
+  display: flex;
+}
+.app-main {
+  display: block;
+  flex: 1;
+  position: relative;
+}
+</style>

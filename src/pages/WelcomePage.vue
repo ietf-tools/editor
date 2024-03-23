@@ -5,7 +5,7 @@ q-page.welcome.bg-dark-5
       img(src='../assets/draftforge-logotext.svg', alt='DraftForge')
     .welcome-text.q-mt-lg
       .text-body1: strong Welcome to DraftForge
-      .text-caption.text-blue-grey-3 The editor for creating, reviewing and publishing Internet Drafts / RFCs
+      .text-caption.text-blue-grey-3 The editor for writing, reviewing, refining and submit Internet-Drafts.
     q-list.q-mt-md.rounded-borders(
       separator
       bordered
@@ -66,14 +66,6 @@ const docsStore = useDocsStore()
 // ROUTER
 
 const router = useRouter()
-
-if (docsStore.active) {
-  if (docsStore.opened.length > 0) {
-    router.replace('/editor')
-  } else {
-    docsStore.active = null
-  }
-}
 
 // WATCH
 

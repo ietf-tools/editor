@@ -1,23 +1,22 @@
-import { useDocsStore } from 'src/stores/docs'
-
 const routes = [
   {
+    name: 'submit',
+    path: '/submit',
+    component: () => import('pages/SubmitPage.vue')
+  },
+  {
     path: '/',
-    component: () => import('layouts/MainLayout.vue'),
+    component: () => import('layouts/EditorLayout.vue'),
     children: [
       {
+        name: 'welcome',
         path: '',
-        component: () => import('pages/WelcomePage.vue'),
-        beforeEnter: (to, from) => {
-          const docsStore = useDocsStore()
-          if (docsStore.active && docsStore.opened.length > 0) {
-            return { path: '/editor' }
-          }
-        }
+        component: () => import('pages/WelcomePage.vue')
       },
       {
+        name: 'editor',
         path: 'editor',
-        component: () => import('pages/EditorMain.vue')
+        component: () => import('pages/EditorPage.vue')
       }
     ]
   },
@@ -25,6 +24,7 @@ const routes = [
   // Always leave this as last one,
   // but you can also remove it
   {
+    name: 'error',
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue')
   }
