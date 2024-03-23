@@ -9,10 +9,15 @@ image: Visual Studio 2022
 build_script:
 - ps: >-
     echo "Installing Node.js 20.x..."
+
     Install-Product node 20
+
     echo "Installing dependencies..."
+
     npm ci
+
     echo "Build package..."
+
     npx quasar build -m electron -T win32 --arch x64 -P never
 artifacts:
 - path: dist/electron/Packaged/*.exe
