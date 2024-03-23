@@ -1,0 +1,23 @@
+version: 0.0.{build}
+pull_requests:
+  do_not_increment_build_number: true
+branches:
+  only:
+  - main
+skip_tags: true
+image: Visual Studio 2022
+build_script:
+- ps: >-
+    echo "Installing Node.js 20.x..."
+    Install-Product node 20
+    echo "Installing dependencies..."
+    npm ci
+    echo "Build package..."
+    npx quasar build -m electron -T win32 --arch x64 -P never
+artifacts:
+- path: dist/electron/Packaged/*.exe
+deploy:
+- provider: Webhook
+  url: https://app.signpath.io/API/v1/1cef2ffd-9679-4cb0-86f6-ae6eac0dd0c0/Integrations/AppVeyor?ProjectSlug=editor&SigningPolicySlug=test-signing
+  authorization:
+    secure: xjT5P5AOsX1O/B1V5PX2Mxl3ASER/gQ+lie4/xgs3Thys346S5/lfwPPARKKFGaFAvj0XfC0B/2daYweolPUqA==
