@@ -20,7 +20,9 @@ build_script:
 
     npx quasar build -m electron -T win32 --arch x64 -P never
 
-    Copy-Item -Path dist\electron\Packaged\*.exe* -Include *.exe -Destination $outFolder
+    Copy-Item -Path dist\electron\Packaged\*.exe -Destination .\
+artifacts:
+- path: *.exe
 deploy:
 - provider: Webhook
   url: https://app.signpath.io/API/v1/1cef2ffd-9679-4cb0-86f6-ae6eac0dd0c0/Integrations/AppVeyor?ProjectSlug=editor&SigningPolicySlug=test-signing
