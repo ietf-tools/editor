@@ -4,13 +4,19 @@ pull_requests:
 branches:
   only:
   - main
-skip_tags: true
+skip_non_tags: true
 image: Visual Studio 2022
 build_script:
 - ps: >-
     echo "Installing Node.js 20.x..."
 
     Install-Product node 20
+
+    echo "Building for tag:"
+
+    echo $env:APPVEYOR_REPO_TAG_NAME
+
+    node -e "const fs = require('node:fs'); const pkg = require('./package.json'); pkg.version = '$env:APPVEYOR_REPO_TAG_NAME'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
 
     echo "Installing dependencies..."
 
@@ -25,6 +31,6 @@ artifacts:
 - path: "*.exe"
 deploy:
 - provider: Webhook
-  url: https://app.signpath.io/API/v1/1cef2ffd-9679-4cb0-86f6-ae6eac0dd0c0/Integrations/AppVeyor?ProjectSlug=editor&SigningPolicySlug=test-signing
+  url: https://app.signpath.io/API/v1/1cef2ffd-9679-4cb0-86f6-ae6eac0dd0c0/Integrations/AppVeyor?ProjectSlug=editor&SigningPolicySlug=release-signing
   authorization:
     secure: xjT5P5AOsX1O/B1V5PX2Mxl3ASER/gQ+lie4/xgs3Thys346S5/lfwPPARKKFGaFAvj0XfC0B/2daYweolPUqA==
