@@ -109,7 +109,7 @@ jobs:
         node-version: '20'
 
     - name: Fetch Secrets from Vault
-      if: ${{ matrix.arch == 'darwin' }}
+      if: ${{ matrix.platform == 'darwin' }}
       uses: hashicorp/vault-action@v2.6.0
       with:
         method: jwt
@@ -123,7 +123,7 @@ jobs:
           kv/data/draftforge/apple DIST_CERT_P12_PWD | CSC_KEY_PASSWORD ;
 
     - name: Save signing certs
-      if: ${{ matrix.arch == 'darwin' }}
+      if: ${{ matrix.platform == 'darwin' }}
       run: |
         mkdir -p private_keys
         echo "APPLE_API_KEY=private_keys/AuthKeys_$APPLE_API_KEY_ID.p8" >> "$GITHUB_ENV"
@@ -154,7 +154,7 @@ jobs:
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Purge signing certs
-      if: ${{ matrix.arch == 'darwin' && always() }}
+      if: ${{ matrix.platform == 'darwin' && always() }}
       run: |
         rm -rf private_keys
 
