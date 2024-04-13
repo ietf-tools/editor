@@ -323,6 +323,21 @@ q-dialog(
                 @click='login'
               )
 
+        template(v-if='state.tab === `telemetry`')
+          q-form.q-gutter-md.q-pa-lg
+            .row
+              .col
+                .text-body2 Send telemetry to the IETF Tools team
+                .text-caption.text-grey-5 Application traces, errors and performance metrics will be sent to the IETF Tools team for debugging and general improvement purposes.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.telemetry'
+                  color='primary'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                  @update:model-value='updateTelemetryState'
+                )
+
         template(v-if='state.tab === `dev`')
           q-form.q-gutter-md.q-pa-lg
             .flex.items-center.text-red-5
@@ -396,6 +411,11 @@ const tabs = [
     key: 'profile',
     icon: 'mdi-account',
     label: 'Profile'
+  },
+  {
+    key: 'telemetry',
+    icon: 'mdi-broadcast',
+    label: 'Telemetry'
   },
   {
     key: 'dev',
@@ -541,6 +561,10 @@ function editProfile () {
 }
 function logout () {
   window.ipcBridge.emit('logout')
+}
+
+function updateTelemetryState (newState) {
+  window.ipcBridge.emit('setTelemetryState', { enabled: newState })
 }
 
 onBeforeUnmount(() => {

@@ -251,7 +251,9 @@ export default configure((/* ctx */) => {
         mac: {
           category: 'public.app-category.productivity',
           target: 'dmg',
-          darkModeSupport: true
+          darkModeSupport: true,
+          hardenedRuntime: true,
+          notarize: true
         },
         win: {
           target: 'portable'

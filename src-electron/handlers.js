@@ -200,7 +200,7 @@ function getFiltersForType (type) {
  * @param {Object} git Git instance
  * @param {Object} lsp LSP instance
  */
-export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp) {
+export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
   // ----------------------------------------------------------
   // FILE SYSTEM
   // ----------------------------------------------------------
@@ -357,6 +357,15 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp) {
       console.error(err)
       return null
     }
+  })
+  ipcMain.on('setTelemetryState', (ev, opts) => {
+    tlm.conf.enabled = (opts.enabled === true)
+    if (tlm.conf.enabled) {
+      tlm.start()
+    } else {
+      tlm.stop()
+    }
+    tlm.saveConfig()
   })
   // ----------------------------------------------------------
   // AUTH

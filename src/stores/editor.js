@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { decorationsStore } from 'src/stores/models'
 
 export const useEditorStore = defineStore('editor', {
   state: () => ({
@@ -36,11 +37,13 @@ export const useEditorStore = defineStore('editor', {
     schemaValidationErrors: 0,
     symbols: [],
     tabSize: 2,
+    telemetry: false,
     theme: 'ietf-dark',
     translucencyEffects: true,
     validationChecksDirty: false,
     validationChecks: {
       articles: 0,
+      hyphenation: 0,
       inclusiveLanguage: 0,
       nonAscii: 0
     },
@@ -95,6 +98,7 @@ export const useEditorStore = defineStore('editor', {
       this.errors = []
       for (const key in this.validationChecks) {
         this.validationChecks[key] = 0
+        decorationsStore.get(key)?.clear()
       }
       this.validationChecksDirty = false
     },
@@ -115,6 +119,7 @@ export const useEditorStore = defineStore('editor', {
       'persistSession',
       'previewPaneShown',
       'tabSize',
+      'telemetry',
       'theme',
       'translucencyEffects',
       'wordWrap',

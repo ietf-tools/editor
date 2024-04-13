@@ -1,0 +1,81 @@
+import { decorationsStore } from 'src/stores/models'
+
+export function checkHyphenation (text) {
+  const hyphenTermRgx = /[a-z]+(?:-[a-z]+)+/gi
+  const textLines = text.split('\n')
+
+  const decorations = []
+  const occurences = []
+  const hyphenTerms = []
+  const hyphenTermsOccurences = []
+  for (const [lineIdx, line] of textLines.entries()) {
+    for (const match of line.matchAll(hyphenTermRgx)) {
+      if (match[0].length > 3) {
+        if (!hyphenTerms.includes(match[0])) {
+          hyphenTerms.push(match[0])
+        }
+        hyphenTermsOccurences.push({
+          term: match[0],
+          range: {
+            startLineNumber: lineIdx + 1,
+            startColumn: match.index + 1,
+            endLineNumber: lineIdx + 1,
+            endColumn: match.index + 1 + match[0].length
+          }
+        })
+      }
+    }
+  }
+
+  if (hyphenTerms.length > 0) {
+    for (const [lineIdx, line] of textLines.entries()) {
+      for (const term of hyphenTerms) {
+        const altTerm = term.replaceAll('-', '')
+        const altTermRgx = new RegExp(`(?:^|[>" ])${altTerm}(?:[. "<]|$)`, 'gi')
+        for (const match of line.matchAll(altTermRgx)) {
+          let occIdx = occurences.indexOf(term)
+          if (occIdx < 0) {
+            occIdx = occurences.push(term) - 1
+            for (const termOcc of hyphenTermsOccurences.filter(t => t.term === term)) {
+              decorations.push({
+                options: {
+                  hoverMessage: {
+                    value: `[${occIdx}] Inconsistent Hyphenation (Alternate of ${altTerm})`
+                  },
+                  className: 'dec-warning',
+                  minimap: {
+                    position: 1
+                  },
+                  glyphMarginClassName: 'dec-warning-margin'
+                },
+                range: termOcc.range
+              })
+            }
+          }
+          decorations.push({
+            options: {
+              hoverMessage: {
+                value: `[${occIdx}] Inconsistent Hyphenation (Alternate of ${term})`
+              },
+              className: 'dec-warning',
+              minimap: {
+                position: 1
+              },
+              glyphMarginClassName: 'dec-warning-margin'
+            },
+            range: {
+              startLineNumber: lineIdx + 1,
+              startColumn: match.index + 2,
+              endLineNumber: lineIdx + 1,
+              endColumn: match.index + match[0].length
+            }
+          })
+        }
+      }
+    }
+  }
+
+  decorationsStore.get('hyphenation').set(decorations)
+
+  return occurences.length
+}

@@ -4,7 +4,7 @@ q-btn(v-if='userStore.isLoggedIn' padding="xs sm" flat no-caps)
   q-avatar.q-ml-sm(size='sm' rounded)
     img(:src='userStore.profile.picture')
   q-menu(auto-close)
-    q-list.bg-light-blue-9(separator, style='min-width: 180px')
+    q-list.bg-dark-2(separator, style='min-width: 180px')
       q-item.bg-dark-1
         q-item-section.text-center
           .text-caption.text-blue-grey-3 Datatracker Account

@@ -66,6 +66,9 @@ jobs:
     name: Build Electron
     needs: [prepare]
     runs-on: ${{ matrix.os }}
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -82,10 +85,10 @@ jobs:
             platform: darwin
             arch: x64
             ext: dmg
-          # - os: macos-latest
-          #   platform: darwin
-          #   arch: arm64
-          #   ext: dmg
+          - os: macos-latest
+            platform: darwin
+            arch: arm64
+            ext: dmg
           - os: windows-latest
             platform: win32
             arch: x64
@@ -96,6 +99,7 @@ jobs:
             ext: exe
     env:
       PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
+      CSC_LINK: private_keys/distribution.p12
 
     steps:
     - uses: actions/checkout@v4
@@ -103,6 +107,28 @@ jobs:
     - uses: actions/setup-node@v4
       with:
         node-version: '20'
+
+    - name: Fetch Secrets from Vault
+      if: ${{ matrix.arch == 'darwin' }}
+      uses: hashicorp/vault-action@v2.6.0
+      with:
+        method: jwt
+        url: ${{ secrets.VAULT_URL }}
+        role: ${{ secrets.VAULT_ROLE }}
+        secrets: |
+          kv/data/draftforge/apple API_ISSUER_ID | APPLE_API_ISSUER ;
+          kv/data/draftforge/apple API_KEY_ID | APPLE_API_KEY_ID ;
+          kv/data/draftforge/apple API_KEY_P8 | API_KEY_P8 ;
+          kv/data/draftforge/apple DIST_CERT_P12 | DIST_CERT_P12 ;
+          kv/data/draftforge/apple DIST_CERT_P12_PWD | CSC_KEY_PASSWORD ;
+
+    - name: Save signing certs
+      if: ${{ matrix.arch == 'darwin' }}
+      run: |
+        mkdir -p private_keys
+        echo "APPLE_API_KEY=private_keys/AuthKeys_$APPLE_API_KEY_ID.p8" >> "$GITHUB_ENV"
+        openssl base64 -d <<< "$API_KEY_P8" -out "private_keys/AuthKeys_$APPLE_API_KEY_ID.p8"
+        openssl base64 -d <<< "$DIST_CERT_P12" -out "private_keys/distribution.p12"
 
     - name: Set Version
       run: |
@@ -126,6 +152,11 @@ jobs:
         name: ${{ env.PKG_VERSION }}
         artifacts: "dist/electron/Packaged/*.${{ matrix.ext }}"
         token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Purge signing certs
+      if: ${{ matrix.arch == 'darwin' && always() }}
+      run: |
+        rm -rf private_keys
 
   # -----------------------------------------------------------------
   # RELEASE

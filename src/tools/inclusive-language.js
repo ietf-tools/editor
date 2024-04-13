@@ -1,5 +1,5 @@
 import { find, flatten } from 'lodash-es'
-import { MarkerSeverity } from 'monaco-editor/esm/vs/editor/editor.api'
+import { decorationsStore } from 'src/stores/models'
 
 const dictionnary = [
   {
@@ -40,21 +40,32 @@ export function checkInclusiveLanguage (text) {
   const matchRgx = new RegExp(`[<> "'.:;=([{-](${flatten(dictionnary.map(d => d.triggers)).join('|')})`, 'gi')
   const textLines = text.split('\n')
 
-  const occurences = []
+  const decorations = []
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(matchRgx)) {
       const dictEntry = find(dictionnary, d => d.triggers.includes(match[1].toLowerCase()))
-      occurences.push({
-        message: `Consider using ${dictEntry.suggestion} instead.`,
-        severity: MarkerSeverity.Warning,
-        startLineNumber: lineIdx + 1,
-        startColumn: match.index + 2,
-        endLineNumber: lineIdx + 1,
-        endColumn: match.index + 2 + match[1].length,
-        source: 'inclusive-language'
+      decorations.push({
+        options: {
+          hoverMessage: {
+            value: `Consider using ${dictEntry.suggestion} instead.`
+          },
+          className: 'dec-warning',
+          minimap: {
+            position: 1
+          },
+          glyphMarginClassName: 'dec-warning-margin'
+        },
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 2,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + 1 + match[0].length
+        }
       })
     }
   }
 
-  return occurences
+  decorationsStore.get('inclusiveLanguage').set(decorations)
+
+  return decorations.length
 }

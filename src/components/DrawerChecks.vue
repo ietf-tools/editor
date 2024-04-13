@@ -48,6 +48,7 @@ q-list
 import { onBeforeUnmount, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { checkArticles } from 'src/tools/articles'
+import { checkHyphenation } from 'src/tools/hyphenation'
 import { checkInclusiveLanguage } from 'src/tools/inclusive-language'
 import { checkNonAscii } from 'src/tools/non-ascii'
 import { useDocsStore } from 'src/stores/docs'
@@ -70,6 +71,13 @@ const valChecks = [
     click: () => articlesCheck()
   },
   {
+    key: 'hyphenation',
+    title: 'Hyphenation Check',
+    description: 'Check for consistent usage of hyphenation',
+    icon: 'mdi-line-scan',
+    click: () => hyphenationCheck()
+  },
+  {
     key: 'inclusiveLanguage',
     title: 'Inclusive Language Check',
     description: 'Check for usage of non-inclusive terms',
@@ -89,7 +97,7 @@ const valChecks = [
 
 function articlesCheck (silent) {
   const warnings = checkArticles(modelStore[docsStore.activeDocument.id].getValue())
-  if (warnings.length < 1) {
+  if (warnings < 1) {
     editorStore.setValidationCheckState('articles', 1)
     if (!silent) {
       $q.notify({
@@ -101,23 +109,29 @@ function articlesCheck (silent) {
     }
   } else {
     editorStore.setValidationCheckState('articles', -2)
+  }
+}
+
+function hyphenationCheck (silent = false) {
+  const occurences = checkHyphenation(modelStore[docsStore.activeDocument.id].getValue())
+  if (occurences < 1) {
+    editorStore.setValidationCheckState('hyphenation', 1)
     if (!silent) {
-      setTimeout(() => {
-        EVENT_BUS.emit('editorAction', 'markerNext')
+      $q.notify({
+        message: 'Looks good!',
+        caption: 'Hyphenation is consistent.',
+        color: 'positive',
+        icon: 'mdi-atom-variant'
       })
     }
-  }
-
-  if (silent) {
-    editorStore.errors.push(...warnings)
   } else {
-    editorStore.errors = warnings
+    editorStore.setValidationCheckState('hyphenation', -2)
   }
 }
 
 function inclusiveLangCheck (silent = false) {
   const warnings = checkInclusiveLanguage(modelStore[docsStore.activeDocument.id].getValue())
-  if (warnings.length < 1) {
+  if (warnings < 1) {
     editorStore.setValidationCheckState('inclusiveLanguage', 1)
     if (!silent) {
       $q.notify({
@@ -129,23 +143,12 @@ function inclusiveLangCheck (silent = false) {
     }
   } else {
     editorStore.setValidationCheckState('inclusiveLanguage', -2)
-    if (!silent) {
-      setTimeout(() => {
-        EVENT_BUS.emit('editorAction', 'markerNext')
-      })
-    }
-  }
-
-  if (silent) {
-    editorStore.errors.push(...warnings)
-  } else {
-    editorStore.errors = warnings
   }
 }
 
 function nonAsciiCheck (silent = false) {
   const infos = checkNonAscii(modelStore[docsStore.activeDocument.id].getValue())
-  if (infos.length < 1) {
+  if (infos < 1) {
     editorStore.setValidationCheckState('nonAscii', 1)
     if (!silent) {
       $q.notify({
@@ -157,23 +160,13 @@ function nonAsciiCheck (silent = false) {
     }
   } else {
     editorStore.setValidationCheckState('nonAscii', 2)
-    if (!silent) {
-      setTimeout(() => {
-        EVENT_BUS.emit('editorAction', 'markerNext')
-      })
-    }
-  }
-
-  if (silent) {
-    editorStore.errors.push(...infos)
-  } else {
-    editorStore.errors = infos
   }
 }
 
 function runAllChecks () {
   editorStore.clearErrors()
   articlesCheck(true)
+  hyphenationCheck(true)
   inclusiveLangCheck(true)
   nonAsciiCheck(true)
 

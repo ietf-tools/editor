@@ -1,6 +1,8 @@
 import { app, BrowserWindow, Menu, screen } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import tlm from './instrumentation.js'
+import { trace } from '@opentelemetry/api'
 import { registerMenu } from './menu.js'
 import { loadDocument, registerCallbacks } from './handlers.js'
 import { mergeWithHeaders } from './helpers.js'
@@ -9,6 +11,10 @@ import git from './git.js'
 import lsp from './lsp.js'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
+
+// Initialize Instrumentation
+tlm.initialize()
+const tracer = trace.getTracer('draftforge', '0.0.1')
 
 // needed in case process is undefined under Linux
 // const platform = process.platform || os.platform()
@@ -23,6 +29,7 @@ let mainWindow
 let mainMenu
 
 function createWindow () {
+  const span = tracer.startSpan('createWindow')
   // -> Get primary screen dimensions
   const primaryDisplay = screen.getPrimaryDisplay()
   const { width, height } = primaryDisplay.workAreaSize
@@ -97,7 +104,8 @@ function createWindow () {
   auth.init(mainWindow)
   git.init()
 
-  registerCallbacks(mainWindow, mainMenu, auth, git, lsp)
+  registerCallbacks(mainWindow, mainMenu, auth, git, lsp, tlm)
+  span.end()
 }
 
 if (!instanceLock) {

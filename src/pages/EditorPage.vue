@@ -15,7 +15,7 @@ q-page.row.items-stretch
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import * as monaco from 'monaco-editor'
-import { modelStore } from 'src/stores/models'
+import { modelStore, decorationsStore } from 'src/stores/models'
 import * as lspHelpers from 'src/helpers/lsp'
 import { registerThemes } from 'src/helpers/monaco-themes'
 import { registerMarkdownLanguage } from 'src/languages/markdown'
@@ -60,6 +60,7 @@ onMounted(async () => {
     cursorBlinking: editorStore.cursorBlinking,
     fontSize: editorStore.fontSize,
     formatOnType: editorStore.formatOnType,
+    glyphMargin: true,
     language: 'xmlrfc',
     lineNumbersMinChars: 4,
     linkedEditing: true,
@@ -73,6 +74,12 @@ onMounted(async () => {
     theme: editorStore.theme,
     wordWrap: editorStore.wordWrap ? 'on' : 'off'
   })
+
+  // -> Create decorations collections
+  decorationsStore.clear()
+  for (const key in editorStore.validationChecks) {
+    decorationsStore.set(key, editor.createDecorationsCollection())
+  }
 
   // -> Handle cursor movement
   editor.onDidChangeCursorPosition(ev => {
@@ -102,6 +109,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (editor) {
+    decorationsStore.clear()
     editor.dispose()
   }
 
@@ -239,3 +247,45 @@ function handleRevealPosition (pos) {
   }
 }
 </script>
+
+<style lang="scss">
+.dec {
+  &-info {
+    border-bottom: 3px dashed $light-blue-5;
+
+    &-margin {
+      background-color: rgba($light-blue, .2);
+      border-radius: 0 50% 50% 0;
+
+      &::before {
+        content: '';
+        display: block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: $light-blue;
+        z-index: 10;
+      }
+    }
+  }
+  &-warning {
+    border-bottom: 3px dashed $orange-5;
+
+    &-margin {
+      background-color: rgba($orange, .2);
+      border-radius: 0 50% 50% 0;
+
+      &::before {
+        content: '';
+        display: block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: $orange-5;
+        z-index: 10;
+      }
+    }
+  }
+}
+
+</style>

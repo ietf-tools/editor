@@ -1,4 +1,4 @@
-import { MarkerSeverity } from 'monaco-editor/esm/vs/editor/editor.api'
+import { decorationsStore } from 'src/stores/models'
 
 export function checkArticles (text) {
   const partARgx = /(?<!(?:[aA]ppendix|[cC]onnection|[lL]ink|[nN]ode|Operator)) (?!(?:[aA] (?:AAA|Europe|[oO]ne|U[A-Z]|U-label|[uU]biquitous|[uU]nicast|[uU]nicode|[uU]nidir|[uU]nif|[uU]nion|[uU]nique|[uU]nit|[uU]nivers|[uU]sable|[uU]sability|[uU]sage|[uU]se|[uU]tility)|a uCDN|A and))[aA] [aeiouAEIOU]/g
@@ -8,64 +8,111 @@ export function checkArticles (text) {
   const partCLFRgx = /[aA]n LF /g
   const textLines = text.split('\n')
 
-  const occurences = []
+  const decorations = []
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(partARgx)) {
-      occurences.push({
-        message: 'Bad indefinite article usage detected. Consider using "an" instead of "a".',
-        severity: MarkerSeverity.Warning,
-        startLineNumber: lineIdx + 1,
-        startColumn: match.index + 2,
-        endLineNumber: lineIdx + 1,
-        endColumn: match.index + 1 + match[0].length,
-        source: 'articles (part 1-A)'
+      decorations.push({
+        options: {
+          hoverMessage: {
+            value: 'Bad indefinite article usage detected. Consider using "an" instead of "a".'
+          },
+          className: 'dec-warning',
+          minimap: {
+            position: 1
+          },
+          glyphMarginClassName: 'dec-warning-margin'
+        },
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 2,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + match[0].length
+        }
       })
     }
     for (const match of line.matchAll(partARRgx)) {
-      occurences.push({
-        message: 'Bad indefinite article usage detected. Consider using "an" instead of "a".',
-        severity: MarkerSeverity.Warning,
-        startLineNumber: lineIdx + 1,
-        startColumn: match.index + 1,
-        endLineNumber: lineIdx + 1,
-        endColumn: match.index + 1 + match[0].length,
-        source: 'articles (part 1-B)'
+      decorations.push({
+        options: {
+          hoverMessage: {
+            value: 'Bad indefinite article usage detected. Consider using "an" instead of "a".'
+          },
+          className: 'dec-warning',
+          minimap: {
+            position: 1
+          },
+          glyphMarginClassName: 'dec-warning-margin'
+        },
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 1,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + 1 + match[0].length
+        }
       })
     }
     for (const match of line.matchAll(partBRgx)) {
-      occurences.push({
-        message: 'Bad indefinite article usage detected. Consider using "a" instead of "an".',
-        severity: MarkerSeverity.Warning,
-        startLineNumber: lineIdx + 1,
-        startColumn: match.index + 2,
-        endLineNumber: lineIdx + 1,
-        endColumn: match.index + 1 + match[0].length,
-        source: 'articles (part 2)'
+      decorations.push({
+        options: {
+          hoverMessage: {
+            value: 'Bad indefinite article usage detected. Consider using "a" instead of "an".'
+          },
+          className: 'dec-warning',
+          minimap: {
+            position: 1
+          },
+          glyphMarginClassName: 'dec-warning-margin'
+        },
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 2,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + 1 + match[0].length
+        }
       })
     }
     for (const match of line.matchAll(partCRgx)) {
-      occurences.push({
-        message: 'Bad indefinite article usage detected. Consider using "a" instead of "an".',
-        severity: MarkerSeverity.Warning,
-        startLineNumber: lineIdx + 1,
-        startColumn: match.index + 1,
-        endLineNumber: lineIdx + 1,
-        endColumn: match.index + 1 + match[0].length,
-        source: 'articles (part 3-A)'
+      decorations.push({
+        options: {
+          hoverMessage: {
+            value: 'Bad indefinite article usage detected. Consider using "a" instead of "an".'
+          },
+          className: 'dec-warning',
+          minimap: {
+            position: 1
+          },
+          glyphMarginClassName: 'dec-warning-margin'
+        },
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 1,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + 1 + match[0].length
+        }
       })
     }
     for (const match of line.matchAll(partCLFRgx)) {
-      occurences.push({
-        message: 'Bad indefinite article usage detected. Consider using "a LF" instead of "an LF".',
-        severity: MarkerSeverity.Warning,
-        startLineNumber: lineIdx + 1,
-        startColumn: match.index + 1,
-        endLineNumber: lineIdx + 1,
-        endColumn: match.index + match[0].length,
-        source: 'articles (part 3-B)'
+      decorations.push({
+        options: {
+          hoverMessage: {
+            value: 'Bad indefinite article usage detected. Consider using "a LF" instead of "an LF".'
+          },
+          className: 'dec-warning',
+          minimap: {
+            position: 1
+          },
+          glyphMarginClassName: 'dec-warning-margin'
+        },
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 1,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + match[0].length
+        }
       })
     }
   }
 
-  return occurences
+  decorationsStore.get('articles').set(decorations)
+
+  return decorations.length
 }

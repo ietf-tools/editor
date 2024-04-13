@@ -1,24 +1,35 @@
-import { MarkerSeverity } from 'monaco-editor/esm/vs/editor/editor.api'
+import { decorationsStore } from 'src/stores/models'
 
 export function checkNonAscii (text) {
   // eslint-disable-next-line no-control-regex
   const matchRgx = /[^\x00-\x7F]+/gi
   const textLines = text.split('\n')
 
-  const occurences = []
+  const decorations = []
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(matchRgx)) {
-      occurences.push({
-        message: 'Non-ASCII character(s) detected.',
-        severity: MarkerSeverity.Info,
-        startLineNumber: lineIdx + 1,
-        startColumn: match.index + 1,
-        endLineNumber: lineIdx + 1,
-        endColumn: match.index + 1 + match[0].length,
-        source: 'non-ascii'
+      decorations.push({
+        options: {
+          hoverMessage: {
+            value: 'Non-ASCII character(s) detected.'
+          },
+          className: 'dec-info',
+          minimap: {
+            position: 1
+          },
+          glyphMarginClassName: 'dec-info-margin'
+        },
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 1,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + 1 + match[0].length
+        }
       })
     }
   }
 
-  return occurences
+  decorationsStore.get('nonAscii').set(decorations)
+
+  return decorations.length
 }

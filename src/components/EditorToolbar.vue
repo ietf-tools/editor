@@ -41,7 +41,6 @@ q-bar.toolbar-editor
         @click='closeDocument(doc)'
         )
     q-btn(
-      v-if='editorStore.mode === `write`'
       icon='mdi-plus'
       color='light-blue-9'
       text-color='light-blue-2'
@@ -91,6 +90,11 @@ const drawerPanes = [
     key: 'DrawerSymbols',
     icon: 'mdi-alpha-s-box',
     label: 'Document Symbols'
+  },
+  {
+    key: 'DrawerChecks',
+    icon: 'mdi-marker-check',
+    label: 'Validation Checks'
   },
   {
     key: 'DrawerTools',
