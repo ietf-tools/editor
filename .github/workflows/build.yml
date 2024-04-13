@@ -99,7 +99,6 @@ jobs:
             ext: exe
     env:
       PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
-      CSC_LINK: private_keys/distribution.p12
 
     steps:
     - uses: actions/checkout@v4
@@ -127,6 +126,7 @@ jobs:
       run: |
         mkdir -p private_keys
         echo "APPLE_API_KEY=private_keys/AuthKeys_$APPLE_API_KEY_ID.p8" >> "$GITHUB_ENV"
+        echo "CSC_LINK=private_keys/distribution.p12" >> "$GITHUB_ENV"
         openssl base64 -d <<< "$API_KEY_P8" -out "private_keys/AuthKeys_$APPLE_API_KEY_ID.p8"
         openssl base64 -d <<< "$DIST_CERT_P12" -out "private_keys/distribution.p12"
 
