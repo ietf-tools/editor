@@ -141,6 +141,24 @@ jobs:
         echo "Build package..."
         npx quasar build -m electron -T ${{ matrix.platform }} --arch ${{ matrix.arch }} -P never
 
+    - name: Upload Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.platform }}-${{ matrix.arch }}-build
+        path: "dist/electron/Packaged/*.${{ matrix.ext }}"
+
+    - id: signpath
+      if: ${{ matrix.platform == 'win32' && matrix.arch == 'x64' }}
+      uses: signpath/github-action-submit-signing-request@v0.3
+      with:
+        api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
+        organization-id: '${{ secrets.SIGNPATH_ORG_ID }}'
+        project-slug: 'editor'
+        signing-policy-slug: 'release-signing'
+        github-artifact-name: ${{ matrix.platform }}-${{ matrix.arch }}-build
+        wait-for-completion: true
+        output-artifact-directory: signed-build
+
     - name: Add Package to Release
       uses: ncipollo/release-action@v1.14.0
       with:
@@ -150,7 +168,7 @@ jobs:
         omitBody: true
         tag: ${{ env.PKG_VERSION }}
         name: ${{ env.PKG_VERSION }}
-        artifacts: "dist/electron/Packaged/*.${{ matrix.ext }}"
+        artifacts: "dist/electron/Packaged/*.${{ matrix.ext }},signed-build/*.${{ matrix.ext }}"
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Purge signing certs
