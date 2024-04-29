@@ -135,6 +135,8 @@ jobs:
         node -e "const fs = require('node:fs'); const pkg = require('./package.json'); pkg.version = '${{ env.PKG_VERSION }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
 
     - name: Build package
+      env:
+        CSC_IDENTITY_AUTO_DISCOVERY: 'false'
       run: |
         echo "Installing dependencies..."
         npm ci
@@ -154,7 +156,7 @@ jobs:
         api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
         organization-id: '${{ secrets.SIGNPATH_ORG_ID }}'
         project-slug: 'editor'
-        signing-policy-slug: 'release-signing'
+        signing-policy-slug: 'test-signing'
         github-artifact-name: ${{ matrix.platform }}-${{ matrix.arch }}-build
         wait-for-completion: true
         output-artifact-directory: signed-build
