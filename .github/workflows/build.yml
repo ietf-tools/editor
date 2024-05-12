@@ -11,6 +11,9 @@ jobs:
   prepare:
     name: Prepare Release
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
     outputs:
       pkg_version: ${{ steps.semver.outputs.nextStrict }}
 
@@ -68,7 +71,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     permissions:
       id-token: write
-      contents: read
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -185,6 +188,9 @@ jobs:
     name: Publish Release
     needs: [prepare, build-electron]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
     env:
       PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
 
