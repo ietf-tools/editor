@@ -112,7 +112,7 @@ jobs:
 
     - name: Fetch Secrets from Vault
       if: ${{ matrix.platform == 'darwin' }}
-      uses: hashicorp/vault-action@v2.6.0
+      uses: hashicorp/vault-action@v3.0.0
       with:
         method: jwt
         url: ${{ secrets.VAULT_URL }}
@@ -164,7 +164,8 @@ jobs:
         wait-for-completion: true
         output-artifact-directory: signed-build
 
-    - name: Add Package to Release
+    - name: Add Signed Package to Release
+      if: ${{ matrix.platform == 'win32' && matrix.arch == 'x64' }}
       uses: ncipollo/release-action@v1.14.0
       with:
         prerelease: true
@@ -173,7 +174,20 @@ jobs:
         omitBody: true
         tag: ${{ env.PKG_VERSION }}
         name: ${{ env.PKG_VERSION }}
-        artifacts: "dist/electron/Packaged/*.${{ matrix.ext }},signed-build/*.${{ matrix.ext }}"
+        artifacts: "signed-build/*.${{ matrix.ext }}"
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Add Package to Release
+      if: ${{ matrix.platform != 'win32' && matrix.arch != 'x64' }}
+      uses: ncipollo/release-action@v1.14.0
+      with:
+        prerelease: true
+        updateOnlyUnreleased: true
+        allowUpdates: true
+        omitBody: true
+        tag: ${{ env.PKG_VERSION }}
+        name: ${{ env.PKG_VERSION }}
+        artifacts: "dist/electron/Packaged/*.${{ matrix.ext }}"
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Purge signing certs
