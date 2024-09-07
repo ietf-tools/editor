@@ -16,15 +16,6 @@ export default configure((/* ctx */) => {
   const packageInfo = JSON.parse(readFileSync(new URL('./package.json', import.meta.url)))
 
   return {
-    eslint: {
-      // fix: true,
-      // include: [],
-      // exclude: [],
-      // rawOptions: {},
-      warnings: true,
-      errors: true
-    },
-
     // https://v2.quasar.dev/quasar-cli/prefetch-feature
     // preFetch: true,
 
