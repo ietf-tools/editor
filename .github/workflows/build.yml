@@ -147,6 +147,7 @@ jobs:
         npx quasar build -m electron -T ${{ matrix.platform }} --arch ${{ matrix.arch }} -P never
 
     - name: Upload Build Artifact
+      id: artifactupload
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.platform }}-${{ matrix.arch }}-build
@@ -154,13 +155,13 @@ jobs:
 
     - id: signpath
       if: ${{ matrix.platform == 'win32' && matrix.arch == 'x64' }}
-      uses: signpath/github-action-submit-signing-request@v0.3
+      uses: signpath/github-action-submit-signing-request@v1
       with:
         api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
         organization-id: '${{ secrets.SIGNPATH_ORG_ID }}'
         project-slug: 'editor'
         signing-policy-slug: 'test-signing'
-        github-artifact-name: ${{ matrix.platform }}-${{ matrix.arch }}-build
+        github-artifact-id: '${{ steps.artifactupload.outputs.artifact-id }}'
         wait-for-completion: true
         output-artifact-directory: signed-build
 
