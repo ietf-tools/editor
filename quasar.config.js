@@ -49,8 +49,8 @@ export default configure((/* ctx */) => {
     // Full list of options: https://v2.quasar.dev/quasar-cli-vite/quasar-config-js#build
     build: {
       target: {
-        browser: ['es2019', 'chrome87'],
-        node: 'node18'
+        browser: ['es2022', 'chrome128'],
+        node: 'node20'
       },
 
       vueRouterMode: 'history', // available values: 'hash', 'history'
@@ -243,8 +243,11 @@ export default configure((/* ctx */) => {
           category: 'public.app-category.productivity',
           target: 'dmg',
           darkModeSupport: true,
-          hardenedRuntime: true
-          // notarize: true
+          hardenedRuntime: true,
+          gatekeeperAssess: false,
+          entitlements: 'build/mac/entitlements.mac.plist',
+          entitlementsInherit: 'build/mac/entitlements.mac.plist',
+          notarize: true
         },
         win: {
           target: 'portable'

@@ -2,11 +2,17 @@ import js from '@eslint/js'
 import neostandard from 'neostandard'
 import pluginVue from 'eslint-plugin-vue'
 import vueParser from 'vue-eslint-parser'
+import { FlatCompat } from '@eslint/eslintrc'
+
+const compat = new FlatCompat()
 
 export default [
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
   ...neostandard(),
+  ...compat.extends(
+    'plugin:vue-pug/vue3-recommended'
+  ),
   {
     ignores: [
       '/dist',
@@ -52,9 +58,9 @@ export default [
       'prefer-promise-reject-errors': 'off',
 
       // allow debugger during development only
-      'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+      'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off'
 
-      'no-unused-vars': 'off'
+      // 'no-unused-vars': 'off'
     }
   }
 ]
