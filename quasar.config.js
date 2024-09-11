@@ -247,7 +247,8 @@ export default configure((/* ctx */) => {
           gatekeeperAssess: false,
           entitlements: 'build/mac/entitlements.mac.plist',
           entitlementsInherit: 'build/mac/entitlements.mac.plist',
-          notarize: true
+          notarize: true,
+          sign: false
         },
         win: {
           target: 'portable'
