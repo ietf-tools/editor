@@ -133,6 +133,12 @@ jobs:
         openssl base64 -d <<< "$API_KEY_P8" -out "private_keys/AuthKeys_$APPLE_API_KEY_ID.p8"
         # openssl base64 -d <<< "$DIST_CERT_P12" -out "private_keys/distribution.p12"
 
+    - name: Import Certs into keychain
+      uses: apple-actions/import-codesign-certs@v3
+      with:
+        p12-file-base64: ${{ env.DIST_CERT_P12 }}
+        p12-password: ${{ env.DIST_CERT_P12_PWD }}
+
     - name: Set Version
       run: |
         node -e "const fs = require('node:fs'); const pkg = require('./package.json'); pkg.version = '${{ env.PKG_VERSION }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
