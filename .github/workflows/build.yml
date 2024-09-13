@@ -134,6 +134,7 @@ jobs:
         # openssl base64 -d <<< "$DIST_CERT_P12" -out "private_keys/distribution.p12"
 
     - name: Import Certs into keychain
+      if: ${{ matrix.platform == 'darwin' }}
       uses: apple-actions/import-codesign-certs@v3
       with:
         p12-file-base64: ${{ env.CSC_LINK }}
