@@ -138,8 +138,8 @@ jobs:
         node -e "const fs = require('node:fs'); const pkg = require('./package.json'); pkg.version = '${{ env.PKG_VERSION }}'; fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));"
 
     - name: Build package
-      # env:
-      #  CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      env:
+        DEBUG: "electron-notarize*"
       run: |
         echo "Installing dependencies..."
         npm ci
