@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { cloneDeep, find, last } from 'lodash-es'
 import { DateTime } from 'luxon'
-import * as monaco from 'monaco-editor'
+import * as monaco from 'monaco-editor/esm/vs/editor/edcore.main'
 import { modelStore } from 'src/stores/models'
 import { useEditorStore } from 'src/stores/editor'
 

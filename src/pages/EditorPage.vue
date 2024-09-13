@@ -14,7 +14,7 @@ q-page.row.items-stretch
 <script setup>
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import * as monaco from 'monaco-editor'
+import * as monaco from 'monaco-editor/esm/vs/editor/edcore.main'
 import { modelStore, decorationsStore } from 'src/stores/models'
 import * as lspHelpers from 'src/helpers/lsp'
 import { registerThemes } from 'src/helpers/monaco-themes'

@@ -73,6 +73,17 @@ export default configure((/* ctx */) => {
 
       extendViteConf (viteConf) {
         viteConf.build.chunkSizeWarningLimit = 9999999
+        viteConf.build.rollupOptions = {
+          output: {
+            manualChunks: (id) => {
+              if (id.includes('.css') || id.includes('.scss') || id.includes('.sass')) {
+                return 'app'
+              } else if (id.includes('quasar')) {
+                return 'quasar'
+              }
+            }
+          }
+        }
         // viteConf.build.rollupOptions = {
         //   external: ['monaco-editor'],
         //   output: {
@@ -240,6 +251,7 @@ export default configure((/* ctx */) => {
         // executableName: 'draftforge',
         copyright: `Copyright © 2023-${curYear} The IETF Trust`,
         mac: {
+          electronLanguages: ['en-US'],
           category: 'public.app-category.productivity',
           target: 'dmg',
           darkModeSupport: true,
@@ -253,9 +265,11 @@ export default configure((/* ctx */) => {
           sign: false
         },
         win: {
+          electronLanguages: ['en-US'],
           target: 'portable'
         },
         linux: {
+          electronLanguages: ['en-US'],
           target: 'tar.gz'
         }
       }
