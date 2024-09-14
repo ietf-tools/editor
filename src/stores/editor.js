@@ -47,6 +47,12 @@ export const useEditorStore = defineStore('editor', {
       inclusiveLanguage: 0,
       nonAscii: 0
     },
+    validationChecksDetails: {
+      articles: [],
+      hyphenation: [],
+      inclusiveLanguage: [],
+      nonAscii: []
+    },
     wordWrap: true,
     workingDirectory: '',
     workingDirFiles: []
@@ -98,6 +104,7 @@ export const useEditorStore = defineStore('editor', {
       this.errors = []
       for (const key in this.validationChecks) {
         this.validationChecks[key] = 0
+        this.validationChecksDetails[key] = []
         decorationsStore.get(key)?.clear()
       }
       this.validationChecksDirty = false
@@ -105,6 +112,9 @@ export const useEditorStore = defineStore('editor', {
     setValidationCheckState (key, newState) {
       this.validationChecks[key] = newState
       this.validationChecksDirty = true
+    },
+    setValidationCheckDetails (key, newArr) {
+      this.validationChecksDetails[key] = newArr
     }
   },
   persist: {

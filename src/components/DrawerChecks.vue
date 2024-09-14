@@ -25,23 +25,38 @@
       @click='runAllChecks'
     )
 q-list
-  q-item(
+  q-expansion-item(
     v-for='chk of valChecks'
+    group='valchecks'
+    hide-expand-icon
     :key='chk.key'
-    clickable
     @click='chk.click'
     )
-    q-item-section(side)
-      q-icon(:name='chk.icon' size='xs' color='amber')
-    q-item-section
-      q-item-label {{ chk.title }}
-      q-item-label.text-amber(caption) {{ chk.description }}
-    q-item-section(side)
-      q-icon(v-if='editorStore.validationChecks[chk.key] === 0' name='mdi-circle-outline' size='xs' color='blue-grey')
-      q-icon(v-else-if='editorStore.validationChecks[chk.key] === 1' name='mdi-check-circle' size='xs' color='positive')
-      q-icon(v-else-if='editorStore.validationChecks[chk.key] === 2' name='mdi-information' size='xs' color='light-blue-5')
-      q-icon(v-else-if='editorStore.validationChecks[chk.key] === -1' name='mdi-close-circle' size='xs' color='red-5')
-      q-icon(v-else-if='editorStore.validationChecks[chk.key] === -2' name='mdi-alert-circle' size='xs' color='orange-5')
+    template(#header)
+      q-item-section(side)
+        q-icon(:name='chk.icon' size='xs' color='amber')
+      q-item-section
+        q-item-label {{ chk.title }}
+        q-item-label.text-amber(caption) {{ chk.description }}
+      q-item-section(side)
+        q-icon(v-if='editorStore.validationChecks[chk.key] === 0' name='mdi-circle-outline' size='xs' color='blue-grey')
+        q-icon(v-else-if='editorStore.validationChecks[chk.key] === 1' name='mdi-check-circle' size='xs' color='positive')
+        q-icon(v-else-if='editorStore.validationChecks[chk.key] === 2' name='mdi-information' size='xs' color='light-blue-5')
+        q-icon(v-else-if='editorStore.validationChecks[chk.key] === -1' name='mdi-close-circle' size='xs' color='red-5')
+        q-icon(v-else-if='editorStore.validationChecks[chk.key] === -2' name='mdi-alert-circle' size='xs' color='orange-5')
+    .bg-dark-5.checkdetails
+      q-list(dense, separator)
+        q-item(
+          v-for='dtl of editorStore.validationChecksDetails[chk.key]'
+          :key='dtl.key'
+          clickable
+          @click='goToPosition(dtl.range)'
+          )
+          q-item-section(v-if='dtl.group', side)
+            q-badge(color='blue-9' text-color='white' :label='dtl.group')
+          q-item-section.text-caption {{ dtl.message }}
+          q-item-section(v-if='dtl.range', side)
+            q-badge(color='dark-3' text-color='white' :label='dtl.range.startLineNumber + ":" + dtl.range.startColumn')
 </template>
 
 <script setup>
@@ -113,9 +128,10 @@ function articlesCheck (silent) {
 }
 
 function hyphenationCheck (silent = false) {
-  const occurences = checkHyphenation(modelStore[docsStore.activeDocument.id].getValue())
-  if (occurences < 1) {
+  const results = checkHyphenation(modelStore[docsStore.activeDocument.id].getValue())
+  if (results.count < 1) {
     editorStore.setValidationCheckState('hyphenation', 1)
+    editorStore.setValidationCheckDetails('hyphenation', [])
     if (!silent) {
       $q.notify({
         message: 'Looks good!',
@@ -126,6 +142,7 @@ function hyphenationCheck (silent = false) {
     }
   } else {
     editorStore.setValidationCheckState('hyphenation', -2)
+    editorStore.setValidationCheckDetails('hyphenation', results.details)
   }
 }
 
@@ -184,6 +201,13 @@ function runAllChecks () {
   }
 }
 
+function goToPosition (range) {
+  EVENT_BUS.emit('revealPosition', {
+    lineNumber: range.startLineNumber,
+    column: range.startColumn
+  })
+}
+
 // MOUNTED
 
 onMounted(() => {
@@ -193,3 +217,12 @@ onBeforeUnmount(() => {
   EVENT_BUS.off('runAllChecks')
 })
 </script>
+
+<style lang="scss">
+.checkdetails {
+  border-top: 1px solid rgba(255, 255, 255, 10%);
+  border-bottom: 1px solid #000;
+  padding: 3px 0;
+  box-shadow: 0 1px 0 0 rgba(255,255,255, 10%);
+}
+</style>

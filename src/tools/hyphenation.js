@@ -1,10 +1,12 @@
 import { decorationsStore } from 'src/stores/models'
+import { sortBy } from 'lodash-es'
 
 export function checkHyphenation (text) {
   const hyphenTermRgx = /[a-z]+(?:-[a-z]+)+/gi
   const textLines = text.split('\n')
 
   const decorations = []
+  const details = []
   const occurences = []
   const hyphenTerms = []
   const hyphenTermsOccurences = []
@@ -50,6 +52,12 @@ export function checkHyphenation (text) {
                 },
                 range: termOcc.range
               })
+              details.push({
+                key: crypto.randomUUID(),
+                group: occIdx + 1,
+                message: `${term} is alternate of ${altTerm}`,
+                range: termOcc.range
+              })
             }
           }
           decorations.push({
@@ -70,6 +78,17 @@ export function checkHyphenation (text) {
               endColumn: match.index + match[0].length
             }
           })
+          details.push({
+            key: crypto.randomUUID(),
+            group: occIdx + 1,
+            message: `${term} has alternate term(s)`,
+            range: {
+              startLineNumber: lineIdx + 1,
+              startColumn: match.index + 2,
+              endLineNumber: lineIdx + 1,
+              endColumn: match.index + match[0].length
+            }
+          })
         }
       }
     }
@@ -77,5 +96,8 @@ export function checkHyphenation (text) {
 
   decorationsStore.get('hyphenation').set(decorations)
 
-  return occurences.length
+  return {
+    count: occurences.length,
+    details: sortBy(details, d => d.range.startLineNumber)
+  }
 }

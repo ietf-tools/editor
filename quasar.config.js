@@ -78,8 +78,6 @@ export default configure((/* ctx */) => {
             manualChunks: (id) => {
               if (id.includes('.css') || id.includes('.scss') || id.includes('.sass')) {
                 return 'app'
-              } else if (id.includes('quasar')) {
-                return 'quasar'
               }
             }
           }
