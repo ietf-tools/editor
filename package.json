@@ -55,6 +55,9 @@
     "pug": "3.0.3",
     "vue-eslint-parser": "9.4.3"
   },
+  "overrides": {
+    "is-stream": "^4.0.1"
+  },
   "engines": {
     "node": ">=20"
   }
