@@ -75,6 +75,7 @@ export default {
       minimizable: false,
       maximizable: false,
       fullscreenable: false,
+      closable: true,
       title: 'Login',
       darkTheme: true,
       backgroundColor: '#000'

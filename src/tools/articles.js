@@ -1,4 +1,5 @@
 import { decorationsStore } from 'src/stores/models'
+import { sortBy } from 'lodash-es'
 
 export function checkArticles (text) {
   const partARgx = /(?<!(?:[aA]ppendix|[cC]onnection|[lL]ink|[nN]ode|Operator)) (?!(?:[aA] (?:AAA|Europe|[oO]ne|U[A-Z]|U-label|[uU]biquitous|[uU]nicast|[uU]nicode|[uU]nidir|[uU]nif|[uU]nion|[uU]nique|[uU]nit|[uU]nivers|[uU]sable|[uU]sability|[uU]sage|[uU]se|[uU]tility)|a uCDN|A and))[aA] [aeiouAEIOU]/g
@@ -9,6 +10,7 @@ export function checkArticles (text) {
   const textLines = text.split('\n')
 
   const decorations = []
+  const details = []
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(partARgx)) {
       decorations.push({
@@ -22,6 +24,16 @@ export function checkArticles (text) {
           },
           glyphMarginClassName: 'dec-warning-margin'
         },
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 2,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + match[0].length
+        }
+      })
+      details.push({
+        key: crypto.randomUUID(),
+        message: `Bad indefinite article: ${match[0]}`,
         range: {
           startLineNumber: lineIdx + 1,
           startColumn: match.index + 2,
@@ -49,6 +61,16 @@ export function checkArticles (text) {
           endColumn: match.index + 1 + match[0].length
         }
       })
+      details.push({
+        key: crypto.randomUUID(),
+        message: `Bad indefinite article: ${match[0]}`,
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 2,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + match[0].length
+        }
+      })
     }
     for (const match of line.matchAll(partBRgx)) {
       decorations.push({
@@ -67,6 +89,16 @@ export function checkArticles (text) {
           startColumn: match.index + 2,
           endLineNumber: lineIdx + 1,
           endColumn: match.index + 1 + match[0].length
+        }
+      })
+      details.push({
+        key: crypto.randomUUID(),
+        message: `Bad indefinite article: ${match[0]}`,
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 2,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + match[0].length
         }
       })
     }
@@ -89,6 +121,16 @@ export function checkArticles (text) {
           endColumn: match.index + 1 + match[0].length
         }
       })
+      details.push({
+        key: crypto.randomUUID(),
+        message: `Bad indefinite article: ${match[0]}`,
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 2,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + match[0].length
+        }
+      })
     }
     for (const match of line.matchAll(partCLFRgx)) {
       decorations.push({
@@ -109,10 +151,23 @@ export function checkArticles (text) {
           endColumn: match.index + match[0].length
         }
       })
+      details.push({
+        key: crypto.randomUUID(),
+        message: `Bad indefinite article: ${match[0]}`,
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 2,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + match[0].length
+        }
+      })
     }
   }
 
   decorationsStore.get('articles').set(decorations)
 
-  return decorations.length
+  return {
+    count: decorations.length,
+    details: sortBy(details, d => d.range.startLineNumber)
+  }
 }

@@ -10,6 +10,7 @@
 
 import { configure } from 'quasar/wrappers'
 import { readFileSync } from 'node:fs'
+import { mergeConfig } from 'vite'
 
 export default configure((/* ctx */) => {
   const curYear = new Date().getFullYear()
@@ -72,16 +73,18 @@ export default configure((/* ctx */) => {
       // distDir
 
       extendViteConf (viteConf) {
-        viteConf.build.chunkSizeWarningLimit = 9999999
-        viteConf.build.rollupOptions = {
-          output: {
-            manualChunks: (id) => {
-              if (id.includes('.css') || id.includes('.scss') || id.includes('.sass')) {
-                return 'app'
+        viteConf.build = mergeConfig(viteConf.build, {
+          chunkSizeWarningLimit: 9999999,
+          rollupOptions: {
+            output: {
+              manualChunks: (id) => {
+                if (id.includes('.css') || id.includes('.scss') || id.includes('.sass')) {
+                  return 'app'
+                }
               }
             }
           }
-        }
+        })
         // viteConf.build.rollupOptions = {
         //   external: ['monaco-editor'],
         //   output: {

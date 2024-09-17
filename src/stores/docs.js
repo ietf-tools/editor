@@ -249,6 +249,6 @@ export const useDocsStore = defineStore('docs', {
     }
   },
   persist: {
-    paths: []
+    pick: []
   }
 })

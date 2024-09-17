@@ -84,7 +84,9 @@ function createWindow () {
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
     mainWindow.webContents.openDevTools({
-      activate: false
+      activate: false,
+      mode: 'detach',
+      title: 'DraftForge DevTools'
     })
     setTimeout(() => {
       mainWindow.moveTop()

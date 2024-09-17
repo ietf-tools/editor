@@ -118,7 +118,7 @@ export const useEditorStore = defineStore('editor', {
     }
   },
   persist: {
-    paths: [
+    pick: [
       'animationEffects',
       'confirmExit',
       'cursorBlinking',

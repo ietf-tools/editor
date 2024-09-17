@@ -111,9 +111,10 @@ const valChecks = [
 // METHODS
 
 function articlesCheck (silent) {
-  const warnings = checkArticles(modelStore[docsStore.activeDocument.id].getValue())
-  if (warnings < 1) {
+  const results = checkArticles(modelStore[docsStore.activeDocument.id].getValue())
+  if (results.count < 1) {
     editorStore.setValidationCheckState('articles', 1)
+    editorStore.setValidationCheckDetails('articles', [])
     if (!silent) {
       $q.notify({
         message: 'Looks good!',
@@ -124,6 +125,7 @@ function articlesCheck (silent) {
     }
   } else {
     editorStore.setValidationCheckState('articles', -2)
+    editorStore.setValidationCheckDetails('articles', results.details)
   }
 }
 
