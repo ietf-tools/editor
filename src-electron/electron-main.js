@@ -9,12 +9,13 @@ import { mergeWithHeaders } from './helpers.js'
 import auth from './auth.js'
 import git from './git.js'
 import lsp from './lsp.js'
+import updater from './updater.js'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
 // Initialize Instrumentation
 tlm.initialize()
-const tracer = trace.getTracer('draftforge', '0.0.1')
+const tracer = trace.getTracer('draftforge', app.getVersion())
 
 // needed in case process is undefined under Linux
 // const platform = process.platform || os.platform()
@@ -25,17 +26,31 @@ const instanceLock = app.requestSingleInstanceLock()
 // prevent electron from building a default menu
 Menu.setApplicationMenu(null)
 
+let splashWindow
 let mainWindow
 let mainMenu
 
 function createWindow () {
   const span = tracer.startSpan('createWindow')
+
+  // Show splash screen
+  splashWindow = new BrowserWindow({
+    width: 768,
+    height: 280,
+    transparent: true,
+    frame: false,
+    center: true,
+    alwaysOnTop: true
+  })
+  splashWindow.loadFile(path.resolve(import.meta.dirname, process.env.QUASAR_PUBLIC_FOLDER, 'splash.html'))
+
   // -> Get primary screen dimensions
   const primaryDisplay = screen.getPrimaryDisplay()
   const { width, height } = primaryDisplay.workAreaSize
 
   // -> Initial window options
   mainWindow = new BrowserWindow({
+    show: false,
     icon: path.resolve(currentDir, 'icons/icon.png'), // tray icon
     width: Math.round(width * 0.9),
     height: Math.round(height * 0.9),
@@ -58,7 +73,7 @@ function createWindow () {
   })
 
   // -> Set application menu
-  mainMenu = registerMenu(mainWindow)
+  mainMenu = registerMenu(mainWindow, updater)
 
   // -> Disable CORS
   mainWindow.webContents.session.webRequest.onBeforeSendHeaders(({ requestHeaders }, clb) => {
@@ -74,6 +89,12 @@ function createWindow () {
   // -> Set spellchecker language
   mainWindow.webContents.session.setSpellCheckerLanguages(['en-US'])
 
+  mainWindow.webContents.once('did-finish-load', () => {
+    splashWindow.destroy()
+    mainWindow.show()
+    mainWindow.moveTop()
+  })
+
   // -> Load start URL
   if (process.env.DEV) {
     mainWindow.loadURL(process.env.APP_URL)
@@ -88,16 +109,7 @@ function createWindow () {
       mode: 'detach',
       title: 'DraftForge DevTools'
     })
-    setTimeout(() => {
-      mainWindow.moveTop()
-    }, 500)
   }
-  // } else {
-  //   // we're on production; no access to devtools pls
-  //   mainWindow.webContents.on('devtools-opened', () => {
-  //     mainWindow.webContents.closeDevTools()
-  //   })
-  // }
 
   mainWindow.on('closed', () => {
     mainWindow = null
@@ -105,6 +117,7 @@ function createWindow () {
 
   auth.init(mainWindow)
   git.init()
+  updater.init(mainWindow)
 
   registerCallbacks(mainWindow, mainMenu, auth, git, lsp, tlm)
   span.end()

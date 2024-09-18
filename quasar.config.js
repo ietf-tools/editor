@@ -254,24 +254,60 @@ export default configure((/* ctx */) => {
         mac: {
           electronLanguages: ['en-US'],
           category: 'public.app-category.productivity',
-          target: 'dmg',
           darkModeSupport: true,
           hardenedRuntime: true,
           gatekeeperAssess: false,
           entitlements: 'build/mac/entitlements.mac.plist',
           entitlementsInherit: 'build/mac/entitlements.mac.plist',
-          notarize: true
+          notarize: true,
+          target: [
+            {
+              target: 'dmg',
+              arch: ['x64', 'arm64']
+            }
+          ],
+          publish: [
+            {
+              provider: 'generic',
+              url: 'https://draftforge.ietf.org/download/',
+              publishAutoUpdate: true
+            }
+          ]
         },
         dmg: {
           sign: false
         },
         win: {
           electronLanguages: ['en-US'],
-          target: 'portable'
+          target: [
+            {
+              target: 'nsis',
+              arch: ['x64', 'arm64']
+            }
+          ],
+          publish: [
+            {
+              provider: 'generic',
+              url: 'https://draftforge.ietf.org/download/',
+              publishAutoUpdate: true
+            }
+          ]
         },
         linux: {
           electronLanguages: ['en-US'],
-          target: 'tar.gz'
+          target: [
+            {
+              target: 'tar.gz',
+              arch: ['x64', 'arm64']
+            }
+          ],
+          publish: [
+            {
+              provider: 'generic',
+              url: 'https://draftforge.ietf.org/download/',
+              publishAutoUpdate: true
+            }
+          ]
         }
       }
     }

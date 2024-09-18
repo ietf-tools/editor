@@ -78,27 +78,12 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            arch: x64
-            ext: tar.gz
-          - os: ubuntu-latest
-            platform: linux
-            arch: arm64
             ext: tar.gz
           - os: macos-latest
             platform: darwin
-            arch: x64
-            ext: dmg
-          - os: macos-latest
-            platform: darwin
-            arch: arm64
             ext: dmg
           - os: windows-latest
             platform: win32
-            arch: x64
-            ext: exe
-          - os: windows-latest
-            platform: win32
-            arch: arm64
             ext: exe
     env:
       PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
@@ -149,17 +134,17 @@ jobs:
         echo "Installing dependencies..."
         npm ci
         echo "Build package..."
-        npx quasar build -m electron -T ${{ matrix.platform }} --arch ${{ matrix.arch }} -P never
+        npx quasar build -m electron -T ${{ matrix.platform }} -P always
 
     - name: Upload Build Artifact
       id: artifactupload
       uses: actions/upload-artifact@v4
       with:
-        name: ${{ matrix.platform }}-${{ matrix.arch }}-build
+        name: ${{ matrix.platform }}-build
         path: "dist/electron/Packaged/*.${{ matrix.ext }}"
 
     - id: signpath
-      if: ${{ matrix.platform == 'win32' && matrix.arch == 'x64' }}
+      if: ${{ matrix.platform == 'win32' }}
       uses: signpath/github-action-submit-signing-request@v1
       with:
         api-token: '${{ secrets.SIGNPATH_API_TOKEN }}'
@@ -171,7 +156,7 @@ jobs:
         output-artifact-directory: signed-build
 
     - name: Add Signed Package to Release
-      if: ${{ matrix.platform == 'win32' && matrix.arch == 'x64' }}
+      if: ${{ matrix.platform == 'win32' }}
       uses: ncipollo/release-action@v1.14.0
       with:
         prerelease: true
@@ -180,11 +165,11 @@ jobs:
         omitBody: true
         tag: ${{ env.PKG_VERSION }}
         name: ${{ env.PKG_VERSION }}
-        artifacts: "signed-build/*.${{ matrix.ext }}"
+        artifacts: "signed-build/*.${{ matrix.ext }},dist/electron/Packaged/latest.yml"
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Add Package to Release
-      if: ${{ !(matrix.platform == 'win32' && matrix.arch == 'x64') }}
+      if: ${{ matrix.platform != 'win32' }}
       uses: ncipollo/release-action@v1.14.0
       with:
         prerelease: true
@@ -193,7 +178,7 @@ jobs:
         omitBody: true
         tag: ${{ env.PKG_VERSION }}
         name: ${{ env.PKG_VERSION }}
-        artifacts: "dist/electron/Packaged/*.${{ matrix.ext }}"
+        artifacts: "dist/electron/Packaged/*.${{ matrix.ext }},dist/electron/Packaged/latest*.yml"
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Purge signing certs

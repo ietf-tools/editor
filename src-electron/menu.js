@@ -3,7 +3,7 @@ import os from 'node:os'
 
 import { openDocument, selectDirectory } from './handlers'
 
-export function registerMenu (mainWindow) {
+export function registerMenu (mainWindow, updater) {
   const platform = process.platform || os.platform()
   const isMac = platform === 'darwin'
 
@@ -446,7 +446,10 @@ export function registerMenu (mainWindow) {
         },
         { type: 'separator' },
         {
-          label: 'Check for Updates...'
+          label: 'Check for Updates...',
+          click () {
+            updater.checkForUpdates()
+          }
         },
         { type: 'separator' },
         {

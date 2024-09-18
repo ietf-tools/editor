@@ -6,9 +6,13 @@
   "author": "IETF Tools",
   "private": true,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ietf-tools/editor.git"
+  },
   "scripts": {
     "dev": "quasar dev -m electron",
-    "build": "quasar build -m electron"
+    "build": "quasar build -m electron -P always"
   },
   "dependencies": {
     "@electron/remote": "2.1.2",
@@ -23,6 +27,7 @@
     "@opentelemetry/sdk-trace-node": "1.26.0",
     "@quasar/extras": "1.16.12",
     "ansicolor": "2.0.3",
+    "electron-updater": "6.3.4",
     "fast-defer": "1.1.8",
     "got": "14.4.2",
     "isomorphic-git": "1.27.1",
