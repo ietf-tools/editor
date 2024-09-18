@@ -136,7 +136,13 @@ jobs:
         echo "Build package..."
         npx quasar build -m electron -T ${{ matrix.platform }} -P always
 
+    - name: Remove universal installers
+      if: ${{ matrix.platform == 'win32' }}
+      run: |
+        Remove-Item dist/electron/Packaged/ietf-draftforge-win-${{ env.PKG_VERSION }}.exe
+
     - name: Upload Build Artifact
+      if: ${{ matrix.platform == 'win32' }}
       id: artifactupload
       uses: actions/upload-artifact@v4
       with:
