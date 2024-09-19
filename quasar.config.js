@@ -269,7 +269,7 @@ export default configure((/* ctx */) => {
           publish: [
             {
               provider: 'generic',
-              url: 'https://draftforge.ietf.org/download/',
+              url: 'https://github.com/ietf-tools/editor/releases/latest/download/',
               publishAutoUpdate: true
             }
           ]
@@ -288,7 +288,7 @@ export default configure((/* ctx */) => {
           publish: [
             {
               provider: 'generic',
-              url: 'https://draftforge.ietf.org/download/',
+              url: 'https://github.com/ietf-tools/editor/releases/latest/download/',
               publishAutoUpdate: true
             }
           ]
@@ -297,6 +297,14 @@ export default configure((/* ctx */) => {
           electronLanguages: ['en-US'],
           target: [
             {
+              target: 'deb',
+              arch: ['x64', 'arm64']
+            },
+            {
+              target: 'rpm',
+              arch: ['x64', 'arm64']
+            },
+            {
               target: 'tar.gz',
               arch: ['x64', 'arm64']
             }
@@ -304,7 +312,7 @@ export default configure((/* ctx */) => {
           publish: [
             {
               provider: 'generic',
-              url: 'https://draftforge.ietf.org/download/',
+              url: 'https://github.com/ietf-tools/editor/releases/latest/download/',
               publishAutoUpdate: true
             }
           ]

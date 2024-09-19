@@ -10,18 +10,20 @@ export default {
       mainWindow.webContents.send('notify', {
         message: 'Up to date',
         caption: 'You are running the latest version.',
-        color: 'info',
+        color: 'success',
         icon: 'mdi-package-variant-closed-check'
+      })
+    })
+    autoUpdater.on('update-available', (info) => {
+      mainWindow.webContents.send('notify', {
+        message: 'Update available!',
+        caption: 'A new version is available for installation.',
+        color: 'info',
+        icon: 'mdi-cloud-download'
       })
     })
     autoUpdater.on('error', (err) => {
       dialog.showErrorBox('Update Check Failed', `Error: ${err}`)
-      // mainWindow.webContents.send('notify', {
-      //   message: 'Update Check Failed',
-      //   caption: err,
-      //   color: 'negative',
-      //   icon: 'mdi-alert-octagon'
-      // })
     })
   },
   async checkForUpdates () {
