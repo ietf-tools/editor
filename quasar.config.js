@@ -295,6 +295,7 @@ export default configure((/* ctx */) => {
         },
         linux: {
           electronLanguages: ['en-US'],
+          category: 'Office',
           target: [
             {
               target: 'AppImage',
@@ -320,9 +321,6 @@ export default configure((/* ctx */) => {
               publishAutoUpdate: true
             }
           ]
-        },
-        appImage: {
-          category: 'Office'
         }
       }
     }
