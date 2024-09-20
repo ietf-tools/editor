@@ -3,7 +3,11 @@
   "version": "0.0.1",
   "description": "IETF DraftForge",
   "productName": "DraftForge",
-  "author": "IETF Tools",
+  "author": {
+    "name": "IETF Tools Team",
+    "email": "support@ietf.org",
+    "url": "https://www.ietf.org"
+  },
   "private": true,
   "type": "module",
   "repository": {

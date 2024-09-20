@@ -78,13 +78,10 @@ jobs:
         include:
           - os: ubuntu-latest
             platform: linux
-            ext: tar.gz
           - os: macos-latest
             platform: darwin
-            ext: dmg
           - os: windows-latest
             platform: win32
-            ext: exe
     env:
       PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
 
@@ -141,15 +138,16 @@ jobs:
       run: |
         Remove-Item dist/electron/Packaged/ietf-draftforge-win-${{ env.PKG_VERSION }}.exe
 
-    - name: Upload Build Artifact
+    - name: Upload Windows Build Artifact
       if: ${{ matrix.platform == 'win32' }}
       id: artifactupload
       uses: actions/upload-artifact@v4
       with:
         name: ${{ matrix.platform }}-build
-        path: "dist/electron/Packaged/*.${{ matrix.ext }}"
+        path: "dist/electron/Packaged/*.exe"
 
     - id: signpath
+      name: Sign Windows Executables
       if: ${{ matrix.platform == 'win32' }}
       uses: signpath/github-action-submit-signing-request@v1
       with:
@@ -161,7 +159,7 @@ jobs:
         wait-for-completion: true
         output-artifact-directory: signed-build
 
-    - name: Add Signed Package to Release
+    - name: Add Signed Windows Package to Release
       if: ${{ matrix.platform == 'win32' }}
       uses: ncipollo/release-action@v1.14.0
       with:
@@ -171,7 +169,7 @@ jobs:
         omitBody: true
         tag: ${{ env.PKG_VERSION }}
         name: ${{ env.PKG_VERSION }}
-        artifacts: "signed-build/*.${{ matrix.ext }},dist/electron/Packaged/latest.yml"
+        artifacts: "signed-build/*.exe,dist/electron/Packaged/latest.yml"
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Add Package to Release
@@ -184,7 +182,7 @@ jobs:
         omitBody: true
         tag: ${{ env.PKG_VERSION }}
         name: ${{ env.PKG_VERSION }}
-        artifacts: "dist/electron/Packaged/*.${{ matrix.ext }},dist/electron/Packaged/latest*.yml"
+        artifacts: "dist/electron/Packaged/*.+(dmg|AppImage|deb|rpm|tar.gz),dist/electron/Packaged/latest*.yml"
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Purge signing certs

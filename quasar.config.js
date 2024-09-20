@@ -297,6 +297,10 @@ export default configure((/* ctx */) => {
           electronLanguages: ['en-US'],
           target: [
             {
+              target: 'AppImage',
+              arch: ['x64', 'arm64']
+            },
+            {
               target: 'deb',
               arch: ['x64', 'arm64']
             },
@@ -316,6 +320,9 @@ export default configure((/* ctx */) => {
               publishAutoUpdate: true
             }
           ]
+        },
+        appImage: {
+          category: 'Office'
         }
       }
     }
