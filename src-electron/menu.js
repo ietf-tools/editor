@@ -448,7 +448,16 @@ export function registerMenu (mainWindow, updater) {
         {
           label: 'Check for Updates...',
           click () {
-            updater.checkForUpdates()
+            if (process.env.DEV) {
+              mainWindow.webContents.send('notify', {
+                message: 'Function Unavailable',
+                caption: 'Checking for updates is not available in dev mode.',
+                color: 'amber-9',
+                icon: 'mdi-car-traction-control'
+              })
+            } else {
+              updater.checkForUpdates()
+            }
           }
         },
         { type: 'separator' },

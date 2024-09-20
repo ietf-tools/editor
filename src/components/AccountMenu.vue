@@ -7,7 +7,7 @@ q-btn(v-if='userStore.isLoggedIn' padding="xs sm" flat no-caps)
     q-list.bg-dark-2(separator, style='min-width: 180px')
       q-item.bg-dark-1
         q-item-section.text-center
-          .text-caption.text-blue-grey-3 Datatracker Account
+          .text-caption.text-blue-grey-3 IETF Account
           .text-caption.text-blue-grey-2: strong {{ userStore.profile.email }}
       q-item(clickable, @click='openPrefProfile')
         q-item-section(side)

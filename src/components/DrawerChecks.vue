@@ -25,14 +25,11 @@
       @click='runAllChecks'
     )
 q-list
-  q-expansion-item(
-    v-for='chk of valChecks'
-    group='valchecks'
-    hide-expand-icon
-    :key='chk.key'
-    @click='chk.click'
-    )
-    template(#header)
+  template(v-for='chk of valChecks' :key='chk.key')
+    q-item(
+      @click='chk.click'
+      clickable
+      )
       q-item-section(side)
         q-icon(:name='chk.icon' size='xs' color='amber')
       q-item-section
@@ -44,19 +41,25 @@ q-list
         q-icon(v-else-if='editorStore.validationChecks[chk.key] === 2' name='mdi-information' size='xs' color='light-blue-5')
         q-icon(v-else-if='editorStore.validationChecks[chk.key] === -1' name='mdi-close-circle' size='xs' color='red-5')
         q-icon(v-else-if='editorStore.validationChecks[chk.key] === -2' name='mdi-alert-circle' size='xs' color='orange-5')
-    .bg-dark-5.checkdetails
-      q-list(dense, separator)
-        q-item(
-          v-for='dtl of editorStore.validationChecksDetails[chk.key]'
-          :key='dtl.key'
-          clickable
-          @click='goToPosition(dtl.range)'
-          )
-          q-item-section(v-if='dtl.group', side)
-            q-badge(color='blue-9' text-color='white' :label='dtl.group')
-          q-item-section.text-caption {{ dtl.message }}
-          q-item-section(v-if='dtl.range', side)
-            q-badge(color='dark-3' text-color='white' :label='dtl.range.startLineNumber + ":" + dtl.range.startColumn')
+    q-expansion-item.bg-dark-5(
+      v-if='editorStore.validationChecksDetails[chk.key].length > 0'
+      )
+      template(#header)
+        q-item-section.q-pl-md
+          q-item-label.text-purple-2 └─ {{ editorStore.validationChecksDetails[chk.key].length }} issues
+      .bg-dark-5.checkdetails
+        q-list(dense, separator)
+          q-item(
+            v-for='dtl of editorStore.validationChecksDetails[chk.key]'
+            :key='dtl.key'
+            clickable
+            @click='goToPosition(dtl.range)'
+            )
+            q-item-section(v-if='dtl.group', side)
+              q-badge(color='blue-9' text-color='white' :label='dtl.group')
+            q-item-section.text-caption {{ dtl.message }}
+            q-item-section(v-if='dtl.range', side)
+              q-badge(color='dark-3' text-color='white' :label='dtl.range.startLineNumber + ":" + dtl.range.startColumn')
 </template>
 
 <script setup>
