@@ -177,7 +177,7 @@ jobs:
         $appX64Size = (Get-Item "signed-build/ietf-draftforge-win-x64-$appVersion.exe").Length
         $appArm64Size = (Get-Item "signed-build/ietf-draftforge-win-arm64-$appVersion.exe").Length
         yq -i 'del(.files.[0]) | del(.path) | del(.sha512)' dist/electron/Packaged/latest.yml
-        yq -i ".files.[0].sha512 = `"$appX64HashB64`" | .files.[0].size = `"$appX64Size`" | .files.[1].sha512 = `"$appArm64HashB64`" | .files.[1].size = `"$appArm64Size`"" dist/electron/Packaged/latest.yml
+        yq -i ".files.[0].sha512 = `"$appX64HashB64`" | .files.[0].size = $appX64Size | .files.[1].sha512 = `"$appArm64HashB64`" | .files.[1].size = $appArm64Size" dist/electron/Packaged/latest.yml
 
     - name: Windows - Add Signed Packages to Release
       if: ${{ matrix.platform == 'win32' }}
