@@ -168,10 +168,10 @@ jobs:
       if: ${{ matrix.platform == 'win32' }}
       run: |
         $appVersion = yq '.version' dist/electron/Packaged/latest.yml
-        $appX64Hash = (Get-FileHash "signed-build/ietf-draftforge-win-x64-$appVersion.exe" -Algorithm SHA512
+        $appX64Hash = Get-FileHash "signed-build/ietf-draftforge-win-x64-$appVersion.exe" -Algorithm SHA512
         $appX64HashBytes = [byte[]] -split ($appX64Hash.Hash -replace '..', '0x$& ')
         $appX64HashB64 = [System.Convert]::ToBase64String($appX64HashBytes)
-        $appArm64Hash = (Get-FileHash "signed-build/ietf-draftforge-win-arm64-$appVersion.exe" -Algorithm SHA512
+        $appArm64Hash = Get-FileHash "signed-build/ietf-draftforge-win-arm64-$appVersion.exe" -Algorithm SHA512
         $appArm64HashBytes = [byte[]] -split ($appArm64Hash.Hash -replace '..', '0x$& ')
         $appArm64HashB64 = [System.Convert]::ToBase64String($appArm64HashBytes)
         $appX64Size = (Get-Item "signed-build/ietf-draftforge-win-x64-$appVersion.exe").Length
