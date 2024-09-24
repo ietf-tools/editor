@@ -92,7 +92,7 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Fetch Secrets from Vault
+    - name: macOS - Fetch Secrets from Vault
       if: ${{ matrix.platform == 'darwin' }}
       uses: hashicorp/vault-action@v3.0.0
       with:
@@ -106,7 +106,7 @@ jobs:
           kv/data/draftforge/apple DIST_CERT_P12 | CSC_LINK ;
           kv/data/draftforge/apple DIST_CERT_P12_PWD | CSC_KEY_PASSWORD ;
 
-    - name: Save signing certs
+    - name: macOS - Save signing certs
       if: ${{ matrix.platform == 'darwin' }}
       run: |
         mkdir -p private_keys
@@ -115,7 +115,7 @@ jobs:
         openssl base64 -d <<< "$API_KEY_P8" -out "private_keys/AuthKeys_$APPLE_API_KEY_ID.p8"
         # openssl base64 -d <<< "$DIST_CERT_P12" -out "private_keys/distribution.p12"
 
-    - name: Import Certs into keychain
+    - name: macOS - Import Certs into keychain
       if: ${{ matrix.platform == 'darwin' }}
       uses: apple-actions/import-codesign-certs@v3
       with:
@@ -133,12 +133,12 @@ jobs:
         echo "Build package..."
         npx quasar build -m electron -T ${{ matrix.platform }} -P always
 
-    - name: Remove universal installers
+    - name: Windows - Remove universal installers
       if: ${{ matrix.platform == 'win32' }}
       run: |
         Remove-Item dist/electron/Packaged/ietf-draftforge-win-${{ env.PKG_VERSION }}.exe
 
-    - name: Upload Windows Build Artifact
+    - name: Windows - Upload Build Artifact
       if: ${{ matrix.platform == 'win32' }}
       id: artifactupload
       uses: actions/upload-artifact@v4
@@ -147,7 +147,7 @@ jobs:
         path: "dist/electron/Packaged/*.exe"
 
     - id: signpath
-      name: Sign Windows Executables
+      name: Windows - Sign Executables
       if: ${{ matrix.platform == 'win32' }}
       uses: signpath/github-action-submit-signing-request@v1
       with:
@@ -159,12 +159,12 @@ jobs:
         wait-for-completion: true
         output-artifact-directory: signed-build
 
-    - name: Install yq
+    - name: Windows - Install yq
       if: ${{ matrix.platform == 'win32' }}
       run: |
         choco install yq
 
-    - name: Recalculate Windows signatures for latest.yml
+    - name: Windows - Recalculate exec signatures for latest.yml
       if: ${{ matrix.platform == 'win32' }}
       run: |
         $appVersion = yq '.version' dist/electron/Packaged/latest.yml
@@ -179,7 +179,7 @@ jobs:
         yq -i 'del(.files.[0]) | del(.path) | del(.sha512)' dist/electron/Packaged/latest.yml
         yq -i ".files.[0].sha512 = `"$appX64HashB64`" | .files.[0].size = `"$appX64Size`" | .files.[1].sha512 = `"$appArm64HashB64`" | .files.[1].size = `"$appArm64Size`"" dist/electron/Packaged/latest.yml
 
-    - name: Add Signed Windows Package to Release
+    - name: Windows - Add Signed Packages to Release
       if: ${{ matrix.platform == 'win32' }}
       uses: ncipollo/release-action@v1.14.0
       with:
@@ -192,7 +192,7 @@ jobs:
         artifacts: "signed-build/*.exe,dist/electron/Packaged/latest.yml"
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Add Package to Release
+    - name: macOS/Linux - Add Packages to Release
       if: ${{ matrix.platform != 'win32' }}
       uses: ncipollo/release-action@v1.14.0
       with:
@@ -205,7 +205,7 @@ jobs:
         artifacts: "dist/electron/Packaged/*.+(dmg|AppImage|deb|rpm|tar.gz),dist/electron/Packaged/latest*.yml"
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Purge signing certs
+    - name: macOS - Purge signing certs
       if: ${{ matrix.platform == 'darwin' && always() }}
       run: |
         rm -rf private_keys
