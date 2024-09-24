@@ -3,6 +3,7 @@
   app-mode-sidebar
   .app-main
     router-view
+  updater-dialog
 </template>
 
 <script setup>
@@ -13,6 +14,7 @@ import { useDocsStore } from 'src/stores/docs'
 import { useEditorStore } from 'src/stores/editor'
 import { useUserStore } from 'src/stores/user'
 import AppModeSidebar from 'components/AppModeSidebar.vue'
+import UpdaterDialog from 'components/UpdaterDialog.vue'
 
 const $q = useQuasar()
 
@@ -152,6 +154,13 @@ onMounted(async () => {
     try {
       await docsStore.restoreSession()
     } catch (err) {}
+  }
+
+  // -> Check for updates
+  if (editorStore.checkForUpdates) {
+    setTimeout(() => {
+      window.ipcBridge.emit('checkForUpdates', { silent: true })
+    }, 2000)
   }
 })
 

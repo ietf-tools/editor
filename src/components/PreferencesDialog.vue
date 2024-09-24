@@ -86,6 +86,26 @@ q-dialog(
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
+            q-separator
+            .row
+              .col
+                .text-body2 Automatically Check for Updates
+                .text-caption.text-grey-5 The application will automatically check for new versions at launch.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.checkForUpdates'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
+              q-separator.q-ml-sm.q-mr-md(vertical, inset)
+              .col-auto
+                q-btn(
+                  label='Check Now'
+                  unelevated
+                  color='primary'
+                  no-caps
+                  @click='checkForUpdates'
+                )
         template(v-else-if='state.tab === `editor`')
           q-form.q-gutter-md.q-pa-lg
             .row
@@ -505,6 +525,10 @@ const cursorAnims = [
 // ]
 
 // METHODS
+
+function checkForUpdates () {
+  window.ipcBridge.emit('checkForUpdates')
+}
 
 function setupPGPKey () {
   $q.dialog({

@@ -4,6 +4,7 @@ import { decorationsStore } from 'src/stores/models'
 export const useEditorStore = defineStore('editor', {
   state: () => ({
     animationEffects: true,
+    checkForUpdates: true,
     col: 1,
     confirmExit: true,
     content: '',
@@ -120,6 +121,7 @@ export const useEditorStore = defineStore('editor', {
   persist: {
     pick: [
       'animationEffects',
+      'checkForUpdates',
       'confirmExit',
       'cursorBlinking',
       'cursorStyle',

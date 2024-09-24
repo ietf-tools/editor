@@ -159,6 +159,26 @@ jobs:
         wait-for-completion: true
         output-artifact-directory: signed-build
 
+    - name: Install yq
+      if: ${{ matrix.platform == 'win32' }}
+      run: |
+        choco install yq
+
+    - name: Recalculate Windows signatures for latest.yml
+      if: ${{ matrix.platform == 'win32' }}
+      run: |
+        $appVersion = yq '.version' dist/electron/Packaged/latest.yml
+        $appX64Hash = (Get-FileHash "signed-build/ietf-draftforge-win-x64-$appVersion.exe" -Algorithm SHA512
+        $appX64HashBytes = [byte[]] -split ($appX64Hash.Hash -replace '..', '0x$& ')
+        $appX64HashB64 = [System.Convert]::ToBase64String($appX64HashBytes)
+        $appArm64Hash = (Get-FileHash "signed-build/ietf-draftforge-win-arm64-$appVersion.exe" -Algorithm SHA512
+        $appArm64HashBytes = [byte[]] -split ($appArm64Hash.Hash -replace '..', '0x$& ')
+        $appArm64HashB64 = [System.Convert]::ToBase64String($appArm64HashBytes)
+        $appX64Size = (Get-Item "signed-build/ietf-draftforge-win-x64-$appVersion.exe").Length
+        $appArm64Size = (Get-Item "signed-build/ietf-draftforge-win-arm64-$appVersion.exe").Length
+        yq -i 'del(.files.[0]) | del(.path) | del(.sha512)' dist/electron/Packaged/latest.yml
+        yq -i ".files.[0].sha512 = `"$appX64HashB64`" | .files.[0].size = `"$appX64Size`" | .files.[1].sha512 = `"$appArm64HashB64`" | .files.[1].size = `"$appArm64Size`"" dist/electron/Packaged/latest.yml
+
     - name: Add Signed Windows Package to Release
       if: ${{ matrix.platform == 'win32' }}
       uses: ncipollo/release-action@v1.14.0
