@@ -136,7 +136,9 @@ export default {
       dir,
       url,
       remote: 'origin',
-      onAuth: this.onAuth
+      onAuth: (url) => {
+        return this.onAuth(url)
+      }
     })
     this.conf.currentRemote = 'origin'
     if (upstreamUrl) {
@@ -169,7 +171,10 @@ export default {
       fs,
       http,
       dir,
-      remote
+      remote,
+      onAuth: (url) => {
+        return this.onAuth(url)
+      }
     })
   },
   /**
