@@ -202,7 +202,7 @@ jobs:
         omitBody: true
         tag: ${{ env.PKG_VERSION }}
         name: ${{ env.PKG_VERSION }}
-        artifacts: "dist/electron/Packaged/*.+(dmg|AppImage|deb|rpm|tar.gz),dist/electron/Packaged/latest*.yml"
+        artifacts: "dist/electron/Packaged/*.+(dmg|zip|deb|rpm|tar.gz),dist/electron/Packaged/latest*.yml"
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: macOS - Purge signing certs

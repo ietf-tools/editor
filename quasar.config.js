@@ -262,7 +262,7 @@ export default configure((/* ctx */) => {
           notarize: true,
           target: [
             {
-              target: 'dmg',
+              target: 'default',
               arch: ['x64', 'arm64']
             }
           ],
