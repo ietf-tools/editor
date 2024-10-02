@@ -234,15 +234,13 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
   ipcMain.handle('fetchGitConfig', async (ev) => {
     return {
       ...git.conf,
-      password: git.conf.password ? '********' : '',
       pgpKey: Boolean(git.conf.publicKey)
     }
   })
   ipcMain.on('updateGitConfig', async (ev, conf) => {
     git.conf = {
       ...git.conf,
-      ...conf,
-      password: (!isNil(conf.password) && conf.password !== '********') ? conf.password : git.conf.password
+      ...conf
     }
     try {
       await git.saveConfig()

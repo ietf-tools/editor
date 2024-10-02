@@ -263,11 +263,17 @@ q-dialog(
               .col-4
                 q-input(
                   v-model.number='editorStore.gitPassword'
-                  type='password'
+                  :type='state.gitPasswordShown ? `text` : `password`'
                   outlined
                   dense
                   color='light-blue-4'
-                )
+                  )
+                  template(#append)
+                    q-icon.cursor-pointer(
+                      :name='state.gitPasswordShown ? `mdi-eye-outline` : `mdi-eye-off-outline`'
+                      @click='state.gitPasswordShown = !state.gitPasswordShown'
+                      size='xs'
+                    )
             q-separator
             .row
               .col
@@ -284,7 +290,7 @@ q-dialog(
                 .text-body2 OpenPGP Signing Key
                 .text-caption.text-grey-5 Set the key to use for signing commits.
                 .text-caption.flex(v-if='editorStore.gitPgpKeySet')
-                  q-badge(label='RSA', color='green-9')
+                  q-badge(label='ed25519', color='green-9')
                   q-separator.q-mx-sm(vertical)
                   .text-uppercase.text-purple-2 {{ editorStore.gitFingerprint }}
                   q-separator.q-mx-sm(vertical)
@@ -408,7 +414,8 @@ const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent()
 // STATE
 
 const state = reactive({
-  tab: props.tab || 'editor'
+  tab: props.tab || 'editor',
+  gitPasswordShown: false
 })
 
 const tabs = [
