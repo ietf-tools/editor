@@ -160,9 +160,10 @@ async function generatePGPKey () {
   state.isLoading = true
   try {
     const { privateKey, publicKey, revocationCertificate } = await openpgp.generateKey({
-      type: 'rsa',
-      rsaBits: 4096,
-      userIDs: [{ name: state.name, email: state.email }]
+      type: 'ecc',
+      curve: 'curve25519',
+      userIDs: [{ name: state.name, email: state.email }],
+      format: 'armored'
     })
 
     window.ipcBridge.emit('writeToClipboard', {
