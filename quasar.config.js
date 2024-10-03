@@ -64,7 +64,8 @@ export default configure((/* ctx */) => {
       // publicPath: '/',
       // analyze: true,
       env: {
-        APP_VERSION: packageInfo.version
+        APP_VERSION: packageInfo.version,
+        OS_PLATFORM: process.platform
       },
       // rawDefine: {}
       // ignorePublicFolder: true,

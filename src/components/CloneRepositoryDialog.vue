@@ -84,8 +84,19 @@ q-dialog(
                 )
         .row.q-mt-lg
           .col
+            .text-body2 Clone in Subdirectory
+            .text-caption.text-grey-5 A subdirectory with the name of the repository will be created under the path selected above. This replicates the default behavior of Git.
+          .col-auto
+            q-toggle(
+              tabindex='4'
+              v-model='state.cloneInSubDir'
+              checked-icon='mdi-check'
+              unchecked-icon='mdi-close'
+            )
+        .row.q-mt-lg
+          .col
             .text-body2 Switch Working Directory
-            .text-caption.text-grey-5 Automatically set the local target directory as the working directory.
+            .text-caption.text-grey-5 Automatically set the cloned repository path as the working directory.
           .col-auto
             q-toggle(
               tabindex='4'
@@ -153,6 +164,7 @@ const state = reactive({
   isFork: false,
   upstreamUrl: '',
   target: editorStore.workingDirectory,
+  cloneInSubDir: true,
   switchWorkDir: true,
   isLoading: false
 })
@@ -162,7 +174,7 @@ const state = reactive({
 async function cloneRepo () {
   let progressDialog
   try {
-    if (!state.url) {
+    if (!state.url || !state.url.startsWith('https://')) {
       throw new Error('You must enter a valid HTTPS git repository URL!')
     }
     if (!state.target) {
@@ -179,9 +191,21 @@ async function cloneRepo () {
       ok: false
     })
 
-    await window.ipcBridge.gitCloneRepository(state.url, state.target, state.isFork ? state.upstreamUrl : null)
+    // -> Append repo to target path
+    let targetDir = state.target.trim()
+    if (state.cloneInSubDir) {
+      let lastUrlPart = state.url.split('/').at(-1)
+      if (lastUrlPart.endsWith('.git')) {
+        lastUrlPart = lastUrlPart.slice(0, -4)
+      }
+      targetDir = process.env.OS_PLATFORM === 'win32' ? `${targetDir}\\${lastUrlPart}` : `${targetDir}/${lastUrlPart}`
+    }
+
+    // -> Clone repo
+    await window.ipcBridge.gitCloneRepository(state.url, targetDir, state.isFork ? state.upstreamUrl : null)
     state.isLoading = false
 
+    // -> Switch working directory
     if (state.switchWorkDir) {
       editorStore.workingDirectory = state.target
       editorStore.drawerPane = 'DrawerFiles'

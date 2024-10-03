@@ -246,10 +246,10 @@ q-dialog(
                   unchecked-icon='mdi-close'
                 )
             .row(v-if='!editorStore.gitUseCredMan')
-              .col-8
+              .col-7
                 .text-body2 Username
                 .text-caption.text-grey-5 The username to use for git authentication.
-              .col-4
+              .col-5
                 q-input(
                   v-model.number='editorStore.gitUsername'
                   outlined
@@ -257,10 +257,10 @@ q-dialog(
                   color='light-blue-4'
                 )
             .row(v-if='!editorStore.gitUseCredMan')
-              .col-8
+              .col-7
                 .text-body2 Password / Personal Access Token
                 .text-caption.text-grey-5 The password / PAT to use for git authentication
-              .col-4
+              .col-5
                 q-input(
                   v-model.number='editorStore.gitPassword'
                   :type='state.gitPasswordShown ? `text` : `password`'
