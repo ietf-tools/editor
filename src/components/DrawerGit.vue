@@ -108,15 +108,21 @@
           standout
           dense
           color='light-blue-3'
+          v-model='state.commitMsg'
+          @keyup.ctrl.enter='commit'
+          autogrow
+          autofocus
         )
         q-btn.full-width.q-mt-xs(
           color='primary'
           no-caps
           size='sm'
           unelevated
+          @click='commit'
           )
           q-icon.q-mr-sm(name='mdi-check')
           span.text-caption Commit
+          q-tooltip You can also commit using Ctrl + Enter
       q-list(
         dense
         )
@@ -275,6 +281,7 @@ const state = reactive({
   fetchLoading: false,
   changesLoading: false,
   historyLoading: false,
+  commitMsg: '',
   staged: [],
   changes: [],
   history: []
@@ -433,6 +440,35 @@ async function unstageAllFiles () {
     console.error(err)
     $q.notify({
       message: 'Failed to unstage all files',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.changesLoading = false
+}
+
+async function commit () {
+  if (state.commitMsg.length < 1) {
+    $q.notify({
+      message: 'Commit message missing!',
+      caption: 'A commit message is required.',
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+    return
+  }
+  if (state.changesLoading) { return }
+  state.changesLoading = true
+  try {
+    await window.ipcBridge.gitCommit(editorStore.workingDirectory, state.commitMsg)
+    state.commitMsg = ''
+    await refreshChanges()
+    await refreshHistory()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to commit staged changes',
       caption: err.message,
       color: 'negative',
       icon: 'mdi-alert'

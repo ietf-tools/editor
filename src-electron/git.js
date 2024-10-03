@@ -5,6 +5,7 @@ import http from 'isomorphic-git/http/node/index.js'
 import { spawn } from 'node:child_process'
 import { app, clipboard, safeStorage } from 'electron'
 import { createHash } from 'node:crypto'
+import * as openpgp from 'openpgp'
 
 export default {
   conf: {
@@ -337,6 +338,32 @@ export default {
     }
   },
   /**
+   * Commits changes to the git repository.
+   *
+   * @param {Object} params - The parameters for the commit.
+   * @param {string} params.dir - The directory of the git repository.
+   * @param {string} params.message - The commit message.
+   * @returns {Promise<Object>} The result of the git commit operation.
+   */
+  async commit ({ dir, message }) {
+    return git.commit({
+      fs,
+      dir,
+      author: {
+        name: this.conf.name,
+        email: this.conf.email
+      },
+      message,
+      ...this.conf.signCommits && {
+        signingKey: this.conf.privateKey,
+        onSign: (opts) => {
+          console.info(opts)
+          return this.onSign(opts)
+        }
+      }
+    })
+  },
+  /**
    * Authentication event handler
    *
    * @param {string} url Git remote URL
@@ -368,5 +395,26 @@ export default {
         password: this.conf.password
       }
     }
+  },
+  /**
+   * Signs the given payload using the provided secret key.
+   *
+   * @param {Object} params - The parameters for the signing operation.
+   * @param {string} params.payload - The data to be signed.
+   * @param {string} params.secretKey - The secret key used for signing.
+   * @returns {Promise<Object>} A promise that resolves to an object containing the signature.
+   */
+  async onSign ({ payload, secretKey }) {
+    const enc = new TextEncoder()
+    // -> Convert to binary to avoid mangling the line endings
+    const unsignedMessage = await openpgp.createMessage({ binary: enc.encode(payload) })
+    const privateKeys = await openpgp.readPrivateKey({ armoredKey: secretKey })
+    const signature = await openpgp.sign({
+      message: unsignedMessage,
+      signingKeys: privateKeys,
+      format: 'armored',
+      detached: true
+    })
+    return { signature }
   }
 }

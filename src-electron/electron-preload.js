@@ -30,6 +30,7 @@ contextBridge.exposeInMainWorld('ipcBridge', {
   gitStatusMatrix: (dir) => ipcRenderer.invoke('gitStatusMatrix', { dir }),
   gitStageFiles: (dir, files) => ipcRenderer.invoke('gitStageFiles', { dir, files }),
   gitUnstageFiles: (dir, files) => ipcRenderer.invoke('gitUnstageFiles', { dir, files }),
+  gitCommit: (dir, message) => ipcRenderer.invoke('gitCommit', { dir, message }),
   lspSendRequest: (method, params) => ipcRenderer.invoke('lspSendRequest', { method, params }),
   persistSession: (data) => ipcRenderer.invoke('persistSession', data),
   restoreSession: () => ipcRenderer.invoke('restoreSession')

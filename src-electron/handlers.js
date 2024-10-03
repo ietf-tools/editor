@@ -1,7 +1,7 @@
 import { app, clipboard, dialog, ipcMain, shell } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { isNil, orderBy } from 'lodash-es'
+import { orderBy } from 'lodash-es'
 import { encode, decode } from '@msgpack/msgpack'
 
 /**
@@ -296,6 +296,9 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
   })
   ipcMain.handle('gitUnstageFiles', async (ev, opts) => {
     return git.unstageFiles({ dir: opts.dir, files: opts.files })
+  })
+  ipcMain.handle('gitCommit', async (ev, opts) => {
+    return git.commit({ dir: opts.dir, message: opts.message })
   })
   ipcMain.handle('gitCloneRepository', async (ev, opts) => {
     return git.repoClone({
