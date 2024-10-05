@@ -2,7 +2,7 @@
 q-page.welcome.bg-dark-5
   .welcome-container.q-pa-lg
     .welcome-logo
-      img(src='../assets/draftforge-logotext.svg', alt='DraftForge')
+      img(src='../assets/draftforge-logotext-ietf.svg', alt='DraftForge')
     .welcome-text.q-mt-lg
       .text-body1: strong Welcome to DraftForge
       .text-caption.text-blue-grey-3 The editor for writing, reviewing, refining and submit Internet-Drafts.
@@ -130,7 +130,7 @@ onMounted(() => {
   &-container {
     max-width: 650px;
     margin: 0 auto;
-    padding-top: calc(50vh - 350px);
+    padding-top: max(30px, calc(50vh - 420px));
   }
 
   &-logo {
