@@ -28,6 +28,7 @@ jobs:
       with:
         token: ${{ github.token }}
         branch: main
+        patchAll: true
         skipInvalidTags: true
 
     - name: Create Draft Release

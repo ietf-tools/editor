@@ -10,7 +10,9 @@
 
 import { configure } from 'quasar/wrappers'
 import { readFileSync } from 'node:fs'
+import { path } from 'node:path'
 import { mergeConfig } from 'vite'
+import { flipFuses, FuseVersion, FuseV1Options } from '@electron/fuses'
 
 export default configure((/* ctx */) => {
   const curYear = new Date().getFullYear()
@@ -318,6 +320,28 @@ export default configure((/* ctx */) => {
               publishAutoUpdate: true
             }
           ]
+        },
+        afterPack: async (context) => {
+          const ext = {
+            darwin: '.app',
+            win32: '.exe',
+            linux: ''
+          }[context.electronPlatformName]
+
+          const executableName = context.electronPlatformName === 'linux'
+            ? context.packager.appInfo.productFilename.toLowerCase().replace('-dev', '').replace(' ', '-')
+            : context.packager.appInfo.productFilename
+
+          await flipFuses(path.join(context.appOutDir, `${executableName}${ext}`), {
+            version: FuseVersion.V1,
+            [FuseV1Options.RunAsNode]: false,
+            [FuseV1Options.EnableCookieEncryption]: true,
+            [FuseV1Options.EnableNodeOptionsEnvironmentVariable]: false,
+            [FuseV1Options.EnableNodeCliInspectArguments]: false,
+            [FuseV1Options.OnlyLoadAppFromAsar]: true,
+            [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: false,
+            [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: false
+          })
         }
       }
     }
