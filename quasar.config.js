@@ -322,6 +322,7 @@ export default configure((/* ctx */) => {
           ]
         },
         afterPack: async (context) => {
+          console.info('Flipping electron fuses...')
           const ext = {
             darwin: '.app',
             win32: '.exe',
@@ -340,8 +341,10 @@ export default configure((/* ctx */) => {
             [FuseV1Options.EnableNodeCliInspectArguments]: false,
             [FuseV1Options.OnlyLoadAppFromAsar]: true,
             [FuseV1Options.LoadBrowserProcessSpecificV8Snapshot]: false,
-            [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: false
+            [FuseV1Options.EnableEmbeddedAsarIntegrityValidation]: false,
+            resetAdHocDarwinSignature: context.electronPlatformName === 'darwin'
           })
+          console.info('Flipping electron fuses... [ Done ]')
         }
       }
     }
