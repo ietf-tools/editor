@@ -20,7 +20,7 @@ import * as lspHelpers from 'src/helpers/lsp'
 import { registerThemes } from 'src/helpers/monaco-themes'
 import { registerMarkdownLanguage } from 'src/languages/markdown'
 import { registerXMLRFCLanguage } from 'src/languages/xmlrfc'
-import { handleEditorAction } from 'src/helpers/monaco-handlers'
+import { handleEditorAction, registerActions } from 'src/helpers/monaco-handlers'
 
 import { useEditorStore } from 'stores/editor'
 import { useDocsStore } from 'src/stores/docs'
@@ -88,6 +88,9 @@ onMounted(async () => {
       col: ev.position.column
     })
   })
+
+  // -> Register actions
+  registerActions(editor)
 
   // -> Post init
   editor.focus()
@@ -188,7 +191,7 @@ watch(() => editorStore.errors, (newValue) => {
 
 // METHODS
 
-function docOpenFinished (doc) {
+function docOpenFinished(doc) {
   if (doc.language === 'xmlrfc') {
     window.ipcBridge.emit('lspSendNotification', {
       method: 'textDocument/didOpen',
@@ -207,12 +210,12 @@ function docOpenFinished (doc) {
   // editor.setBanner(banner, 50)
 }
 
-function handleEditorActions (evt, action) {
+function handleEditorActions(evt, action) {
   const properAction = action ?? evt
   handleEditorAction(editor, properAction)
 }
 
-async function handleLspNotification (evt, data) {
+async function handleLspNotification(evt, data) {
   switch (data.method) {
     case 'textDocument/publishDiagnostics': {
       const modelId = docsStore.getDocumentByURI(data.params.uri)?.id
@@ -239,7 +242,7 @@ async function handleLspNotification (evt, data) {
   }
 }
 
-function handleRevealPosition (pos) {
+function handleRevealPosition(pos) {
   if (editor) {
     editor.focus()
     editor.revealPositionNearTop(pos, monaco.editor.ScrollType.Smooth)
@@ -268,6 +271,7 @@ function handleRevealPosition (pos) {
       }
     }
   }
+
   &-warning {
     border-bottom: 3px dashed $orange-5;
 
@@ -287,5 +291,4 @@ function handleRevealPosition (pos) {
     }
   }
 }
-
 </style>

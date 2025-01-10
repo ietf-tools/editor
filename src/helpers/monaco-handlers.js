@@ -1,6 +1,9 @@
+import { useDocsStore } from 'src/stores/docs'
 import { useEditorStore } from 'src/stores/editor'
+import { modelStore } from 'src/stores/models'
 import { checkNits } from '@ietf-tools/idnits'
 
+const docsStore = useDocsStore()
 const editorStore = useEditorStore()
 
 export function handleEditorAction (editor, action) {
@@ -148,6 +151,13 @@ export function handleEditorAction (editor, action) {
       })
       break
     }
+    case 'stripMChars': {
+      editor.focus()
+      setTimeout(() => {
+        editor.trigger('menu', 'stripMChars')
+      })
+      break
+    }
     case 'undo': {
       editor.trigger('menu', 'undo')
       editor.focus()
@@ -179,6 +189,20 @@ export function handleEditorAction (editor, action) {
       break
     }
   }
+}
+
+export function registerActions (editor) {
+  editor.addAction({
+    id: 'stripMChars',
+    label: 'Strip ^M Line Endings',
+    run: function (ed) {
+      const processedDoc = []
+      for (const line of modelStore[docsStore.activeDocument.id].getValue().split('\n')) {
+        processedDoc.push(line.endsWith('^4') ? line.slice(0, -2) : line)
+      }
+      modelStore[docsStore.activeDocument.id].setValue(processedDoc.join('\n'))
+    }
+  })
 }
 
 async function validateContent () {
