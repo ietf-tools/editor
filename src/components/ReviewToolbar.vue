@@ -131,9 +131,11 @@ function openPreferences () {
 </script>
 
 <style lang="scss">
+@use "sass:color";
+
 .toolbar-review {
   height: 40px;
-  background: radial-gradient(ellipse at bottom, $indigo-5, darken($indigo-7, 5%));
+  background: radial-gradient(ellipse at bottom, $indigo-5, color.adjust($indigo-7, $lightness: -5%));
   border-bottom: 1px solid $indigo-3;
   border-left: 1px solid $indigo-3;
 

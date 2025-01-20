@@ -30,9 +30,11 @@ function openPreferences () {
 </script>
 
 <style lang="scss">
+@use "sass:color";
+
 .toolbar-submit {
   height: 40px;
-  background: radial-gradient(ellipse at bottom, $light-green-9, darken($light-green-10, 5%));
+  background: radial-gradient(ellipse at bottom, $light-green-9, color.adjust($light-green-10, $lightness: -5%));
   border-bottom: 1px solid $light-green-5;
   border-left: 1px solid $light-green-5;
 }

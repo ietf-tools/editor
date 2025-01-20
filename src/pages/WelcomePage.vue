@@ -124,11 +124,13 @@ onMounted(() => {
 </script>
 
 <style lang="scss">
+@use "sass:color";
+
 .welcome {
-  background: linear-gradient(45deg, darken($dark-4, 2%), $dark-6);
+  background: linear-gradient(45deg, color.adjust($dark-4, $lightness: -2%), $dark-6);
 
   &-container {
-    max-width: 650px;
+    max-width: 600px;
     margin: 0 auto;
     padding-top: max(30px, calc(50vh - 420px));
   }

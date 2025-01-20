@@ -61,9 +61,11 @@ const docsStore = useDocsStore()
 </script>
 
 <style lang="scss">
+@use "sass:color";
+
 .submit {
-  background: linear-gradient(45deg, darken($dark-4, 2%), $dark-6);
-  border-left: 1px solid lighten($dark-1, 10%);
+  background: linear-gradient(45deg, color.adjust($dark-4, $lightness: -2%), $dark-6);
+  border-left: 1px solid color.adjust($dark-1, $lightness: 10%);
 
   &-container {
     max-width: 650px;

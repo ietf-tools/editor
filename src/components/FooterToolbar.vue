@@ -61,6 +61,9 @@ q-footer
     .footer-bar-separator
     .footer-bar-item
       span.text-caption UTF-8
+    .footer-bar-separator
+    .footer-bar-item
+      span.text-caption LF
 </template>
 
 <script setup>
@@ -107,8 +110,10 @@ function runAllChecks () {
 </script>
 
 <style lang="scss">
+@use "sass:color";
+
 .welcome-footer-bar, .footer-bar {
-  border-left: 1px solid lighten($dark-1, 10%);
+  border-left: 1px solid color.adjust($dark-1, $lightness: 10%);
 }
 .welcome-footer-bar {
   background-color: $dark-3;
@@ -133,14 +138,14 @@ function runAllChecks () {
       background-color: $red-9;
       border-top-color: $red-6;
       border-left: 1px solid $red-7;
-      border-right: 1px solid darken($red-10, 5%);
+      border-right: 1px solid color.adjust($red-10, $lightness: -5%);
       color: $red-2;
     }
     &.positive {
       background-color: $green-9;
       border-top-color: $green-6;
       border-left: 1px solid $green-8;
-      border-right: 1px solid darken($green-10, 5%);
+      border-right: 1px solid color.adjust($green-10, $lightness: -5%);
       color: $green-2;
     }
   }

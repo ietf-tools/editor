@@ -40,7 +40,9 @@ const state = reactive({
 </script>
 
 <style lang="scss">
+@use "sass:color";
+
 .drawer-pane {
-  border-left: 1px solid lighten($dark-1, 10%);
+  border-left: 1px solid color.adjust($dark-1, $lightness: 10%);
 }
 </style>

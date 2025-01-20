@@ -72,9 +72,11 @@ const modes = [
 </script>
 
 <style lang="scss">
+@use "sass:color";
+
 .app-mode {
   flex: 0 0 45px;
-  background-color: darken($dark-5, 5%);
+  background-color: color.adjust($dark-5, $lightness: -5%);
   background-image: linear-gradient(to right, $dark-2, $dark-3);
   border-top: 1px solid $blue-grey-5;
   padding: 5px;

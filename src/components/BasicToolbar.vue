@@ -131,9 +131,11 @@ function openPreferences () {
 </script>
 
 <style lang="scss">
+@use "sass:color";
+
 .toolbar-basic {
   height: 40px;
-  background: radial-gradient(ellipse at bottom, $blue-grey-9, darken($blue-grey-10, 5%));
+  background: radial-gradient(ellipse at bottom, $blue-grey-9, color.adjust($blue-grey-10, $lightness: -5%));
   border-bottom: 1px solid $blue-grey-5;
   border-left: 1px solid $blue-grey-5;
 
