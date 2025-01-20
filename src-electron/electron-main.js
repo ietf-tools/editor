@@ -1,6 +1,7 @@
-import { app, BrowserWindow, Menu, screen } from 'electron'
+import { app, dialog, BrowserWindow, Menu, screen } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import cmdExists from 'command-exists'
 import tlm from './instrumentation.js'
 import { trace } from '@opentelemetry/api'
 import { registerMenu } from './menu.js'
@@ -10,6 +11,7 @@ import auth from './auth.js'
 import git from './git.js'
 import lsp from './lsp.js'
 import updater from './updater.js'
+import { createKeybindingsHandler } from './keyhandler.js'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
 
@@ -30,7 +32,19 @@ let splashWindow
 let mainWindow
 let mainMenu
 
-function createWindow () {
+const menuHandlers = createKeybindingsHandler({
+  'Escape d': () => {
+    console.info('SHIFT + D')
+  },
+  'y e e t': () => {
+    console.info("The keys 'y', 'e', 'e', and 't' were pressed in order")
+  },
+  '$mod+([0-9])': (event, input) => {
+    console.info(`Either 'Control+${input.key}' or 'Meta+${input.key}' were pressed`)
+  },
+})
+
+async function createWindow () {
   const span = tracer.startSpan('createWindow')
 
   // Show splash screen
@@ -43,6 +57,15 @@ function createWindow () {
     alwaysOnTop: true
   })
   splashWindow.loadFile(path.resolve(import.meta.dirname, process.env.QUASAR_PUBLIC_FOLDER, 'splash.html'))
+
+  // Ensure git is install
+  try {
+    await cmdExists('git')
+  } catch (err) {
+    splashWindow.destroy()
+    dialog.showErrorBox('Missing Git Dependency', 'Git is not installed or is not in path. Install git first and then launch DraftForge again.')
+    app.exit(1)
+  }
 
   // -> Get primary screen dimensions
   const primaryDisplay = screen.getPrimaryDisplay()
@@ -93,6 +116,12 @@ function createWindow () {
     splashWindow.destroy()
     mainWindow.show()
     mainWindow.moveTop()
+
+    mainWindow.webContents.on('before-input-event', (evt, input) => {
+      if (input?.type === 'keyDown') {
+        menuHandlers(evt, input)
+      }
+    })
   })
 
   // -> Load start URL

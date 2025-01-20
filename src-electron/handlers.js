@@ -270,35 +270,41 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
   ipcMain.handle('clearGitKey', async (ev) => {
     return git.clearSigningKey()
   })
+  ipcMain.handle('gitSetWorkingDirectory', async (ev, opts) => {
+    return git.setWorkingDirectory({ dir: opts.dir })
+  })
   ipcMain.handle('gitPerformFetch', async (ev, opts) => {
-    return git.performFetch({ dir: opts.dir, remote: opts.remote })
+    return git.performFetch({ remote: opts.remote })
   })
   ipcMain.handle('gitListRemotes', async (ev, opts) => {
-    return git.listRemotes({ dir: opts.dir })
+    return git.listRemotes()
   })
   ipcMain.handle('gitAddRemote', async (ev, opts) => {
-    return git.addRemote({ dir: opts.dir, remote: opts.remote, url: opts.url })
+    return git.addRemote({ remote: opts.remote, url: opts.url })
   })
   ipcMain.handle('gitDeleteRemote', async (ev, opts) => {
-    return git.deleteRemote({ dir: opts.dir, remote: opts.remote })
+    return git.deleteRemote({ remote: opts.remote })
+  })
+  ipcMain.handle('gitPull', async (ev, opts = {}) => {
+    return git.pull({ remote: opts.remote, branch: opts.branch, mode: opts.mode })
   })
   ipcMain.handle('gitListBranches', async (ev, opts) => {
-    return git.listBranches({ dir: opts.dir, remote: opts.remote })
+    return git.listBranches({ remote: opts.remote })
   })
   ipcMain.handle('gitCommitsLog', async (ev, opts) => {
-    return git.commitsLog({ dir: opts.dir })
+    return git.commitsLog()
   })
   ipcMain.handle('gitStatusMatrix', async (ev, opts) => {
-    return git.statusMatrix({ dir: opts.dir })
+    return git.statusMatrix()
   })
   ipcMain.handle('gitStageFiles', async (ev, opts) => {
-    return git.stageFiles({ dir: opts.dir, files: opts.files })
+    return git.stageFiles({ files: opts.files })
   })
   ipcMain.handle('gitUnstageFiles', async (ev, opts) => {
-    return git.unstageFiles({ dir: opts.dir, files: opts.files })
+    return git.unstageFiles({ files: opts.files })
   })
   ipcMain.handle('gitCommit', async (ev, opts) => {
-    return git.commit({ dir: opts.dir, message: opts.message })
+    return git.commit({ message: opts.message })
   })
   ipcMain.handle('gitCloneRepository', async (ev, opts) => {
     return git.repoClone({

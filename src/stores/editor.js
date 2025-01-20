@@ -30,6 +30,7 @@ export const useEditorStore = defineStore('editor', {
     gitCurrentBranch: '',
     gitLocalBranches: [],
     gitRemoteBranches: [],
+    keybindings: 'default',
     lastChangeTimestamp: null,
     line: 1,
     persistSession: true,
@@ -64,6 +65,9 @@ export const useEditorStore = defineStore('editor', {
     isGitRepo: (state) => state.workingDirFiles.some(f => f.name === '.git')
   },
   actions: {
+    async setGitWorkingDirectory (dir) {
+      return window.ipcBridge.setGitWorkingDirectory(dir ?? this.workingDirectory)
+    },
     async fetchGitConfig () {
       const conf = await window.ipcBridge.fetchGitConfig()
       if (conf) {

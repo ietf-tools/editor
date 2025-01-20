@@ -18,6 +18,25 @@ q-dialog(
         size='18px'
         v-if='state.isLoading'
       )
+      q-btn.q-mr-md(
+        unelevated
+        icon='mdi-plus'
+        label='New Branch'
+        color='primary'
+        padding='xs md'
+        no-caps
+        @click='state.newBranchFormShown = true'
+        :disabled='state.isLoading || state.newBranchFormShown'
+        )
+      q-btn.q-mr-md(
+        unelevated
+        icon='mdi-refresh'
+        padding='xs'
+        color='primary'
+        @click='refresh'
+        :disabled='state.isLoading'
+        )
+        q-tooltip Refresh Local + Remote Branches
       q-btn(
         unelevated
         icon='mdi-close'
@@ -25,69 +44,147 @@ q-dialog(
         padding='xs'
         @click='onDialogCancel'
         )
-    .branches-main.card-border.row
-      .col-6
-        .bg-grey-10.text-body2.q-pa-md Local Branches
-        q-separator
-        q-list(
-          padding
-          separator
-        )
-          q-item(
-            v-for='branch of editorStore.gitLocalBranches'
-            :key='branch'
-            )
-            q-item-section(side)
-              q-icon(name='mdi-source-branch', size='xs')
-            q-item-section
-              q-item-label {{ branch }}
-              q-item-label.text-light-green-4(v-if='editorStore.gitCurrentBranch === branch', caption): em Current Branch
-            q-item-section(
-              v-if='editorStore.gitCurrentBranch !== branch'
-              side
+        q-tooltip Close Dialog
+    .card-border
+      .branches-new(v-if='state.newBranchFormShown')
+        q-form.q-gutter-md.q-pa-lg
+          .row
+            .col-5
+              .text-body2 Name
+              .text-caption.text-grey-5 The name of the new branch
+            .col-7
+              q-input(
+                autofocus
+                v-model.number='state.newBranchName'
+                outlined
+                dense
+                clearable
+                color='light-blue-4'
+                tabindex='1'
               )
-              .flex.items-center
-                q-btn.q-mr-sm(
-                  outline
-                  color='light-green-5'
-                  padding='xs sm'
-                  label='Set Active'
-                  no-caps
-                  @click='setActive(branch)'
+          .row
+            .col-5
+              .text-body2 Source
+              .text-caption.text-grey-5 Branch to create from
+            .col-7
+              q-select(
+                outlined
+                v-model='state.newBranchSource'
+                :options='editorStore.gitLocalBranches'
+                dense
+                color='light-blue-4'
+                tabindex='2'
                 )
-                q-btn(
-                  outline
-                  color='red-5'
-                  padding='xs sm'
-                  label='Delete'
-                  no-caps
-                  @click='deleteRemote(branch)'
-                )
-      q-separator(vertical)
-      .col
-        .bg-grey-10.text-body2.q-pa-md Remote Branches #[em.text-grey-5 ({{ editorStore.gitCurrentRemote }})]
-        q-separator
-        q-list(
-          padding
-          separator
-        )
-          q-item(
-            v-for='branch of editorStore.gitRemoteBranches'
-            :key='branch'
-            )
-            q-item-section(side)
-              q-icon(name='mdi-source-branch', size='xs')
-            q-item-section
-              q-item-label {{ branch }}
-            q-item-section(side)
-              q-btn(
+          .row
+            .col-12.text-right
+              q-btn.q-mr-md(
                 outline
-                color='light-green-5'
-                padding='xs sm'
-                label='Checkout'
-                no-caps
-                @click='setActive(branch)'
+                label='Cancel'
+                color='grey-5'
+                padding='xs md'
+                @click='state.newBranchFormShown = false'
+                tabindex='4'
+                )
+              q-btn(
+                unelevated
+                label='Create Branch'
+                color='primary'
+                padding='xs md'
+                @click='newBranch'
+                tabindex='3'
+                :loading='state.isLoading'
+                )
+      .branches-main.row
+        .col-6
+          .bg-grey-10.text-body2.q-pa-md Local Branches
+          q-separator
+          q-list(
+            padding
+            separator
+          )
+            q-item(
+              v-for='branch of editorStore.gitLocalBranches'
+              :key='branch'
               )
+              q-item-section(side)
+                q-icon(name='mdi-source-branch', size='xs')
+              q-item-section
+                q-item-label {{ branch }}
+                q-item-label.text-light-green-4(v-if='editorStore.gitCurrentBranch === branch', caption): em Current Branch
+              q-item-section(
+                v-if='editorStore.gitCurrentBranch !== branch'
+                side
+                )
+                .flex.items-center
+                  q-btn.q-mr-sm(
+                    outline
+                    color='light-green-5'
+                    padding='xs sm'
+                    label='Set Active'
+                    no-caps
+                    @click='setActive(branch)'
+                  )
+                  q-btn(
+                    outline
+                    color='red-5'
+                    padding='xs sm'
+                    label='Delete'
+                    no-caps
+                    @click='deleteRemote(branch)'
+                  )
+        q-separator(vertical)
+        .col
+          .bg-grey-10.text-body2.q-pa-md Remote Branches
+          q-separator
+          q-list(
+            padding
+            separator
+          )
+            q-item(
+              v-for='br of editorStore.gitRemoteBranches'
+              :key='br'
+              )
+              q-item-section(side)
+                q-icon(name='mdi-source-branch', size='xs')
+              q-item-section
+                q-item-label {{ br.branch }}
+                q-item-label.text-blue-3(caption) {{ br.remote }}
+              q-item-section(side)
+                q-btn(
+                  unelevated
+                  size='sm'
+                  icon='mdi-dots-horizontal'
+                  padding='xs xs'
+                  color='grey-10'
+                  text-color='grey-5'
+                  )
+                  q-tooltip Pull...
+                  q-menu(auto-close)
+                    q-list.bg-dark-7(separator, padding)
+                      q-item(clickable, @click='setActive(branch)')
+                        q-item-section(side)
+                          q-icon(name='mdi-source-branch-check', color='green-4')
+                        q-item-section
+                          q-item-label: strong Checkout
+                          q-item-label(caption) Checkout this remote branch and set as the push target.
+                      q-item(clickable, @click='setActive(branch)')
+                        q-item-section(side)
+                          q-icon(name='mdi-earth-arrow-up', color='blue-4')
+                        q-item-section
+                          q-item-label: strong Set as Push Target
+                          q-item-label(caption) Set this remote branch as the push target for the current local branch.
+                      q-item(clickable, @click='setActive(branch)')
+                        q-item-section(side)
+                          q-icon(name='mdi-trash-can', color='red-4')
+                        q-item-section
+                          q-item-label: strong Delete Remote Branch
+                          q-item-label(caption) Delete branch remotely but keep local branch #[em (if it exists)].
+                      q-item(clickable, @click='setActive(branch)')
+                        q-item-section(side)
+                          q-icon(name='mdi-delete-forever', color='red-4')
+                        q-item-section
+                          q-item-label: strong Delete Remote + Local Branch
+                          q-item-label(caption) Delete both remote and local branch #[em (if it exists)].
 
 </template>
 
@@ -114,9 +211,9 @@ const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent()
 
 const state = reactive({
   isLoading: true,
-  newRemoteFormShown: false,
-  newRemoteName: '',
-  newRemoteUrl: ''
+  newBranchFormShown: false,
+  newBranchName: '',
+  newBranchSource: editorStore.gitCurrentBranch
 })
 
 // METHODS
@@ -136,6 +233,10 @@ async function setActive (remote) {
     })
   }
   state.isLoading = false
+}
+
+async function newBranch () {
+
 }
 
 async function deleteRemote (remote) {
@@ -159,7 +260,7 @@ async function deleteRemote (remote) {
   }).onOk(async () => {
     state.isLoading = true
     try {
-      await window.ipcBridge.gitDeleteRemote(editorStore.workingDirectory, remote)
+      await window.ipcBridge.gitDeleteRemote(remote)
       await editorStore.fetchRemotes()
     } catch (err) {
       console.error(err)
@@ -172,6 +273,24 @@ async function deleteRemote (remote) {
     }
     state.isLoading = false
   })
+}
+
+async function refresh () {
+  state.isLoading = true
+  try {
+    await window.ipcBridge.gitPerformFetch()
+    await editorStore.fetchRemotes()
+    editorStore.fetchBranches()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to fetch from remote',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.isLoading = false
 }
 
 // MOUNTED
@@ -189,6 +308,11 @@ onMounted(async () => {
   min-width: 900px;
   display: flex;
   flex-direction: column;
+
+  &-new {
+    background-color: rgba(255,255,255,.05);
+    border-bottom: 1px solid rgba(255,255,255,.1);
+  }
 
   &-main {
     min-height: 300px;

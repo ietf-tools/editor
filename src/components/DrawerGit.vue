@@ -69,6 +69,43 @@
       q-btn(
         flat
         size='sm'
+        icon='mdi-transfer-down'
+        padding='xs xs'
+        text-color='grey-5'
+        :loading='state.pullLoading'
+        )
+        q-tooltip Pull...
+        q-menu(auto-close)
+          q-list.bg-dark-7(separator, padding)
+            q-item(clickable, @click='pull')
+              q-item-section(side)
+                q-icon(name='mdi-merge', color='orange')
+              q-item-section
+                q-item-label: strong Pull (fast-forward + merge)
+                q-item-label(caption) Apple remote changes using fast-forward if possible and using merge commits otherwise.
+            q-item(clickable, @click='fastForward')
+              q-item-section(side)
+                q-icon(name='mdi-chevron-triple-right', color='teal-4')
+              q-item-section
+                q-item-label: strong Pull (fast-forward only)
+                q-item-label(caption) Apply remote changes only if they can be fast-forwarded.
+            q-item(clickable, @click='rebase')
+              q-item-section(side)
+                q-icon(name='mdi-arrow-u-right-top', color='purple-3')
+              q-item-section
+                q-item-label: strong Pull (rebase)
+                q-item-label(caption) Apply remote changes first, then apply local changes on top.
+      q-btn(
+        flat
+        size='sm'
+        icon='mdi-transfer-up'
+        padding='xs xs'
+        text-color='grey-5'
+        )
+        q-tooltip Push
+      q-btn(
+        flat
+        size='sm'
         icon='mdi-menu'
         padding='xs xs'
         text-color='grey-5'
@@ -161,6 +198,7 @@
           icon='mdi-arrow-u-left-top'
           padding='xs xs'
           text-color='grey-5'
+          disabled
           )
           q-tooltip Discard All Changes
         q-btn(
@@ -209,6 +247,7 @@
                 icon='mdi-arrow-u-left-top'
                 padding='xs xs'
                 text-color='grey-5'
+                disabled
                 )
                 q-tooltip Discard Changes
               q-btn(
@@ -223,7 +262,7 @@
     .drawer-git-history.q-mt-sm
       .flex.items-center.text-caption.q-px-sm
         q-icon.q-mr-sm(name='mdi-list-box-outline')
-        span.text-grey-4 History
+        span.text-grey-4 Commits
         q-space
         q-btn(
           flat
@@ -244,22 +283,22 @@
         )
         q-item.items-start(
           v-for='cm of state.history'
-          :key='cm.oid'
+          :key='cm.hash'
           clickable
           )
           q-item-section(side)
             q-avatar(
               color='primary'
               size='xs'
-              square
+              rounded
               style='box-shadow: 1px 1px 0 0 rgba(0,0,0,.5);'
               )
-              img(:src='avatarUrl(cm.commit.author.emailHash)')
-            q-tooltip #[strong {{ cm.commit.author.name }}] #[br] &lt;{{ cm.commit.author.email }}&gt;
+              img(:src='avatarUrl(cm.author_email_hash)')
+            q-tooltip #[strong {{ cm.author_name }}] #[br] &lt;{{ cm.author_email }}&gt;
           q-item-section
-            q-item-label.ellipsis-3-lines.text-word-break-all {{ cm.commit.message }}
-            q-item-label(caption): em {{ humanizeDate(cm.commit.author.timestamp) }}
-            q-item-label.text-blue-2(caption) {{ cm.commit.author.name }}
+            q-item-label.ellipsis-3-lines.text-word-break-all {{ cm.message }}
+            q-item-label(caption): em {{ humanizeDate(cm.date) }}
+            q-item-label.text-blue-2(caption) {{ cm.author_name }}
       .text-center.text-caption.q-mt-sm(v-if='state.history.length > 499')
         em.text-grey-5 History limited to 500 most recent commits.
 </template>
@@ -279,6 +318,8 @@ const editorStore = useEditorStore()
 
 const state = reactive({
   fetchLoading: false,
+  pullLoading: false,
+  pushLoading: false,
   changesLoading: false,
   historyLoading: false,
   commitMsg: '',
@@ -290,7 +331,7 @@ const state = reactive({
 // METHODS
 
 function humanizeDate (ts) {
-  return DateTime.fromSeconds(ts, { zone: 'utc' }).toFormat('ff')
+  return DateTime.fromISO(ts).toFormat('ff')
 }
 
 function avatarUrl (emailHash) {
@@ -315,7 +356,7 @@ function cloneRepo () {
 async function performFetch () {
   state.fetchLoading = true
   try {
-    await window.ipcBridge.gitPerformFetch(editorStore.workingDirectory, editorStore.gitCurrentRemote)
+    await window.ipcBridge.gitPerformFetch()
     await editorStore.fetchRemotes()
     editorStore.fetchBranches()
   } catch (err) {
@@ -342,10 +383,61 @@ function manageBranches () {
   })
 }
 
+async function pull () {
+  state.pullLoading = true
+  try {
+    await window.ipcBridge.gitPull()
+    await refreshHistory()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to perform pull from remote repository.',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.pullLoading = false
+}
+
+async function fastForward () {
+  state.pullLoading = true
+  try {
+    await window.ipcBridge.gitPull(null, null, 'ff')
+    await refreshHistory()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to perform pull from remote repository.',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.pullLoading = false
+}
+
+async function rebase () {
+  state.pullLoading = true
+  try {
+    await window.ipcBridge.gitPull(null, null, 'rebase')
+    await refreshHistory()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to perform pull from remote repository.',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.pullLoading = false
+}
+
 async function refreshChanges () {
   state.changesLoading = true
   try {
-    const changes = await window.ipcBridge.gitStatusMatrix(editorStore.workingDirectory)
+    const changes = await window.ipcBridge.gitStatusMatrix()
     state.changes = changes.filter(c => c.isUnstaged)
     state.staged = changes.filter(c => c.isStaged)
   } catch (err) {
@@ -363,7 +455,7 @@ async function refreshChanges () {
 async function refreshHistory () {
   state.historyLoading = true
   try {
-    state.history = await window.ipcBridge.gitCommitsLog(editorStore.workingDirectory)
+    state.history = await window.ipcBridge.gitCommitsLog()
   } catch (err) {
     console.error(err)
     $q.notify({
@@ -380,7 +472,7 @@ async function stageFile (fl) {
   if (state.changesLoading) { return }
   state.changesLoading = true
   try {
-    await window.ipcBridge.gitStageFiles(editorStore.workingDirectory, [cloneDeep(fl)])
+    await window.ipcBridge.gitStageFiles([cloneDeep(fl)])
     await refreshChanges()
   } catch (err) {
     console.error(err)
@@ -398,7 +490,7 @@ async function stageAllFiles () {
   if (state.changesLoading) { return }
   state.changesLoading = true
   try {
-    await window.ipcBridge.gitStageFiles(editorStore.workingDirectory, cloneDeep(state.changes))
+    await window.ipcBridge.gitStageFiles(cloneDeep(state.changes))
     await refreshChanges()
   } catch (err) {
     console.error(err)
@@ -416,7 +508,7 @@ async function unstageFile (fl) {
   if (state.changesLoading) { return }
   state.changesLoading = true
   try {
-    await window.ipcBridge.gitUnstageFiles(editorStore.workingDirectory, [cloneDeep(fl)])
+    await window.ipcBridge.gitUnstageFiles([cloneDeep(fl)])
     await refreshChanges()
   } catch (err) {
     console.error(err)
@@ -434,7 +526,7 @@ async function unstageAllFiles () {
   if (state.changesLoading) { return }
   state.changesLoading = true
   try {
-    await window.ipcBridge.gitUnstageFiles(editorStore.workingDirectory, cloneDeep(state.staged))
+    await window.ipcBridge.gitUnstageFiles(cloneDeep(state.staged))
     await refreshChanges()
   } catch (err) {
     console.error(err)
@@ -461,7 +553,7 @@ async function commit () {
   if (state.changesLoading) { return }
   state.changesLoading = true
   try {
-    await window.ipcBridge.gitCommit(editorStore.workingDirectory, state.commitMsg)
+    await window.ipcBridge.gitCommit(state.commitMsg)
     state.commitMsg = ''
     await refreshChanges()
     await refreshHistory()
@@ -481,6 +573,7 @@ async function commit () {
 
 onActivated(async () => {
   if (editorStore.isGitRepo) {
+    await editorStore.setGitWorkingDirectory()
     await performFetch()
     await editorStore.fetchRemotes()
     refreshChanges()

@@ -1,13 +1,14 @@
-import git from 'isomorphic-git'
+import { simpleGit } from 'simple-git'
 import path from 'node:path'
 import fs from 'node:fs/promises'
-import http from 'isomorphic-git/http/node/index.js'
 import { spawn } from 'node:child_process'
 import { app, clipboard, safeStorage } from 'electron'
 import { createHash } from 'node:crypto'
 import * as openpgp from 'openpgp'
+import { sortBy } from 'lodash-es'
 
 export default {
+  git: simpleGit(),
   conf: {
     signCommits: true,
     useCredMan: true,
@@ -33,6 +34,12 @@ export default {
     } else {
       console.warn('safeStorage is not available on this system. Cannot store or load git auth data.')
     }
+  },
+  /**
+   * Set Git Working Directory
+   */
+  async setWorkingDirectory ({ dir }) {
+    return this.git.cwd(dir)
   },
   /**
    * Load configuration from disk
@@ -167,16 +174,8 @@ export default {
   /**
    * Perform fetch on remote
    */
-  async performFetch ({ dir, remote }) {
-    return git.fetch({
-      fs,
-      http,
-      dir,
-      remote,
-      onAuth: (url) => {
-        return this.onAuth(url)
-      }
-    })
+  async performFetch () {
+    return this.git.fetch(['--all'])
   },
   /**
    * List remotes
@@ -184,11 +183,8 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<Array>} List of remotes
    */
-  async listRemotes ({ dir }) {
-    return git.listRemotes({
-      fs,
-      dir
-    })
+  async listRemotes () {
+    return this.git.getRemotes(true)
   },
   /**
    * Add a remote
@@ -196,13 +192,9 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>}
    */
-  async addRemote ({ dir, remote, url }) {
-    return git.addRemote({
-      fs,
-      dir,
-      remote,
-      url
-    })
+  async addRemote ({ remote, url }) {
+    await this.git.addRemote(remote, url)
+    await this.git.fetch([remote])
   },
   /**
    * Delete a remote
@@ -210,12 +202,32 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>}
    */
-  async deleteRemote ({ dir, remote }) {
-    return git.deleteRemote({
-      fs,
-      dir,
-      remote
-    })
+  async deleteRemote ({ remote }) {
+    return this.git.removeRemote(remote)
+  },
+  /**
+   * Pulls the latest changes from the specified remote repository.
+   *
+   * @param {Object} options - The options for the pull operation.
+   * @param {string} options.remote - The name of the remote repository.
+   * @param {string} options.branch - The name of the working branch.
+   * @param {string} options.mode - Pull mode to use: ff, rebase (or empty for default ff + merge)
+   * @returns {Promise<Object>} - A promise that resolves with the result of the pull operation.
+   */
+  async pull ({ remote, branch, mode } = {}) {
+    const pullArgs = []
+    if (mode === 'ff') {
+      pullArgs.push('--ff-only')
+    } else if (mode === 'rebase') {
+      pullArgs.push('--rebase')
+    }
+    if (remote) {
+      pullArgs.push(remote)
+    }
+    if (branch) {
+      pullArgs.push(branch)
+    }
+    return this.git.pull(pullArgs)
   },
   /**
    * List branches
@@ -223,25 +235,20 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<Array>} List of branches
    */
-  async listBranches ({ dir, remote }) {
-    const currentBranch = await git.currentBranch({
-      fs,
-      dir
-    })
-    const localBranches = await git.listBranches({
-      fs,
-      dir
-    })
-    const remoteBranches = await git.listBranches({
-      fs,
-      dir,
-      remote
-    })
+  async listBranches () {
+    const localBranches = await this.git.branchLocal()
+    const remoteBranches = await this.git.branch()
 
     return {
-      current: currentBranch,
-      local: localBranches,
-      remote: remoteBranches.filter(br => br !== 'HEAD')
+      current: localBranches.current,
+      local: localBranches.all.filter(br => !['list', 'remotes'].includes(br)),
+      remote: remoteBranches.all.filter(br => br.startsWith('remotes/')).map(br => {
+        const parts = br.slice(8).split('/')
+        return {
+          remote: parts[0],
+          branch: parts.slice(1).join('/')
+        }
+      })
     }
   },
   /**
@@ -250,14 +257,12 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<Array>} List of commits
    */
-  async commitsLog ({ dir, depth = 500 }) {
-    return git.log({
-      fs,
-      dir,
-      depth
-    }).then(commits => commits.map(c => {
+  async commitsLog ({ depth = 500 } = {}) {
+    return this.git.log({
+      maxCount: depth
+    }).then(results => results.all.map(c => {
       const normalizedEmail = c.commit?.author?.email?.toLowerCase() ?? 'unknown'
-      c.commit.author.emailHash = createHash('sha256').update(normalizedEmail).digest('hex')
+      c.author_email_hash = createHash('sha256').update(normalizedEmail).digest('hex')
       return c
     }))
   },
@@ -268,20 +273,38 @@ export default {
    * @param {object} param0 Options
    * @returns {Promise<Array>} Array of changes
    */
-  async statusMatrix ({ dir }) {
-    return git.statusMatrix({
-      fs,
-      dir
-    }).then(changes => changes.filter(row => !(row[1] === row[2] && row[1] === row[3])).map(row => {
-      return {
-        path: row[0],
-        isStaged: row[2] === row[3] || (row[2] === 2 && row[3] === 3),
-        isUnstaged: row[2] !== row[3], // can be both staged with unstaged changes
-        isAdded: row[1] === 0 && row[2] === 2,
-        isModified: row[1] === 1 && row[2] === 2,
-        isDeleted: row[1] === 1 && row[2] === 0
-      }
-    }))
+  async statusMatrix () {
+    return this.git.status().then(results => {
+      console.info(results)
+      return sortBy([
+        ...results.files.map(row => ({
+          path: row.path,
+          isStaged: results.staged.includes(row.path),
+          isUnstaged: row.index !== row.working_dir,
+          isAdded: results.created.includes(row.path),
+          isModified: results.modified.includes(row.path),
+          isDeleted: results.deleted.includes(row.path)
+        })),
+        ...results.not_added.map(f => ({
+          path: f,
+          isStaged: false,
+          isUnstaged: true,
+          isAdded: true,
+          isModified: false,
+          isDeleted: false
+        }))
+      ], ['path'])
+    })
+    // .then(changes => changes.filter(row => !(row[1] === row[2] && row[1] === row[3])).map(row => {
+    //   return {
+    //     path: row[0],
+    //     isStaged: row[2] === row[3] || (row[2] === 2 && row[3] === 3),
+    //     isUnstaged: row[2] !== row[3], // can be both staged with unstaged changes
+    //     isAdded: row[1] === 0 && row[2] === 2,
+    //     isModified: row[1] === 1 && row[2] === 2,
+    //     isDeleted: row[1] === 1 && row[2] === 0
+    //   }
+    // }))
   },
   /**
    * Stage Files
@@ -289,24 +312,14 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>} Promise
    */
-  async stageFiles ({ dir, files }) {
+  async stageFiles ({ files }) {
     const toAdd = files.filter(f => !f.isDeleted).map(f => f.path)
     const toRemove = files.filter(f => f.isDeleted).map(f => f.path)
     if (toAdd.length > 0) {
-      await git.add({
-        fs,
-        dir,
-        filepath: toAdd
-      })
+      await this.git.add(toAdd)
     }
     if (toRemove.length > 0) {
-      for (const fl of toRemove) {
-        await git.remove({
-          fs,
-          dir,
-          filepath: fl
-        })
-      }
+      await this.git.rm(toRemove)
     }
   },
   /**
@@ -315,26 +328,16 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>} Promise
    */
-  async unstageFiles ({ dir, files }) {
+  async unstageFiles ({ files }) {
     const toUndelete = files.filter(f => f.isDeleted).map(f => f.path)
     const toRemove = files.filter(f => !f.isDeleted).map(f => f.path)
     if (toUndelete.length > 0) {
       for (const fl of toUndelete) {
-        await git.resetIndex({
-          fs,
-          dir,
-          filepath: fl
-        })
+        await this.git.reset('mixed', ['--', fl])
       }
     }
     if (toRemove.length > 0) {
-      for (const fl of toRemove) {
-        await git.remove({
-          fs,
-          dir,
-          filepath: fl
-        })
-      }
+      await this.git.rm(toRemove)
     }
   },
   /**
@@ -345,7 +348,7 @@ export default {
    * @param {string} params.message - The commit message.
    * @returns {Promise<Object>} The result of the git commit operation.
    */
-  async commit ({ dir, message }) {
+  async commit ({ message }) {
     return git.commit({
       fs,
       dir,
@@ -357,7 +360,6 @@ export default {
       ...this.conf.signCommits && {
         signingKey: this.conf.privateKey,
         onSign: (opts) => {
-          console.info(opts)
           return this.onSign(opts)
         }
       }

@@ -209,7 +209,51 @@ q-dialog(
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
-
+        template(v-else-if='state.tab === `keyboard`')
+          q-form.q-gutter-md.q-pa-lg
+            .row
+              .col-8
+                .text-body2 Mode Preset
+                .text-caption.text-grey-5 Keyboard shortcuts mode to use with the editor.
+              .col-4
+                q-select(
+                  outlined
+                  v-model='editorStore.keybindings'
+                  :options='keybindings'
+                  dense
+                  color='light-blue-4'
+                  emit-value
+                  map-options
+                  )
+            q-separator
+            .row
+              .col
+                .text-body2 Control Modifier
+                .text-caption.text-grey-5 Set the key to use as the Control modifier
+              .col-auto.self-center
+                q-chip(color='purple-2', square, outline) ControlLeft
+              q-separator.q-ml-sm.q-mr-md(vertical, inset)
+              .col-auto
+                q-btn(
+                  label='Change'
+                  unelevated
+                  color='primary'
+                  no-caps
+                )
+            .row
+              .col
+                .text-body2 Meta Modifier
+                .text-caption.text-grey-5 Set the key to use as the Meta modifier
+              .col-auto.self-center
+                q-chip(color='purple-2', square, outline) Escape
+              q-separator.q-ml-sm.q-mr-md(vertical, inset)
+              .col-auto
+                q-btn(
+                  label='Change'
+                  unelevated
+                  color='primary'
+                  no-caps
+                )
         template(v-else-if='state.tab === `git`')
           q-form.q-gutter-md.q-pa-lg
             .row
@@ -430,6 +474,11 @@ const tabs = [
     label: 'Editor'
   },
   {
+    key: 'keyboard',
+    icon: 'mdi-keyboard-outline',
+    label: 'Keyboard Shortcuts'
+  },
+  {
     key: 'git',
     icon: 'mdi-git',
     label: 'Git Integration'
@@ -468,6 +517,17 @@ const themes = [
     label: 'High Contrast Light',
     value: 'hc-light'
   }
+]
+
+const keybindings = [
+  {
+    label: 'VS Code (default)',
+    value: 'default'
+  },
+  {
+    label: 'Emacs',
+    value: 'emacs'
+  },
 ]
 
 const cursorStyles = [

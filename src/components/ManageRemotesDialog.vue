@@ -91,38 +91,30 @@ q-dialog(
         )
           q-item(
             v-for='remote of editorStore.gitRemotes'
-            :key='remote.remote'
+            :key='remote.name'
             )
             q-item-section(side)
               q-chip(
                 square
-                :color='editorStore.gitCurrentRemote === remote.remote ? `light-green-8` : `primary`'
+                :color='editorStore.gitCurrentRemote === remote.name ? `light-green-8` : `primary`'
                 text-color='white'
-                :label='remote.remote'
+                :label='remote.name'
               )
             q-item-section
-              q-item-label {{ remote.url }}
-              q-item-label.text-light-green-4(v-if='editorStore.gitCurrentRemote === remote.remote', caption): em Active Remote
+              q-item-label {{ remote.refs.push }}
+              //- q-item-label(caption) {{ remote.refs.push }}
+              q-item-label.text-light-green-4(v-if='editorStore.gitCurrentRemote === remote.name', caption): em Active Push Target
             q-item-section(
-              v-if='editorStore.gitCurrentRemote !== remote.remote'
+              v-if='editorStore.gitCurrentRemote !== remote.name'
               side
               )
-              .flex.items-center
-                q-btn.q-mr-sm(
-                  outline
-                  color='light-green-5'
-                  padding='xs sm'
-                  label='Set Active'
-                  no-caps
-                  @click='setActive(remote.remote)'
-                )
                 q-btn(
                   outline
                   color='red-5'
                   padding='xs sm'
-                  label='Delete'
+                  label='Remove'
                   no-caps
-                  @click='deleteRemote(remote.remote)'
+                  @click='deleteRemote(remote.name)'
                 )
 </template>
 
@@ -168,7 +160,7 @@ async function newRemote () {
     if (editorStore.gitRemotes.some(r => r.remote === state.newRemoteName)) {
       throw new Error('Remote already exists')
     }
-    await window.ipcBridge.gitAddRemote(editorStore.workingDirectory, state.newRemoteName, state.newRemoteUrl)
+    await window.ipcBridge.gitAddRemote(state.newRemoteName, state.newRemoteUrl)
     await editorStore.fetchRemotes()
     state.newRemoteName = ''
     state.newRemoteUrl = ''
@@ -182,23 +174,6 @@ async function newRemote () {
     console.error(err)
     $q.notify({
       message: 'Failed to add new remote',
-      caption: err.message,
-      color: 'negative',
-      icon: 'mdi-alert'
-    })
-  }
-  state.isLoading = false
-}
-
-async function setActive (remote) {
-  editorStore.gitCurrentRemote = remote
-  state.isLoading = true
-  try {
-    await editorStore.saveGitConfig()
-  } catch (err) {
-    console.error(err)
-    $q.notify({
-      message: 'Failed to save current remote selection',
       caption: err.message,
       color: 'negative',
       icon: 'mdi-alert'
@@ -228,7 +203,7 @@ async function deleteRemote (remote) {
   }).onOk(async () => {
     state.isLoading = true
     try {
-      await window.ipcBridge.gitDeleteRemote(editorStore.workingDirectory, remote)
+      await window.ipcBridge.gitDeleteRemote(remote)
       await editorStore.fetchRemotes()
     } catch (err) {
       console.error(err)
