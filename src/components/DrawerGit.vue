@@ -7,7 +7,6 @@
       q-icon.q-ml-sm(name='mdi-information-outline' color='light-blue-3')
         q-tooltip
           span {{ editorStore.workingDirectory }}
-          .text-caption Test
       q-space
       q-btn(
         flat
@@ -170,9 +169,9 @@
           style='padding-right: 8px'
           )
           q-item-section(side)
-            q-icon(v-if='cg.isAdded', name='mdi-plus-box-outline', size='xs', color='positive')
-            q-icon(v-else-if='cg.isModified', name='mdi-pencil-box-outline', size='xs', color='amber')
-            q-icon(v-else-if='cg.isDeleted', name='mdi-minus-box-outline', size='xs', color='red-5')
+            q-icon(v-if='cg.state === `A`', name='mdi-plus-box-outline', size='xs', color='positive')
+            q-icon(v-else-if='cg.state === `M`', name='mdi-pencil-box-outline', size='xs', color='amber')
+            q-icon(v-else-if='cg.state === `D`', name='mdi-minus-box-outline', size='xs', color='red-5')
           q-item-section
             q-item-label.text-caption.text-word-break-all {{ cg.path }}
           q-item-section.drawer-git-changes-hover(side)
@@ -234,9 +233,9 @@
           style='padding-right: 8px'
           )
           q-item-section(side)
-            q-icon(v-if='cg.isAdded', name='mdi-plus-box-outline', size='xs', color='positive')
-            q-icon(v-else-if='cg.isModified', name='mdi-pencil-box-outline', size='xs', color='amber')
-            q-icon(v-else-if='cg.isDeleted', name='mdi-minus-box-outline', size='xs', color='red-5')
+            q-icon(v-if='cg.state === `?`', name='mdi-plus-box-outline', size='xs', color='positive')
+            q-icon(v-else-if='cg.state === `M`', name='mdi-pencil-box-outline', size='xs', color='amber')
+            q-icon(v-else-if='cg.state === `D`', name='mdi-minus-box-outline', size='xs', color='red-5')
           q-item-section
             q-item-label.text-caption.text-word-break-all {{ cg.path }}
           q-item-section.drawer-git-changes-hover(side)
@@ -438,8 +437,8 @@ async function refreshChanges () {
   state.changesLoading = true
   try {
     const changes = await window.ipcBridge.gitStatusMatrix()
-    state.changes = changes.filter(c => c.isUnstaged)
-    state.staged = changes.filter(c => c.isStaged)
+    state.changes = changes.unstaged
+    state.staged = changes.staged
   } catch (err) {
     console.error(err)
     $q.notify({

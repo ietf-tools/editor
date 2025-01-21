@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process'
 import { app, clipboard, safeStorage } from 'electron'
 import { createHash } from 'node:crypto'
 import * as openpgp from 'openpgp'
-import { sortBy } from 'lodash-es'
+import { find } from 'lodash-es'
 
 export default {
   git: simpleGit(),
@@ -261,7 +261,7 @@ export default {
     return this.git.log({
       maxCount: depth
     }).then(results => results.all.map(c => {
-      const normalizedEmail = c.commit?.author?.email?.toLowerCase() ?? 'unknown'
+      const normalizedEmail = c.author_email?.toLowerCase() ?? 'unknown'
       c.author_email_hash = createHash('sha256').update(normalizedEmail).digest('hex')
       return c
     }))
@@ -274,26 +274,37 @@ export default {
    * @returns {Promise<Array>} Array of changes
    */
   async statusMatrix () {
-    return this.git.status().then(results => {
+    return this.git.status(['--no-renames']).then(results => {
       console.info(results)
-      return sortBy([
-        ...results.files.map(row => ({
-          path: row.path,
-          isStaged: results.staged.includes(row.path),
-          isUnstaged: row.index !== row.working_dir,
-          isAdded: results.created.includes(row.path),
-          isModified: results.modified.includes(row.path),
-          isDeleted: results.deleted.includes(row.path)
-        })),
-        ...results.not_added.map(f => ({
+      return {
+        staged: results.staged.map(f => ({
           path: f,
-          isStaged: false,
-          isUnstaged: true,
-          isAdded: true,
-          isModified: false,
-          isDeleted: false
+          state: find(results.files, ['path', f])?.index
+        })),
+        unstaged: results.files.filter(f => f.working_dir !== ' ').map(f => ({
+          path: f.path,
+          state: f.working_dir
         }))
-      ], ['path'])
+      }
+
+      // return sortBy([
+      //   ...results.files.map(row => ({
+      //     path: row.path,
+      //     isStaged: results.staged.includes(row.path),
+      //     isUnstaged: row.index !== row.working_dir,
+      //     isAdded: results.created.includes(row.path),
+      //     isModified: results.modified.includes(row.path),
+      //     isDeleted: results.deleted.includes(row.path)
+      //   })),
+      //   ...results.not_added.map(f => ({
+      //     path: f,
+      //     isStaged: false,
+      //     isUnstaged: true,
+      //     isAdded: true,
+      //     isModified: false,
+      //     isDeleted: false
+      //   }))
+      // ], ['path'])
     })
     // .then(changes => changes.filter(row => !(row[1] === row[2] && row[1] === row[3])).map(row => {
     //   return {
@@ -313,14 +324,7 @@ export default {
    * @returns {Promise<void>} Promise
    */
   async stageFiles ({ files }) {
-    const toAdd = files.filter(f => !f.isDeleted).map(f => f.path)
-    const toRemove = files.filter(f => f.isDeleted).map(f => f.path)
-    if (toAdd.length > 0) {
-      await this.git.add(toAdd)
-    }
-    if (toRemove.length > 0) {
-      await this.git.rm(toRemove)
-    }
+    await this.git.add(files.map(f => f.path))
   },
   /**
    * Unstage Files
@@ -329,15 +333,8 @@ export default {
    * @returns {Promise<void>} Promise
    */
   async unstageFiles ({ files }) {
-    const toUndelete = files.filter(f => f.isDeleted).map(f => f.path)
-    const toRemove = files.filter(f => !f.isDeleted).map(f => f.path)
-    if (toUndelete.length > 0) {
-      for (const fl of toUndelete) {
-        await this.git.reset('mixed', ['--', fl])
-      }
-    }
-    if (toRemove.length > 0) {
-      await this.git.rm(toRemove)
+    for (const fl of files.map(f => f.path)) {
+      await this.git.reset('mixed', ['--', fl])
     }
   },
   /**

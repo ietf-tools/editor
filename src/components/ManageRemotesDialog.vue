@@ -26,6 +26,15 @@ q-dialog(
         @click='state.newRemoteFormShown = true'
         :disabled='state.isLoading || state.newRemoteFormShown'
         )
+      q-btn.q-mr-md(
+        unelevated
+        icon='mdi-refresh'
+        padding='xs'
+        color='primary'
+        @click='refresh'
+        :disabled='state.isLoading'
+        )
+        q-tooltip Refresh Remotes
       q-btn(
         unelevated
         icon='mdi-close'
@@ -216,6 +225,24 @@ async function deleteRemote (remote) {
     }
     state.isLoading = false
   })
+}
+
+async function refresh () {
+  state.isLoading = true
+  try {
+    await window.ipcBridge.gitPerformFetch()
+    await editorStore.fetchRemotes()
+    editorStore.fetchBranches()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to fetch from remotes',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.isLoading = false
 }
 
 // MOUNTED

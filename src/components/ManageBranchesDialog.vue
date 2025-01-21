@@ -178,13 +178,13 @@ q-dialog(
                           q-icon(name='mdi-trash-can', color='red-4')
                         q-item-section
                           q-item-label: strong Delete Remote Branch
-                          q-item-label(caption) Delete branch remotely but keep local branch #[em (if it exists)].
+                          q-item-label(caption) Delete remote branch but keep local branch #[em (if it exists)].
                       q-item(clickable, @click='setActive(branch)')
                         q-item-section(side)
                           q-icon(name='mdi-delete-forever', color='red-4')
                         q-item-section
                           q-item-label: strong Delete Remote + Local Branch
-                          q-item-label(caption) Delete both remote and local branch #[em (if it exists)].
+                          q-item-label(caption) Delete both remote and local #[em (if it exists)] branches.
 
 </template>
 

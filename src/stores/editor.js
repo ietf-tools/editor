@@ -19,6 +19,7 @@ export const useEditorStore = defineStore('editor', {
     gitName: '',
     gitEmail: '',
     gitSignCommits: true,
+    gitUseDefaultSigningKey: true,
     gitUseCredMan: true,
     gitUsername: '',
     gitPassword: '',

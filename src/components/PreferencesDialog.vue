@@ -281,46 +281,6 @@ q-dialog(
             q-separator
             .row
               .col
-                .text-body2 Use Git Credential Manager
-                .text-caption.text-grey-5 Use the native git credential manager for authentication. Git must be installed on the system.
-              .col-auto
-                q-toggle(
-                  v-model='editorStore.gitUseCredMan'
-                  checked-icon='mdi-check'
-                  unchecked-icon='mdi-close'
-                )
-            .row(v-if='!editorStore.gitUseCredMan')
-              .col-7
-                .text-body2 Username
-                .text-caption.text-grey-5 The username to use for git authentication.
-              .col-5
-                q-input(
-                  v-model.number='editorStore.gitUsername'
-                  outlined
-                  dense
-                  color='light-blue-4'
-                )
-            .row(v-if='!editorStore.gitUseCredMan')
-              .col-7
-                .text-body2 Password / Personal Access Token
-                .text-caption.text-grey-5 The password / PAT to use for git authentication
-              .col-5
-                q-input(
-                  v-model.number='editorStore.gitPassword'
-                  :type='state.gitPasswordShown ? `text` : `password`'
-                  outlined
-                  dense
-                  color='light-blue-4'
-                  )
-                  template(#append)
-                    q-icon.cursor-pointer(
-                      :name='state.gitPasswordShown ? `mdi-eye-outline` : `mdi-eye-off-outline`'
-                      @click='state.gitPasswordShown = !state.gitPasswordShown'
-                      size='xs'
-                    )
-            q-separator
-            .row
-              .col
                 .text-body2 Sign Commits
                 .text-caption.text-grey-5 Use OpenPGP signing when creating commits.
               .col-auto
@@ -330,6 +290,16 @@ q-dialog(
                   unchecked-icon='mdi-close'
                 )
             .row(v-if='editorStore.gitSignCommits')
+              .col
+                .text-body2 Use System Default Signing Key
+                .text-caption.text-grey-5 Use the signing key configured globally in git on your system.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.gitUseDefaultSigningKey'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
+            .row(v-if='editorStore.gitSignCommits && !editorStore.gitUseDefaultSigningKey')
               .col
                 .text-body2 OpenPGP Signing Key
                 .text-caption.text-grey-5 Set the key to use for signing commits.
@@ -579,17 +549,6 @@ const cursorAnims = [
     value: 'solid'
   }
 ]
-
-// const gitModes = [
-//   {
-//     label: 'Editor Git',
-//     value: 'editor'
-//   },
-//   {
-//     label: 'System Git',
-//     value: 'system'
-//   }
-// ]
 
 // METHODS
 
