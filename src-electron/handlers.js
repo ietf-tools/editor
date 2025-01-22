@@ -288,6 +288,9 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
   ipcMain.handle('gitPull', async (ev, opts = {}) => {
     return git.pull({ remote: opts.remote, branch: opts.branch, mode: opts.mode })
   })
+  ipcMain.handle('gitPush', async (ev, opts) => {
+    return git.push({ remote: opts.remote, branch: opts.branch })
+  })
   ipcMain.handle('gitListBranches', async (ev, opts) => {
     return git.listBranches({ remote: opts.remote })
   })

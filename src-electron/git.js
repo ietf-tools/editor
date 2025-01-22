@@ -230,6 +230,14 @@ export default {
     return this.git.pull(pullArgs)
   },
   /**
+   * Push commits to remote repository
+   *
+   * @returns {Promise<Object>} - A promise that resolves with the result of the push operation.
+   */
+  async push ({ remote, branch }) {
+    return this.git.push(remote, branch)
+  },
+  /**
    * List branches
    *
    * @param {Object} param0 Options

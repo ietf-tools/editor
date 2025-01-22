@@ -27,6 +27,7 @@ contextBridge.exposeInMainWorld('ipcBridge', {
   gitAddRemote: (remote, url) => ipcRenderer.invoke('gitAddRemote', { remote, url }),
   gitDeleteRemote: (remote) => ipcRenderer.invoke('gitDeleteRemote', { remote }),
   gitPull: (mode, remote, branch) => ipcRenderer.invoke('gitPull', { mode, remote, branch }),
+  gitPush: (remote, branch) => ipcRenderer.invoke('gitPush', { remote, branch }),
   gitListBranches: (remote) => ipcRenderer.invoke('gitListBranches', { remote }),
   gitCommitsLog: () => ipcRenderer.invoke('gitCommitsLog'),
   gitStatusMatrix: () => ipcRenderer.invoke('gitStatusMatrix'),

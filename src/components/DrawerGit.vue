@@ -100,6 +100,8 @@
         icon='mdi-transfer-up'
         padding='xs xs'
         text-color='grey-5'
+        :loading='state.pushLoading'
+        @click='push'
         )
         q-tooltip Push
       q-btn(
@@ -397,6 +399,23 @@ async function pull (mode) {
     })
   }
   state.pullLoading = false
+}
+
+async function push () {
+  state.pushLoading = true
+  try {
+    await window.ipcBridge.gitPush(editorStore.gitCurrentRemote, editorStore.gitCurrentBranch)
+    await refreshHistory()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to perform push to remote repository.',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.pushLoading = false
 }
 
 async function refreshChanges () {
