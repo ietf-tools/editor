@@ -268,7 +268,6 @@ export default {
   },
   /**
    * Get the status of files in the working directory
-   * Reference: https://isomorphic-git.org/docs/en/statusMatrix
    *
    * @param {object} param0 Options
    * @returns {Promise<Array>} Array of changes
@@ -286,36 +285,7 @@ export default {
           state: f.working_dir
         }))
       }
-
-      // return sortBy([
-      //   ...results.files.map(row => ({
-      //     path: row.path,
-      //     isStaged: results.staged.includes(row.path),
-      //     isUnstaged: row.index !== row.working_dir,
-      //     isAdded: results.created.includes(row.path),
-      //     isModified: results.modified.includes(row.path),
-      //     isDeleted: results.deleted.includes(row.path)
-      //   })),
-      //   ...results.not_added.map(f => ({
-      //     path: f,
-      //     isStaged: false,
-      //     isUnstaged: true,
-      //     isAdded: true,
-      //     isModified: false,
-      //     isDeleted: false
-      //   }))
-      // ], ['path'])
     })
-    // .then(changes => changes.filter(row => !(row[1] === row[2] && row[1] === row[3])).map(row => {
-    //   return {
-    //     path: row[0],
-    //     isStaged: row[2] === row[3] || (row[2] === 2 && row[3] === 3),
-    //     isUnstaged: row[2] !== row[3], // can be both staged with unstaged changes
-    //     isAdded: row[1] === 0 && row[2] === 2,
-    //     isModified: row[1] === 1 && row[2] === 2,
-    //     isDeleted: row[1] === 1 && row[2] === 0
-    //   }
-    // }))
   },
   /**
    * Stage Files
@@ -338,29 +308,31 @@ export default {
     }
   },
   /**
+   * Discard Chnages
+   *
+   * @param {*} param0 Options
+   * @returns {Promise<void>} Promise
+   */
+  async discardChanges ({ files }) {
+    for (const fl of files) {
+      await this.git.raw(['restore', fl])
+    }
+  },
+  /**
    * Commits changes to the git repository.
    *
    * @param {Object} params - The parameters for the commit.
-   * @param {string} params.dir - The directory of the git repository.
    * @param {string} params.message - The commit message.
    * @returns {Promise<Object>} The result of the git commit operation.
    */
   async commit ({ message }) {
-    return git.commit({
-      fs,
-      dir,
-      author: {
-        name: this.conf.name,
-        email: this.conf.email
-      },
-      message,
-      ...this.conf.signCommits && {
-        signingKey: this.conf.privateKey,
-        onSign: (opts) => {
-          return this.onSign(opts)
-        }
-      }
-    })
+    const commitOpts = {
+      '--author': `"${this.conf.name} <${this.conf.email}>"`
+    }
+    if (this.conf.signCommits) {
+      commitOpts['-S'] = null
+    }
+    return this.git.commit(message, null, commitOpts)
   },
   /**
    * Authentication event handler

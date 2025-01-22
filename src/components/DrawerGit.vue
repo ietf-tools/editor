@@ -76,21 +76,21 @@
         q-tooltip Pull...
         q-menu(auto-close)
           q-list.bg-dark-7(separator, padding)
-            q-item(clickable, @click='pull')
+            q-item(clickable, @click='pull(`merge`)')
               q-item-section(side)
                 q-icon(name='mdi-merge', color='orange')
               q-item-section
                 q-item-label: strong Pull (fast-forward + merge)
                 q-item-label(caption) Apple remote changes using fast-forward if possible and using merge commits otherwise.
-            q-item(clickable, @click='fastForward')
+            q-item(clickable, @click='pull(`ff`)')
               q-item-section(side)
                 q-icon(name='mdi-chevron-triple-right', color='teal-4')
               q-item-section
                 q-item-label: strong Pull (fast-forward only)
                 q-item-label(caption) Apply remote changes only if they can be fast-forwarded.
-            q-item(clickable, @click='rebase')
+            q-item(clickable, @click='pull(`rebase`)')
               q-item-section(side)
-                q-icon(name='mdi-arrow-u-right-top', color='purple-3')
+                q-icon(name='mdi-pillar', color='purple-3')
               q-item-section
                 q-item-label: strong Pull (rebase)
                 q-item-label(caption) Apply remote changes first, then apply local changes on top.
@@ -197,7 +197,7 @@
           icon='mdi-arrow-u-left-top'
           padding='xs xs'
           text-color='grey-5'
-          disabled
+          @click='discardChanges'
           )
           q-tooltip Discard All Changes
         q-btn(
@@ -246,7 +246,7 @@
                 icon='mdi-arrow-u-left-top'
                 padding='xs xs'
                 text-color='grey-5'
-                disabled
+                @click.stop.prevent='discardChange(cg.path)'
                 )
                 q-tooltip Discard Changes
               q-btn(
@@ -382,44 +382,10 @@ function manageBranches () {
   })
 }
 
-async function pull () {
+async function pull (mode) {
   state.pullLoading = true
   try {
-    await window.ipcBridge.gitPull()
-    await refreshHistory()
-  } catch (err) {
-    console.error(err)
-    $q.notify({
-      message: 'Failed to perform pull from remote repository.',
-      caption: err.message,
-      color: 'negative',
-      icon: 'mdi-alert'
-    })
-  }
-  state.pullLoading = false
-}
-
-async function fastForward () {
-  state.pullLoading = true
-  try {
-    await window.ipcBridge.gitPull(null, null, 'ff')
-    await refreshHistory()
-  } catch (err) {
-    console.error(err)
-    $q.notify({
-      message: 'Failed to perform pull from remote repository.',
-      caption: err.message,
-      color: 'negative',
-      icon: 'mdi-alert'
-    })
-  }
-  state.pullLoading = false
-}
-
-async function rebase () {
-  state.pullLoading = true
-  try {
-    await window.ipcBridge.gitPull(null, null, 'rebase')
+    await window.ipcBridge.gitPull(mode)
     await refreshHistory()
   } catch (err) {
     console.error(err)
@@ -537,6 +503,80 @@ async function unstageAllFiles () {
     })
   }
   state.changesLoading = false
+}
+
+async function discardChanges () {
+  if (state.changesLoading) { return }
+  $q.dialog({
+    title: 'Confirm',
+    message: 'Are you sure you want to discard all unstaged changes?',
+    persistent: true,
+    focus: 'none',
+    ok: {
+      color: 'negative',
+      textColor: 'white',
+      unelevated: true,
+      label: 'Discard All Changes',
+      noCaps: true
+    },
+    cancel: {
+      color: 'grey-3',
+      outline: true,
+      noCaps: true
+    }
+  }).onOk(async () => {
+    state.changesLoading = true
+    try {
+      await window.ipcBridge.gitDiscardChanges(state.changes.map(c => c.path))
+      await refreshChanges()
+    } catch (err) {
+      console.error(err)
+      $q.notify({
+        message: 'Failed to discard all changes',
+        caption: err.message,
+        color: 'negative',
+        icon: 'mdi-alert'
+      })
+    }
+    state.changesLoading = false
+  })
+}
+
+async function discardChange (flPath) {
+  if (state.changesLoading) { return }
+  $q.dialog({
+    title: 'Confirm',
+    message: `Are you sure you want to discard changes to ${flPath}?`,
+    persistent: true,
+    focus: 'none',
+    ok: {
+      color: 'negative',
+      textColor: 'white',
+      unelevated: true,
+      label: 'Discard Changes',
+      noCaps: true
+    },
+    cancel: {
+      color: 'grey-3',
+      outline: true,
+      noCaps: true
+    }
+  }).onOk(async () => {
+    state.changesLoading = true
+    try {
+      await window.ipcBridge.gitDiscardChanges([flPath])
+      await refreshChanges()
+    } catch (err) {
+      console.error(err)
+      $q.notify({
+        message: `Failed to discard changes for ${flPath}`,
+        caption: err.message,
+        color: 'negative',
+        icon: 'mdi-alert'
+      })
+    }
+    state.changesLoading = false
+  })
 }
 
 async function commit () {

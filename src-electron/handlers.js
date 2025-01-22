@@ -303,6 +303,9 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
   ipcMain.handle('gitUnstageFiles', async (ev, opts) => {
     return git.unstageFiles({ files: opts.files })
   })
+  ipcMain.handle('gitDiscardChanges', async (ev, opts) => {
+    return git.discardChanges({ files: opts.files })
+  })
   ipcMain.handle('gitCommit', async (ev, opts) => {
     return git.commit({ message: opts.message })
   })
