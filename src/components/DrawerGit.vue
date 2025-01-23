@@ -381,6 +381,9 @@ function manageRemotes () {
 function manageBranches () {
   $q.dialog({
     component: defineAsyncComponent(() => import('components/ManageBranchesDialog.vue'))
+  }).onDismiss(() => {
+    refreshChanges()
+    refreshHistory()
   })
 }
 
@@ -421,9 +424,15 @@ async function push () {
 async function refreshChanges () {
   state.changesLoading = true
   try {
-    const changes = await window.ipcBridge.gitStatusMatrix()
-    state.changes = changes.unstaged
-    state.staged = changes.staged
+    const status = await window.ipcBridge.gitStatusMatrix()
+    editorStore.gitCurrentBranch = status.currentBranch
+    if (status.tracking) {
+      editorStore.gitCurrentRemote = status.tracking?.split('/', 1)[0] ?? 'origin'
+    } else {
+      editorStore.gitCurrentRemote = 'origin'
+    }
+    state.changes = status.unstaged
+    state.staged = status.staged
   } catch (err) {
     console.error(err)
     $q.notify({

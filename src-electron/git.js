@@ -260,6 +260,40 @@ export default {
     }
   },
   /**
+   * Create new branch from source
+   *
+   * @param {Object} param0 Options
+   * @param {Promise<void>} Promise
+   */
+  async newBranch ({ branchName, source, tracking }) {
+    await this.git.checkoutBranch(branchName, source)
+    if (tracking) {
+      await this.git.branch(['-u', tracking, branchName])
+    }
+  },
+  /**
+   * Delete local branch
+   *
+   * @param {*} param0 Options
+   * @param {Promise<void>} Promise
+   */
+  async deleteBranch ({ branch }) {
+    await this.git.deleteLocalBranch(branch)
+  },
+  /**
+   * Checkout branch
+   *
+   * @param {*} param0 Options
+   * @param {Promise<void>} Promise
+   */
+  async checkoutBranch ({ branch, tracking }) {
+    if (tracking) {
+      await this.git.raw(['checkout', '-b', branch, '--track', tracking])
+    } else {
+      await this.git.checkout(branch)
+    }
+  },
+  /**
    * Fetch commits history
    *
    * @param {Object} param0 Options
@@ -282,8 +316,9 @@ export default {
    */
   async statusMatrix () {
     return this.git.status(['--no-renames']).then(results => {
-      console.info(results)
       return {
+        currentBranch: results.current,
+        tracking: results.tracking,
         staged: results.staged.map(f => ({
           path: f,
           state: find(results.files, ['path', f])?.index

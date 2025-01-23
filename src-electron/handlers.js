@@ -294,6 +294,15 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
   ipcMain.handle('gitListBranches', async (ev, opts) => {
     return git.listBranches({ remote: opts.remote })
   })
+  ipcMain.handle('gitNewBranch', async (ev, opts) => {
+    return git.newBranch({ branchName: opts.branchName, source: opts.source, tracking: opts.tracking })
+  })
+  ipcMain.handle('gitDeleteBranch', async (ev, opts) => {
+    return git.deleteBranch({ branch: opts.branch })
+  })
+  ipcMain.handle('gitCheckoutBranch', async (ev, opts) => {
+    return git.checkoutBranch({ branch: opts.branch, tracking: opts.tracking })
+  })
   ipcMain.handle('gitCommitsLog', async (ev, opts) => {
     return git.commitsLog()
   })

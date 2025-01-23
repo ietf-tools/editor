@@ -120,17 +120,17 @@ q-dialog(
                     outline
                     color='light-green-5'
                     padding='xs sm'
-                    label='Set Active'
+                    label='Checkout'
                     no-caps
-                    @click='setActive(branch)'
+                    @click='checkoutBranch(branch)'
                   )
                   q-btn(
                     outline
                     color='red-5'
-                    padding='xs sm'
-                    label='Delete'
+                    padding='xs'
+                    icon='mdi-trash-can-outline'
                     no-caps
-                    @click='deleteRemote(branch)'
+                    @click='deleteBranch(branch)'
                   )
         q-separator(vertical)
         .col
@@ -145,10 +145,10 @@ q-dialog(
               :key='br'
               )
               q-item-section(side)
-                q-icon(name='mdi-source-branch', size='xs')
+                q-avatar(rounded, color='secondary' text-color='white' size='md') {{ br.remote[0]?.toUpperCase() }}
               q-item-section
                 q-item-label {{ br.branch }}
-                q-item-label.text-blue-3(caption) {{ br.remote }}
+                q-item-label.text-teal-2(caption): em {{ br.remote }}
               q-item-section(side)
                 q-btn(
                   unelevated
@@ -158,34 +158,29 @@ q-dialog(
                   color='grey-10'
                   text-color='grey-5'
                   )
-                  q-tooltip Pull...
+                  q-tooltip Actions...
                   q-menu(auto-close)
                     q-list.bg-dark-7(separator, padding)
-                      q-item(clickable, @click='setActive(branch)')
+                      q-item(clickable, @click='checkoutBranch(br.branch, `${br.remote}/${br.branch}`)')
                         q-item-section(side)
                           q-icon(name='mdi-source-branch-check', color='green-4')
                         q-item-section
                           q-item-label: strong Checkout
                           q-item-label(caption) Checkout this remote branch and set as the push target.
-                      q-item(clickable, @click='setActive(branch)')
+                      q-item(clickable, @click='setBranchTracking(br)')
                         q-item-section(side)
                           q-icon(name='mdi-earth-arrow-up', color='blue-4')
                         q-item-section
                           q-item-label: strong Set as Push Target
                           q-item-label(caption) Set this remote branch as the push target for the current local branch.
-                      q-item(clickable, @click='setActive(branch)')
+                      q-item(clickable, @click='deleteRemoteBranch(br)')
                         q-item-section(side)
-                          q-icon(name='mdi-trash-can', color='red-4')
+                          q-icon(name='mdi-trash-can-outline', color='red-4')
                         q-item-section
                           q-item-label: strong Delete Remote Branch
                           q-item-label(caption) Delete remote branch but keep local branch #[em (if it exists)].
-                      q-item(clickable, @click='setActive(branch)')
-                        q-item-section(side)
-                          q-icon(name='mdi-delete-forever', color='red-4')
-                        q-item-section
-                          q-item-label: strong Delete Remote + Local Branch
-                          q-item-label(caption) Delete both remote and local #[em (if it exists)] branches.
 
+      q-inner-loading(:showing='state.isCheckoutLoading', label='Checking out branch...')
 </template>
 
 <script setup>
@@ -211,6 +206,7 @@ const { dialogRef, onDialogHide, onDialogCancel } = useDialogPluginComponent()
 
 const state = reactive({
   isLoading: true,
+  isCheckoutLoading: false,
   newBranchFormShown: false,
   newBranchName: '',
   newBranchSource: editorStore.gitCurrentBranch
@@ -218,15 +214,40 @@ const state = reactive({
 
 // METHODS
 
-async function setActive (remote) {
-  editorStore.gitCurrentRemote = remote
+async function checkoutBranch (branch, tracking) {
   state.isLoading = true
+  state.isCheckoutLoading = true
   try {
+    await window.ipcBridge.gitCheckoutBranch(branch, tracking)
+    editorStore.gitCurrentBranch = branch
     await editorStore.saveGitConfig()
+    await refresh()
+    onDialogCancel()
   } catch (err) {
     console.error(err)
     $q.notify({
-      message: 'Failed to save current remote selection',
+      message: 'Failed to checkout branch',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.isCheckoutLoading = false
+  state.isLoading = false
+}
+
+async function newBranch () {
+  state.isLoading = true
+  try {
+    await window.ipcBridge.gitNewBranch(state.newBranchName, state.newBranchSource)
+    state.newBranchName = ''
+    state.newBranchSource = editorStore.gitCurrentBranch
+    state.newBranchFormShown = false
+    await refresh()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to create new branch',
       caption: err.message,
       color: 'negative',
       icon: 'mdi-alert'
@@ -235,14 +256,10 @@ async function setActive (remote) {
   state.isLoading = false
 }
 
-async function newBranch () {
-
-}
-
-async function deleteRemote (remote) {
+async function deleteBranch (branch) {
   $q.dialog({
     title: 'Confirm',
-    message: `Are you sure you want to delete remote ${remote}?`,
+    message: `Are you sure you want to delete branch ${branch}?`,
     persistent: true,
     focus: 'none',
     ok: {
@@ -260,12 +277,52 @@ async function deleteRemote (remote) {
   }).onOk(async () => {
     state.isLoading = true
     try {
-      await window.ipcBridge.gitDeleteRemote(remote)
-      await editorStore.fetchRemotes()
+      await window.ipcBridge.gitDeleteBranch(branch)
+      await editorStore.fetchBranches()
     } catch (err) {
       console.error(err)
       $q.notify({
-        message: 'Failed to delete remote',
+        message: 'Failed to delete branch',
+        caption: err.message,
+        color: 'negative',
+        icon: 'mdi-alert'
+      })
+    }
+    state.isLoading = false
+  })
+}
+
+async function setBranchTracking (opts) {
+
+}
+
+async function deleteRemoteBranch (opts) {
+  $q.dialog({
+    title: 'Confirm',
+    message: `Are you sure you want to delete remote branch ${opts.branch} at ${opts.remote}? Local branches will not be affected.`,
+    persistent: true,
+    focus: 'none',
+    ok: {
+      color: 'negative',
+      textColor: 'white',
+      unelevated: true,
+      label: 'Delete',
+      noCaps: true
+    },
+    cancel: {
+      color: 'grey-3',
+      outline: true,
+      noCaps: true
+    }
+  }).onOk(async () => {
+    state.isLoading = true
+    try {
+      await window.ipcBridge.gitDeleteRemoteBranch(opts.branch, opts.remote)
+      await editorStore.fetchBranches()
+    } catch (err) {
+      console.error(err)
+      $q.notify({
+        message: 'Failed to delete remote branch',
         caption: err.message,
         color: 'negative',
         icon: 'mdi-alert'
@@ -284,7 +341,7 @@ async function refresh () {
   } catch (err) {
     console.error(err)
     $q.notify({
-      message: 'Failed to fetch from remote',
+      message: 'Failed to refresh branches and remotes.',
       caption: err.message,
       color: 'negative',
       icon: 'mdi-alert'
@@ -298,6 +355,7 @@ async function refresh () {
 onMounted(async () => {
   state.isLoading = true
   await editorStore.fetchRemotes()
+  await editorStore.fetchBranches()
   state.isLoading = false
 })
 
