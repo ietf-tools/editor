@@ -289,7 +289,7 @@ q-dialog(
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
-            .row(v-if='editorStore.gitSignCommits')
+            .row(v-if='editorStore.gitSignCommits && editorStore.debugExperimental')
               .col
                 .text-body2 Use System Default Signing Key
                 .text-caption.text-grey-5 Use the signing key configured globally in git on your system.
@@ -299,7 +299,7 @@ q-dialog(
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
-            .row(v-if='editorStore.gitSignCommits && !editorStore.gitUseDefaultSigningKey')
+            .row(v-if='editorStore.gitSignCommits && !editorStore.gitUseDefaultSigningKey && editorStore.debugExperimental')
               .col
                 .text-body2 OpenPGP Signing Key
                 .text-caption.text-grey-5 Set the key to use for signing commits.
@@ -395,10 +395,21 @@ q-dialog(
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
+            .row
+              .col
+                .text-body2 Enable Experimental Features
+                .text-caption.text-grey-5 Show unfinished / untested features.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.debugExperimental'
+                  color='red'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
 </template>
 
 <script setup>
-import { defineAsyncComponent, onBeforeUnmount, reactive } from 'vue'
+import { defineAsyncComponent, onBeforeUnmount, reactive, computed } from 'vue'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { useEditorStore } from 'src/stores/editor'
 import { useUserStore } from 'src/stores/user'
@@ -432,7 +443,7 @@ const state = reactive({
   gitPasswordShown: false
 })
 
-const tabs = [
+const tabs = computed(() => ([
   {
     key: 'general',
     icon: 'mdi-dots-hexagon',
@@ -443,11 +454,13 @@ const tabs = [
     icon: 'mdi-square-edit-outline',
     label: 'Editor'
   },
-  {
-    key: 'keyboard',
-    icon: 'mdi-keyboard-outline',
-    label: 'Keyboard Shortcuts'
-  },
+  ...(editorStore.debugExperimental
+    ? [{
+        key: 'keyboard',
+        icon: 'mdi-keyboard-outline',
+        label: 'Keyboard Shortcuts'
+      }]
+    : []),
   {
     key: 'git',
     icon: 'mdi-git',
@@ -468,7 +481,7 @@ const tabs = [
     icon: 'mdi-flask',
     label: 'Dev / Debug'
   }
-]
+]))
 
 const themes = [
   {

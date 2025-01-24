@@ -33,6 +33,7 @@
         icon='mdi-archive-plus-outline'
         padding='xs xs'
         text-color='light-blue-3'
+        @click='initRepo'
         )
         q-tooltip Initialize New...
     q-btn(
@@ -59,6 +60,7 @@
       color='primary'
       no-caps
       unelevated
+      @click='initRepo'
     )
   template(v-else)
     .drawer-git-remote.q-mt-sm
@@ -101,9 +103,22 @@
         padding='xs xs'
         text-color='grey-5'
         :loading='state.pushLoading'
-        @click='push'
         )
-        q-tooltip Push
+        q-tooltip Push...
+        q-menu(auto-close)
+          q-list.bg-dark-7(separator, padding)
+            q-item(clickable, @click='push')
+              q-item-section(side)
+                q-icon(name='mdi-tray-arrow-up', color='orange')
+              q-item-section
+                q-item-label: strong Push to {{ editorStore.gitCurrentRemote }}
+                q-item-label(caption) Push the current branch to the {{ editorStore.gitCurrentRemote }} remote.
+            q-item(clickable, @click='pushSelect')
+              q-item-section(side)
+                q-icon(name='mdi-earth-arrow-up', color='teal-4')
+              q-item-section
+                q-item-label: strong Push to...
+                q-item-label(caption) Select the remote to push this branch to.
       q-btn(
         flat
         size='sm'
@@ -354,6 +369,12 @@ function cloneRepo () {
   })
 }
 
+function initRepo () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('components/InitRepositoryDialog.vue'))
+  })
+}
+
 async function performFetch () {
   state.fetchLoading = true
   try {
@@ -408,6 +429,12 @@ async function push () {
   state.pushLoading = true
   try {
     await window.ipcBridge.gitPush(editorStore.gitCurrentRemote, editorStore.gitCurrentBranch)
+    $q.notify({
+      message: 'Push successful.',
+      caption: `Changes have been pushed to the ${editorStore.gitCurrentRemote}.`,
+      color: 'positive',
+      icon: 'mdi-tray-arrow-up'
+    })
     await refreshHistory()
   } catch (err) {
     console.error(err)
@@ -457,6 +484,7 @@ async function refreshHistory () {
       color: 'negative',
       icon: 'mdi-alert'
     })
+    state.history = []
   }
   state.historyLoading = false
 }

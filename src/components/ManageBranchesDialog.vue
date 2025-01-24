@@ -293,7 +293,25 @@ async function deleteBranch (branch) {
 }
 
 async function setBranchTracking (opts) {
-
+  state.isLoading = true
+  try {
+    await window.ipcBridge.gitSetBranchTracking(editorStore.gitCurrentBranch, `${opts.remote}/${opts.branch}`)
+    $q.notify({
+      message: 'Push target updated',
+      caption: `${editorStore.gitCurrentBranch} is now tracking ${opts.remote}/${opts.branch}`,
+      color: 'positive',
+      icon: 'mdi-earth-arrow-up'
+    })
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to delete remote branch',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.isLoading = false
 }
 
 async function deleteRemoteBranch (opts) {
@@ -317,7 +335,7 @@ async function deleteRemoteBranch (opts) {
   }).onOk(async () => {
     state.isLoading = true
     try {
-      await window.ipcBridge.gitDeleteRemoteBranch(opts.branch, opts.remote)
+      await window.ipcBridge.gitDeleteRemoteBranch(opts.remote, opts.branch)
       await editorStore.fetchBranches()
     } catch (err) {
       console.error(err)

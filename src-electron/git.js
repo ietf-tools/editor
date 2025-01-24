@@ -8,7 +8,11 @@ import * as openpgp from 'openpgp'
 import { find } from 'lodash-es'
 
 export default {
-  git: simpleGit(),
+  git: simpleGit({
+    timeout: {
+      block: 60000
+    }
+  }),
   conf: {
     signCommits: true,
     useCredMan: true,
@@ -136,27 +140,26 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>} Promise
    */
-  async repoClone ({ dir, url, upstreamUrl }) {
-    await fs.mkdir(dir, { recursive: true })
-    await git.clone({
-      fs,
-      http,
-      dir,
-      url,
-      remote: 'origin',
-      onAuth: (url) => {
-        return this.onAuth(url)
+  async repoClone ({ dir, url, upstreamUrl, cloneInSubDir }) {
+    let targetDir = dir.trim()
+    if (cloneInSubDir) {
+      let lastUrlPart = url.split('/').at(-1)
+      if (lastUrlPart.endsWith('.git')) {
+        lastUrlPart = lastUrlPart.slice(0, -4)
       }
-    })
-    this.conf.currentRemote = 'origin'
-    if (upstreamUrl) {
-      await git.addRemote({
-        fs,
-        dir,
-        remote: 'upstream',
-        url: upstreamUrl
-      })
+      targetDir = process.env.OS_PLATFORM === 'win32' ? `${targetDir}\\${lastUrlPart}` : `${targetDir}/${lastUrlPart}`
     }
+
+    await fs.mkdir(targetDir, { recursive: true })
+    await this.git.cwd(targetDir)
+    await this.git.clone(url, '.')
+    this.conf.currentRemote = 'origin'
+
+    if (upstreamUrl) {
+      await this.git.addRemote('upstream', upstreamUrl)
+    }
+
+    return targetDir
   },
   /**
    * Initialize a git repository
@@ -165,11 +168,17 @@ export default {
    * @returns {Promise<void>} Promise
    */
   async repoInit ({ dir, branch = 'main' }) {
-    return git.init({
-      fs,
-      dir,
-      defaultBranch: branch
-    })
+    const targetDir = dir.trim()
+
+    await fs.mkdir(targetDir, { recursive: true })
+    await this.git.cwd(targetDir)
+    await this.git.init(['-b', branch])
+
+    await fs.writeFile(path.join(targetDir, 'README.md'), '# New Draft Repository')
+    await this.git.add(['README.md'])
+    await this.commit({ message: 'Initial commit' })
+
+    return targetDir
   },
   /**
    * Perform fetch on remote
@@ -247,6 +256,8 @@ export default {
     const localBranches = await this.git.branchLocal()
     const remoteBranches = await this.git.branch()
 
+    console.info(localBranches)
+
     return {
       current: localBranches.current,
       local: localBranches.all.filter(br => !['list', 'remotes'].includes(br)),
@@ -279,6 +290,25 @@ export default {
    */
   async deleteBranch ({ branch }) {
     await this.git.deleteLocalBranch(branch)
+  },
+  /**
+ * Delete remote branch
+ *
+ * @param {*} param0 Options
+ * @param {Promise<void>} Promise
+ */
+  async deleteRemoteBranch ({ branch, remote }) {
+    await this.git.push(['-d', remote, branch])
+    await this.git.fetch(['--all', '--prune'])
+  },
+  /**
+   * Set branch tracking remote
+   *
+   * @param {*} param0 Options
+   * @param {Promise<void>} Promise
+   */
+  async setBranchTracking ({ branch, tracking }) {
+    await this.git.branch(['-u', tracking, branch])
   },
   /**
    * Checkout branch

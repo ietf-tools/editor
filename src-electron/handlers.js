@@ -300,6 +300,12 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
   ipcMain.handle('gitDeleteBranch', async (ev, opts) => {
     return git.deleteBranch({ branch: opts.branch })
   })
+  ipcMain.handle('gitDeleteRemoteBranch', async (ev, opts) => {
+    return git.deleteRemoteBranch({ branch: opts.branch, remote: opts.remote })
+  })
+  ipcMain.handle('gitSetBranchTracking', async (ev, opts) => {
+    return git.setBranchTracking({ branch: opts.branch, tracking: opts.tracking })
+  })
   ipcMain.handle('gitCheckoutBranch', async (ev, opts) => {
     return git.checkoutBranch({ branch: opts.branch, tracking: opts.tracking })
   })
@@ -325,7 +331,13 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
     return git.repoClone({
       dir: opts.target,
       url: opts.url,
-      upstreamUrl: opts.upstreamUrl
+      upstreamUrl: opts.upstreamUrl,
+      cloneInSubDir: opts.cloneInSubDir
+    })
+  })
+  ipcMain.handle('gitInitRepository', async (ev, opts) => {
+    return git.repoInit({
+      dir: opts.target
     })
   })
   // ----------------------------------------------------------
