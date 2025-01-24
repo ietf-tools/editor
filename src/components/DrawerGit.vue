@@ -7,7 +7,6 @@
       q-icon.q-ml-sm(name='mdi-information-outline' color='light-blue-3')
         q-tooltip
           span {{ editorStore.workingDirectory }}
-          .text-caption Test
       q-space
       q-btn(
         flat
@@ -34,6 +33,7 @@
         icon='mdi-archive-plus-outline'
         padding='xs xs'
         text-color='light-blue-3'
+        @click='initRepo'
         )
         q-tooltip Initialize New...
     q-btn(
@@ -60,12 +60,65 @@
       color='primary'
       no-caps
       unelevated
+      @click='initRepo'
     )
   template(v-else)
     .drawer-git-remote.q-mt-sm
       q-icon.q-mr-sm(name='mdi-satellite-uplink')
       span.text-grey-4 Remote: #[strong.text-white {{ editorStore.gitCurrentRemote }}]
       q-space
+      q-btn(
+        flat
+        size='sm'
+        icon='mdi-transfer-down'
+        padding='xs xs'
+        text-color='grey-5'
+        :loading='state.pullLoading'
+        )
+        q-tooltip Pull...
+        q-menu(auto-close)
+          q-list.bg-dark-7(separator, padding)
+            q-item(clickable, @click='pull(`merge`)')
+              q-item-section(side)
+                q-icon(name='mdi-merge', color='orange')
+              q-item-section
+                q-item-label: strong Pull (fast-forward + merge)
+                q-item-label(caption) Apple remote changes using fast-forward if possible and using merge commits otherwise.
+            q-item(clickable, @click='pull(`ff`)')
+              q-item-section(side)
+                q-icon(name='mdi-chevron-triple-right', color='teal-4')
+              q-item-section
+                q-item-label: strong Pull (fast-forward only)
+                q-item-label(caption) Apply remote changes only if they can be fast-forwarded.
+            q-item(clickable, @click='pull(`rebase`)')
+              q-item-section(side)
+                q-icon(name='mdi-pillar', color='purple-3')
+              q-item-section
+                q-item-label: strong Pull (rebase)
+                q-item-label(caption) Apply remote changes first, then apply local changes on top.
+      q-btn(
+        flat
+        size='sm'
+        icon='mdi-transfer-up'
+        padding='xs xs'
+        text-color='grey-5'
+        :loading='state.pushLoading'
+        )
+        q-tooltip Push...
+        q-menu(auto-close)
+          q-list.bg-dark-7(separator, padding)
+            q-item(clickable, @click='push')
+              q-item-section(side)
+                q-icon(name='mdi-tray-arrow-up', color='orange')
+              q-item-section
+                q-item-label: strong Push to {{ editorStore.gitCurrentRemote }}
+                q-item-label(caption) Push the current branch to the {{ editorStore.gitCurrentRemote }} remote.
+            q-item(clickable, @click='pushSelect')
+              q-item-section(side)
+                q-icon(name='mdi-earth-arrow-up', color='teal-4')
+              q-item-section
+                q-item-label: strong Push to...
+                q-item-label(caption) Select the remote to push this branch to.
       q-btn(
         flat
         size='sm'
@@ -133,9 +186,9 @@
           style='padding-right: 8px'
           )
           q-item-section(side)
-            q-icon(v-if='cg.isAdded', name='mdi-plus-box-outline', size='xs', color='positive')
-            q-icon(v-else-if='cg.isModified', name='mdi-pencil-box-outline', size='xs', color='amber')
-            q-icon(v-else-if='cg.isDeleted', name='mdi-minus-box-outline', size='xs', color='red-5')
+            q-icon(v-if='cg.state === `A`', name='mdi-plus-box-outline', size='xs', color='positive')
+            q-icon(v-else-if='cg.state === `M`', name='mdi-pencil-box-outline', size='xs', color='amber')
+            q-icon(v-else-if='cg.state === `D`', name='mdi-minus-box-outline', size='xs', color='red-5')
           q-item-section
             q-item-label.text-caption.text-word-break-all {{ cg.path }}
           q-item-section.drawer-git-changes-hover(side)
@@ -161,6 +214,7 @@
           icon='mdi-arrow-u-left-top'
           padding='xs xs'
           text-color='grey-5'
+          @click='discardChanges'
           )
           q-tooltip Discard All Changes
         q-btn(
@@ -196,9 +250,9 @@
           style='padding-right: 8px'
           )
           q-item-section(side)
-            q-icon(v-if='cg.isAdded', name='mdi-plus-box-outline', size='xs', color='positive')
-            q-icon(v-else-if='cg.isModified', name='mdi-pencil-box-outline', size='xs', color='amber')
-            q-icon(v-else-if='cg.isDeleted', name='mdi-minus-box-outline', size='xs', color='red-5')
+            q-icon(v-if='cg.state === `?`', name='mdi-plus-box-outline', size='xs', color='positive')
+            q-icon(v-else-if='cg.state === `M`', name='mdi-pencil-box-outline', size='xs', color='amber')
+            q-icon(v-else-if='cg.state === `D`', name='mdi-minus-box-outline', size='xs', color='red-5')
           q-item-section
             q-item-label.text-caption.text-word-break-all {{ cg.path }}
           q-item-section.drawer-git-changes-hover(side)
@@ -209,6 +263,7 @@
                 icon='mdi-arrow-u-left-top'
                 padding='xs xs'
                 text-color='grey-5'
+                @click.stop.prevent='discardChange(cg.path)'
                 )
                 q-tooltip Discard Changes
               q-btn(
@@ -223,7 +278,7 @@
     .drawer-git-history.q-mt-sm
       .flex.items-center.text-caption.q-px-sm
         q-icon.q-mr-sm(name='mdi-list-box-outline')
-        span.text-grey-4 History
+        span.text-grey-4 Commits
         q-space
         q-btn(
           flat
@@ -244,22 +299,22 @@
         )
         q-item.items-start(
           v-for='cm of state.history'
-          :key='cm.oid'
+          :key='cm.hash'
           clickable
           )
           q-item-section(side)
             q-avatar(
               color='primary'
               size='xs'
-              square
+              rounded
               style='box-shadow: 1px 1px 0 0 rgba(0,0,0,.5);'
               )
-              img(:src='avatarUrl(cm.commit.author.emailHash)')
-            q-tooltip #[strong {{ cm.commit.author.name }}] #[br] &lt;{{ cm.commit.author.email }}&gt;
+              img(:src='avatarUrl(cm.author_email_hash)')
+            q-tooltip #[strong {{ cm.author_name }}] #[br] &lt;{{ cm.author_email }}&gt;
           q-item-section
-            q-item-label.ellipsis-3-lines.text-word-break-all {{ cm.commit.message }}
-            q-item-label(caption): em {{ humanizeDate(cm.commit.author.timestamp) }}
-            q-item-label.text-blue-2(caption) {{ cm.commit.author.name }}
+            q-item-label.ellipsis-3-lines.text-word-break-all {{ cm.message }}
+            q-item-label(caption): em {{ humanizeDate(cm.date) }}
+            q-item-label.text-blue-2(caption) {{ cm.author_name }}
       .text-center.text-caption.q-mt-sm(v-if='state.history.length > 499')
         em.text-grey-5 History limited to 500 most recent commits.
 </template>
@@ -279,6 +334,8 @@ const editorStore = useEditorStore()
 
 const state = reactive({
   fetchLoading: false,
+  pullLoading: false,
+  pushLoading: false,
   changesLoading: false,
   historyLoading: false,
   commitMsg: '',
@@ -290,7 +347,7 @@ const state = reactive({
 // METHODS
 
 function humanizeDate (ts) {
-  return DateTime.fromSeconds(ts, { zone: 'utc' }).toFormat('ff')
+  return DateTime.fromISO(ts).toFormat('ff')
 }
 
 function avatarUrl (emailHash) {
@@ -312,10 +369,16 @@ function cloneRepo () {
   })
 }
 
+function initRepo () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('components/InitRepositoryDialog.vue'))
+  })
+}
+
 async function performFetch () {
   state.fetchLoading = true
   try {
-    await window.ipcBridge.gitPerformFetch(editorStore.workingDirectory, editorStore.gitCurrentRemote)
+    await window.ipcBridge.gitPerformFetch()
     await editorStore.fetchRemotes()
     editorStore.fetchBranches()
   } catch (err) {
@@ -339,15 +402,64 @@ function manageRemotes () {
 function manageBranches () {
   $q.dialog({
     component: defineAsyncComponent(() => import('components/ManageBranchesDialog.vue'))
+  }).onDismiss(() => {
+    refreshChanges()
+    refreshHistory()
   })
+}
+
+async function pull (mode) {
+  state.pullLoading = true
+  try {
+    await window.ipcBridge.gitPull(mode)
+    await refreshHistory()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to perform pull from remote repository.',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.pullLoading = false
+}
+
+async function push () {
+  state.pushLoading = true
+  try {
+    await window.ipcBridge.gitPush(editorStore.gitCurrentRemote, editorStore.gitCurrentBranch)
+    $q.notify({
+      message: 'Push successful.',
+      caption: `Changes have been pushed to the ${editorStore.gitCurrentRemote}.`,
+      color: 'positive',
+      icon: 'mdi-tray-arrow-up'
+    })
+    await refreshHistory()
+  } catch (err) {
+    console.error(err)
+    $q.notify({
+      message: 'Failed to perform push to remote repository.',
+      caption: err.message,
+      color: 'negative',
+      icon: 'mdi-alert'
+    })
+  }
+  state.pushLoading = false
 }
 
 async function refreshChanges () {
   state.changesLoading = true
   try {
-    const changes = await window.ipcBridge.gitStatusMatrix(editorStore.workingDirectory)
-    state.changes = changes.filter(c => c.isUnstaged)
-    state.staged = changes.filter(c => c.isStaged)
+    const status = await window.ipcBridge.gitStatusMatrix()
+    editorStore.gitCurrentBranch = status.currentBranch
+    if (status.tracking) {
+      editorStore.gitCurrentRemote = status.tracking?.split('/', 1)[0] ?? 'origin'
+    } else {
+      editorStore.gitCurrentRemote = 'origin'
+    }
+    state.changes = status.unstaged
+    state.staged = status.staged
   } catch (err) {
     console.error(err)
     $q.notify({
@@ -363,7 +475,7 @@ async function refreshChanges () {
 async function refreshHistory () {
   state.historyLoading = true
   try {
-    state.history = await window.ipcBridge.gitCommitsLog(editorStore.workingDirectory)
+    state.history = await window.ipcBridge.gitCommitsLog()
   } catch (err) {
     console.error(err)
     $q.notify({
@@ -372,6 +484,7 @@ async function refreshHistory () {
       color: 'negative',
       icon: 'mdi-alert'
     })
+    state.history = []
   }
   state.historyLoading = false
 }
@@ -380,7 +493,7 @@ async function stageFile (fl) {
   if (state.changesLoading) { return }
   state.changesLoading = true
   try {
-    await window.ipcBridge.gitStageFiles(editorStore.workingDirectory, [cloneDeep(fl)])
+    await window.ipcBridge.gitStageFiles([cloneDeep(fl)])
     await refreshChanges()
   } catch (err) {
     console.error(err)
@@ -398,7 +511,7 @@ async function stageAllFiles () {
   if (state.changesLoading) { return }
   state.changesLoading = true
   try {
-    await window.ipcBridge.gitStageFiles(editorStore.workingDirectory, cloneDeep(state.changes))
+    await window.ipcBridge.gitStageFiles(cloneDeep(state.changes))
     await refreshChanges()
   } catch (err) {
     console.error(err)
@@ -416,7 +529,7 @@ async function unstageFile (fl) {
   if (state.changesLoading) { return }
   state.changesLoading = true
   try {
-    await window.ipcBridge.gitUnstageFiles(editorStore.workingDirectory, [cloneDeep(fl)])
+    await window.ipcBridge.gitUnstageFiles([cloneDeep(fl)])
     await refreshChanges()
   } catch (err) {
     console.error(err)
@@ -434,7 +547,7 @@ async function unstageAllFiles () {
   if (state.changesLoading) { return }
   state.changesLoading = true
   try {
-    await window.ipcBridge.gitUnstageFiles(editorStore.workingDirectory, cloneDeep(state.staged))
+    await window.ipcBridge.gitUnstageFiles(cloneDeep(state.staged))
     await refreshChanges()
   } catch (err) {
     console.error(err)
@@ -446,6 +559,80 @@ async function unstageAllFiles () {
     })
   }
   state.changesLoading = false
+}
+
+async function discardChanges () {
+  if (state.changesLoading) { return }
+  $q.dialog({
+    title: 'Confirm',
+    message: 'Are you sure you want to discard all unstaged changes?',
+    persistent: true,
+    focus: 'none',
+    ok: {
+      color: 'negative',
+      textColor: 'white',
+      unelevated: true,
+      label: 'Discard All Changes',
+      noCaps: true
+    },
+    cancel: {
+      color: 'grey-3',
+      outline: true,
+      noCaps: true
+    }
+  }).onOk(async () => {
+    state.changesLoading = true
+    try {
+      await window.ipcBridge.gitDiscardChanges(state.changes.map(c => c.path))
+      await refreshChanges()
+    } catch (err) {
+      console.error(err)
+      $q.notify({
+        message: 'Failed to discard all changes',
+        caption: err.message,
+        color: 'negative',
+        icon: 'mdi-alert'
+      })
+    }
+    state.changesLoading = false
+  })
+}
+
+async function discardChange (flPath) {
+  if (state.changesLoading) { return }
+  $q.dialog({
+    title: 'Confirm',
+    message: `Are you sure you want to discard changes to ${flPath}?`,
+    persistent: true,
+    focus: 'none',
+    ok: {
+      color: 'negative',
+      textColor: 'white',
+      unelevated: true,
+      label: 'Discard Changes',
+      noCaps: true
+    },
+    cancel: {
+      color: 'grey-3',
+      outline: true,
+      noCaps: true
+    }
+  }).onOk(async () => {
+    state.changesLoading = true
+    try {
+      await window.ipcBridge.gitDiscardChanges([flPath])
+      await refreshChanges()
+    } catch (err) {
+      console.error(err)
+      $q.notify({
+        message: `Failed to discard changes for ${flPath}`,
+        caption: err.message,
+        color: 'negative',
+        icon: 'mdi-alert'
+      })
+    }
+    state.changesLoading = false
+  })
 }
 
 async function commit () {
@@ -461,7 +648,7 @@ async function commit () {
   if (state.changesLoading) { return }
   state.changesLoading = true
   try {
-    await window.ipcBridge.gitCommit(editorStore.workingDirectory, state.commitMsg)
+    await window.ipcBridge.gitCommit(state.commitMsg)
     state.commitMsg = ''
     await refreshChanges()
     await refreshHistory()
@@ -481,6 +668,7 @@ async function commit () {
 
 onActivated(async () => {
   if (editorStore.isGitRepo) {
+    await editorStore.setGitWorkingDirectory()
     await performFetch()
     await editorStore.fetchRemotes()
     refreshChanges()

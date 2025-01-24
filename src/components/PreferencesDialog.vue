@@ -209,7 +209,51 @@ q-dialog(
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
-
+        template(v-else-if='state.tab === `keyboard`')
+          q-form.q-gutter-md.q-pa-lg
+            .row
+              .col-8
+                .text-body2 Mode Preset
+                .text-caption.text-grey-5 Keyboard shortcuts mode to use with the editor.
+              .col-4
+                q-select(
+                  outlined
+                  v-model='editorStore.keybindings'
+                  :options='keybindings'
+                  dense
+                  color='light-blue-4'
+                  emit-value
+                  map-options
+                  )
+            q-separator
+            .row
+              .col
+                .text-body2 Control Modifier
+                .text-caption.text-grey-5 Set the key to use as the Control modifier
+              .col-auto.self-center
+                q-chip(color='purple-2', square, outline) ControlLeft
+              q-separator.q-ml-sm.q-mr-md(vertical, inset)
+              .col-auto
+                q-btn(
+                  label='Change'
+                  unelevated
+                  color='primary'
+                  no-caps
+                )
+            .row
+              .col
+                .text-body2 Meta Modifier
+                .text-caption.text-grey-5 Set the key to use as the Meta modifier
+              .col-auto.self-center
+                q-chip(color='purple-2', square, outline) Escape
+              q-separator.q-ml-sm.q-mr-md(vertical, inset)
+              .col-auto
+                q-btn(
+                  label='Change'
+                  unelevated
+                  color='primary'
+                  no-caps
+                )
         template(v-else-if='state.tab === `git`')
           q-form.q-gutter-md.q-pa-lg
             .row
@@ -237,46 +281,6 @@ q-dialog(
             q-separator
             .row
               .col
-                .text-body2 Use Git Credential Manager
-                .text-caption.text-grey-5 Use the native git credential manager for authentication. Git must be installed on the system.
-              .col-auto
-                q-toggle(
-                  v-model='editorStore.gitUseCredMan'
-                  checked-icon='mdi-check'
-                  unchecked-icon='mdi-close'
-                )
-            .row(v-if='!editorStore.gitUseCredMan')
-              .col-7
-                .text-body2 Username
-                .text-caption.text-grey-5 The username to use for git authentication.
-              .col-5
-                q-input(
-                  v-model.number='editorStore.gitUsername'
-                  outlined
-                  dense
-                  color='light-blue-4'
-                )
-            .row(v-if='!editorStore.gitUseCredMan')
-              .col-7
-                .text-body2 Password / Personal Access Token
-                .text-caption.text-grey-5 The password / PAT to use for git authentication
-              .col-5
-                q-input(
-                  v-model.number='editorStore.gitPassword'
-                  :type='state.gitPasswordShown ? `text` : `password`'
-                  outlined
-                  dense
-                  color='light-blue-4'
-                  )
-                  template(#append)
-                    q-icon.cursor-pointer(
-                      :name='state.gitPasswordShown ? `mdi-eye-outline` : `mdi-eye-off-outline`'
-                      @click='state.gitPasswordShown = !state.gitPasswordShown'
-                      size='xs'
-                    )
-            q-separator
-            .row
-              .col
                 .text-body2 Sign Commits
                 .text-caption.text-grey-5 Use OpenPGP signing when creating commits.
               .col-auto
@@ -285,7 +289,17 @@ q-dialog(
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
-            .row(v-if='editorStore.gitSignCommits')
+            .row(v-if='editorStore.gitSignCommits && editorStore.debugExperimental')
+              .col
+                .text-body2 Use System Default Signing Key
+                .text-caption.text-grey-5 Use the signing key configured globally in git on your system.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.gitUseDefaultSigningKey'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
+            .row(v-if='editorStore.gitSignCommits && !editorStore.gitUseDefaultSigningKey && editorStore.debugExperimental')
               .col
                 .text-body2 OpenPGP Signing Key
                 .text-caption.text-grey-5 Set the key to use for signing commits.
@@ -381,10 +395,21 @@ q-dialog(
                   checked-icon='mdi-check'
                   unchecked-icon='mdi-close'
                 )
+            .row
+              .col
+                .text-body2 Enable Experimental Features
+                .text-caption.text-grey-5 Show unfinished / untested features.
+              .col-auto
+                q-toggle(
+                  v-model='editorStore.debugExperimental'
+                  color='red'
+                  checked-icon='mdi-check'
+                  unchecked-icon='mdi-close'
+                )
 </template>
 
 <script setup>
-import { defineAsyncComponent, onBeforeUnmount, reactive } from 'vue'
+import { defineAsyncComponent, onBeforeUnmount, reactive, computed } from 'vue'
 import { useDialogPluginComponent, useQuasar } from 'quasar'
 import { useEditorStore } from 'src/stores/editor'
 import { useUserStore } from 'src/stores/user'
@@ -418,7 +443,7 @@ const state = reactive({
   gitPasswordShown: false
 })
 
-const tabs = [
+const tabs = computed(() => ([
   {
     key: 'general',
     icon: 'mdi-dots-hexagon',
@@ -429,6 +454,13 @@ const tabs = [
     icon: 'mdi-square-edit-outline',
     label: 'Editor'
   },
+  ...(editorStore.debugExperimental
+    ? [{
+        key: 'keyboard',
+        icon: 'mdi-keyboard-outline',
+        label: 'Keyboard Shortcuts'
+      }]
+    : []),
   {
     key: 'git',
     icon: 'mdi-git',
@@ -449,7 +481,7 @@ const tabs = [
     icon: 'mdi-flask',
     label: 'Dev / Debug'
   }
-]
+]))
 
 const themes = [
   {
@@ -468,6 +500,17 @@ const themes = [
     label: 'High Contrast Light',
     value: 'hc-light'
   }
+]
+
+const keybindings = [
+  {
+    label: 'VS Code (default)',
+    value: 'default'
+  },
+  {
+    label: 'Emacs',
+    value: 'emacs'
+  },
 ]
 
 const cursorStyles = [
@@ -519,17 +562,6 @@ const cursorAnims = [
     value: 'solid'
   }
 ]
-
-// const gitModes = [
-//   {
-//     label: 'Editor Git',
-//     value: 'editor'
-//   },
-//   {
-//     label: 'System Git',
-//     value: 'system'
-//   }
-// ]
 
 // METHODS
 

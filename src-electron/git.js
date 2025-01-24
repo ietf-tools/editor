@@ -1,13 +1,18 @@
-import git from 'isomorphic-git'
+import { simpleGit } from 'simple-git'
 import path from 'node:path'
 import fs from 'node:fs/promises'
-import http from 'isomorphic-git/http/node/index.js'
 import { spawn } from 'node:child_process'
 import { app, clipboard, safeStorage } from 'electron'
 import { createHash } from 'node:crypto'
 import * as openpgp from 'openpgp'
+import { find } from 'lodash-es'
 
 export default {
+  git: simpleGit({
+    timeout: {
+      block: 60000
+    }
+  }),
   conf: {
     signCommits: true,
     useCredMan: true,
@@ -33,6 +38,12 @@ export default {
     } else {
       console.warn('safeStorage is not available on this system. Cannot store or load git auth data.')
     }
+  },
+  /**
+   * Set Git Working Directory
+   */
+  async setWorkingDirectory ({ dir }) {
+    return this.git.cwd(dir)
   },
   /**
    * Load configuration from disk
@@ -129,27 +140,26 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>} Promise
    */
-  async repoClone ({ dir, url, upstreamUrl }) {
-    await fs.mkdir(dir, { recursive: true })
-    await git.clone({
-      fs,
-      http,
-      dir,
-      url,
-      remote: 'origin',
-      onAuth: (url) => {
-        return this.onAuth(url)
+  async repoClone ({ dir, url, upstreamUrl, cloneInSubDir }) {
+    let targetDir = dir.trim()
+    if (cloneInSubDir) {
+      let lastUrlPart = url.split('/').at(-1)
+      if (lastUrlPart.endsWith('.git')) {
+        lastUrlPart = lastUrlPart.slice(0, -4)
       }
-    })
-    this.conf.currentRemote = 'origin'
-    if (upstreamUrl) {
-      await git.addRemote({
-        fs,
-        dir,
-        remote: 'upstream',
-        url: upstreamUrl
-      })
+      targetDir = process.env.OS_PLATFORM === 'win32' ? `${targetDir}\\${lastUrlPart}` : `${targetDir}/${lastUrlPart}`
     }
+
+    await fs.mkdir(targetDir, { recursive: true })
+    await this.git.cwd(targetDir)
+    await this.git.clone(url, '.')
+    this.conf.currentRemote = 'origin'
+
+    if (upstreamUrl) {
+      await this.git.addRemote('upstream', upstreamUrl)
+    }
+
+    return targetDir
   },
   /**
    * Initialize a git repository
@@ -158,25 +168,23 @@ export default {
    * @returns {Promise<void>} Promise
    */
   async repoInit ({ dir, branch = 'main' }) {
-    return git.init({
-      fs,
-      dir,
-      defaultBranch: branch
-    })
+    const targetDir = dir.trim()
+
+    await fs.mkdir(targetDir, { recursive: true })
+    await this.git.cwd(targetDir)
+    await this.git.init(['-b', branch])
+
+    await fs.writeFile(path.join(targetDir, 'README.md'), '# New Draft Repository')
+    await this.git.add(['README.md'])
+    await this.commit({ message: 'Initial commit' })
+
+    return targetDir
   },
   /**
    * Perform fetch on remote
    */
-  async performFetch ({ dir, remote }) {
-    return git.fetch({
-      fs,
-      http,
-      dir,
-      remote,
-      onAuth: (url) => {
-        return this.onAuth(url)
-      }
-    })
+  async performFetch () {
+    return this.git.fetch(['--all'])
   },
   /**
    * List remotes
@@ -184,11 +192,8 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<Array>} List of remotes
    */
-  async listRemotes ({ dir }) {
-    return git.listRemotes({
-      fs,
-      dir
-    })
+  async listRemotes () {
+    return this.git.getRemotes(true)
   },
   /**
    * Add a remote
@@ -196,13 +201,9 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>}
    */
-  async addRemote ({ dir, remote, url }) {
-    return git.addRemote({
-      fs,
-      dir,
-      remote,
-      url
-    })
+  async addRemote ({ remote, url }) {
+    await this.git.addRemote(remote, url)
+    await this.git.fetch([remote])
   },
   /**
    * Delete a remote
@@ -210,12 +211,40 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>}
    */
-  async deleteRemote ({ dir, remote }) {
-    return git.deleteRemote({
-      fs,
-      dir,
-      remote
-    })
+  async deleteRemote ({ remote }) {
+    return this.git.removeRemote(remote)
+  },
+  /**
+   * Pulls the latest changes from the specified remote repository.
+   *
+   * @param {Object} options - The options for the pull operation.
+   * @param {string} options.remote - The name of the remote repository.
+   * @param {string} options.branch - The name of the working branch.
+   * @param {string} options.mode - Pull mode to use: ff, rebase (or empty for default ff + merge)
+   * @returns {Promise<Object>} - A promise that resolves with the result of the pull operation.
+   */
+  async pull ({ remote, branch, mode } = {}) {
+    const pullArgs = []
+    if (mode === 'ff') {
+      pullArgs.push('--ff-only')
+    } else if (mode === 'rebase') {
+      pullArgs.push('--rebase')
+    }
+    if (remote) {
+      pullArgs.push(remote)
+    }
+    if (branch) {
+      pullArgs.push(branch)
+    }
+    return this.git.pull(pullArgs)
+  },
+  /**
+   * Push commits to remote repository
+   *
+   * @returns {Promise<Object>} - A promise that resolves with the result of the push operation.
+   */
+  async push ({ remote, branch }) {
+    return this.git.push(remote, branch)
   },
   /**
    * List branches
@@ -223,25 +252,75 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<Array>} List of branches
    */
-  async listBranches ({ dir, remote }) {
-    const currentBranch = await git.currentBranch({
-      fs,
-      dir
-    })
-    const localBranches = await git.listBranches({
-      fs,
-      dir
-    })
-    const remoteBranches = await git.listBranches({
-      fs,
-      dir,
-      remote
-    })
+  async listBranches () {
+    const localBranches = await this.git.branchLocal()
+    const remoteBranches = await this.git.branch()
+
+    console.info(localBranches)
 
     return {
-      current: currentBranch,
-      local: localBranches,
-      remote: remoteBranches.filter(br => br !== 'HEAD')
+      current: localBranches.current,
+      local: localBranches.all.filter(br => !['list', 'remotes'].includes(br)),
+      remote: remoteBranches.all.filter(br => br.startsWith('remotes/')).map(br => {
+        const parts = br.slice(8).split('/')
+        return {
+          remote: parts[0],
+          branch: parts.slice(1).join('/')
+        }
+      })
+    }
+  },
+  /**
+   * Create new branch from source
+   *
+   * @param {Object} param0 Options
+   * @param {Promise<void>} Promise
+   */
+  async newBranch ({ branchName, source, tracking }) {
+    await this.git.checkoutBranch(branchName, source)
+    if (tracking) {
+      await this.git.branch(['-u', tracking, branchName])
+    }
+  },
+  /**
+   * Delete local branch
+   *
+   * @param {*} param0 Options
+   * @param {Promise<void>} Promise
+   */
+  async deleteBranch ({ branch }) {
+    await this.git.deleteLocalBranch(branch)
+  },
+  /**
+ * Delete remote branch
+ *
+ * @param {*} param0 Options
+ * @param {Promise<void>} Promise
+ */
+  async deleteRemoteBranch ({ branch, remote }) {
+    await this.git.push(['-d', remote, branch])
+    await this.git.fetch(['--all', '--prune'])
+  },
+  /**
+   * Set branch tracking remote
+   *
+   * @param {*} param0 Options
+   * @param {Promise<void>} Promise
+   */
+  async setBranchTracking ({ branch, tracking }) {
+    await this.git.branch(['-u', tracking, branch])
+  },
+  /**
+   * Checkout branch
+   *
+   * @param {*} param0 Options
+   * @param {Promise<void>} Promise
+   */
+  async checkoutBranch ({ branch, tracking }) {
+    if (tracking) {
+      await this.git.raw(['checkout', '-b', branch, '--track', tracking])
+    } else {
+      await this.git.checkout(branch)
     }
   },
   /**
@@ -250,38 +329,36 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<Array>} List of commits
    */
-  async commitsLog ({ dir, depth = 500 }) {
-    return git.log({
-      fs,
-      dir,
-      depth
-    }).then(commits => commits.map(c => {
-      const normalizedEmail = c.commit?.author?.email?.toLowerCase() ?? 'unknown'
-      c.commit.author.emailHash = createHash('sha256').update(normalizedEmail).digest('hex')
+  async commitsLog ({ depth = 500 } = {}) {
+    return this.git.log({
+      maxCount: depth
+    }).then(results => results.all.map(c => {
+      const normalizedEmail = c.author_email?.toLowerCase() ?? 'unknown'
+      c.author_email_hash = createHash('sha256').update(normalizedEmail).digest('hex')
       return c
     }))
   },
   /**
    * Get the status of files in the working directory
-   * Reference: https://isomorphic-git.org/docs/en/statusMatrix
    *
    * @param {object} param0 Options
    * @returns {Promise<Array>} Array of changes
    */
-  async statusMatrix ({ dir }) {
-    return git.statusMatrix({
-      fs,
-      dir
-    }).then(changes => changes.filter(row => !(row[1] === row[2] && row[1] === row[3])).map(row => {
+  async statusMatrix () {
+    return this.git.status(['--no-renames']).then(results => {
       return {
-        path: row[0],
-        isStaged: row[2] === row[3] || (row[2] === 2 && row[3] === 3),
-        isUnstaged: row[2] !== row[3], // can be both staged with unstaged changes
-        isAdded: row[1] === 0 && row[2] === 2,
-        isModified: row[1] === 1 && row[2] === 2,
-        isDeleted: row[1] === 1 && row[2] === 0
+        currentBranch: results.current,
+        tracking: results.tracking,
+        staged: results.staged.map(f => ({
+          path: f,
+          state: find(results.files, ['path', f])?.index
+        })),
+        unstaged: results.files.filter(f => f.working_dir !== ' ').map(f => ({
+          path: f.path,
+          state: f.working_dir
+        }))
       }
-    }))
+    })
   },
   /**
    * Stage Files
@@ -289,25 +366,8 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>} Promise
    */
-  async stageFiles ({ dir, files }) {
-    const toAdd = files.filter(f => !f.isDeleted).map(f => f.path)
-    const toRemove = files.filter(f => f.isDeleted).map(f => f.path)
-    if (toAdd.length > 0) {
-      await git.add({
-        fs,
-        dir,
-        filepath: toAdd
-      })
-    }
-    if (toRemove.length > 0) {
-      for (const fl of toRemove) {
-        await git.remove({
-          fs,
-          dir,
-          filepath: fl
-        })
-      }
-    }
+  async stageFiles ({ files }) {
+    await this.git.add(files.map(f => f.path))
   },
   /**
    * Unstage Files
@@ -315,53 +375,37 @@ export default {
    * @param {Object} param0 Options
    * @returns {Promise<void>} Promise
    */
-  async unstageFiles ({ dir, files }) {
-    const toUndelete = files.filter(f => f.isDeleted).map(f => f.path)
-    const toRemove = files.filter(f => !f.isDeleted).map(f => f.path)
-    if (toUndelete.length > 0) {
-      for (const fl of toUndelete) {
-        await git.resetIndex({
-          fs,
-          dir,
-          filepath: fl
-        })
-      }
+  async unstageFiles ({ files }) {
+    for (const fl of files.map(f => f.path)) {
+      await this.git.reset('mixed', ['--', fl])
     }
-    if (toRemove.length > 0) {
-      for (const fl of toRemove) {
-        await git.remove({
-          fs,
-          dir,
-          filepath: fl
-        })
-      }
+  },
+  /**
+   * Discard Chnages
+   *
+   * @param {*} param0 Options
+   * @returns {Promise<void>} Promise
+   */
+  async discardChanges ({ files }) {
+    for (const fl of files) {
+      await this.git.raw(['restore', fl])
     }
   },
   /**
    * Commits changes to the git repository.
    *
    * @param {Object} params - The parameters for the commit.
-   * @param {string} params.dir - The directory of the git repository.
    * @param {string} params.message - The commit message.
    * @returns {Promise<Object>} The result of the git commit operation.
    */
-  async commit ({ dir, message }) {
-    return git.commit({
-      fs,
-      dir,
-      author: {
-        name: this.conf.name,
-        email: this.conf.email
-      },
-      message,
-      ...this.conf.signCommits && {
-        signingKey: this.conf.privateKey,
-        onSign: (opts) => {
-          console.info(opts)
-          return this.onSign(opts)
-        }
-      }
-    })
+  async commit ({ message }) {
+    const commitOpts = {
+      '--author': `"${this.conf.name} <${this.conf.email}>"`
+    }
+    if (this.conf.signCommits) {
+      commitOpts['-S'] = null
+    }
+    return this.git.commit(message, null, commitOpts)
   },
   /**
    * Authentication event handler

@@ -11,6 +11,7 @@ export const useEditorStore = defineStore('editor', {
     cursorBlinking: 'blink',
     cursorStyle: 'line',
     debugDisableUnload: false,
+    debugExperimental: false,
     drawerPane: 'DrawerFiles',
     errors: [],
     fontSize: 16,
@@ -19,6 +20,7 @@ export const useEditorStore = defineStore('editor', {
     gitName: '',
     gitEmail: '',
     gitSignCommits: true,
+    gitUseDefaultSigningKey: true,
     gitUseCredMan: true,
     gitUsername: '',
     gitPassword: '',
@@ -30,6 +32,7 @@ export const useEditorStore = defineStore('editor', {
     gitCurrentBranch: '',
     gitLocalBranches: [],
     gitRemoteBranches: [],
+    keybindings: 'default',
     lastChangeTimestamp: null,
     line: 1,
     persistSession: true,
@@ -64,6 +67,9 @@ export const useEditorStore = defineStore('editor', {
     isGitRepo: (state) => state.workingDirFiles.some(f => f.name === '.git')
   },
   actions: {
+    async setGitWorkingDirectory (dir) {
+      return window.ipcBridge.setGitWorkingDirectory(dir ?? this.workingDirectory)
+    },
     async fetchGitConfig () {
       const conf = await window.ipcBridge.fetchGitConfig()
       if (conf) {
@@ -126,6 +132,7 @@ export const useEditorStore = defineStore('editor', {
       'cursorBlinking',
       'cursorStyle',
       'debugDisableUnload',
+      'debugExperimental',
       'fontSize',
       'formatOnType',
       'persistSession',
