@@ -45,6 +45,19 @@
       @click='gitSettings'
       )
       q-tooltip Git Settings
+  .drawer-git-setupwarn.q-mt-sm(v-if='isGitSetupIncomplete')
+    q-icon.q-mr-sm.animated.fadeIn.slower.infinite(name='mdi-alert')
+    span.text-orange-3 Git configuration is incomplete!
+    q-space
+    q-btn(
+      outline
+      color='dark-4'
+      size='sm'
+      label='Fix Now'
+      padding='xs sm'
+      text-color='orange-4'
+      @click='gitSettings'
+    )
   template(v-if='!editorStore.isGitRepo')
     q-btn.full-width.q-mt-sm(
       icon='mdi-cloud-download'
@@ -63,7 +76,7 @@
       @click='initRepo'
     )
   template(v-else)
-    .drawer-git-remote.q-mt-sm
+    .drawer-git-remote.q-mt-sm(v-if='hasGitRemotes')
       q-icon.q-mr-sm(name='mdi-satellite-uplink')
       span.text-grey-4 Remote: #[strong.text-white {{ editorStore.gitCurrentRemote }}]
       q-space
@@ -74,6 +87,7 @@
         padding='xs xs'
         text-color='grey-5'
         :loading='state.pullLoading'
+        :disable='!hasGitRemotes'
         )
         q-tooltip Pull...
         q-menu(auto-close)
@@ -103,6 +117,7 @@
         padding='xs xs'
         text-color='grey-5'
         :loading='state.pushLoading'
+        :disable='!hasGitRemotes'
         )
         q-tooltip Push...
         q-menu(auto-close)
@@ -128,6 +143,19 @@
         @click='manageRemotes'
         )
         q-tooltip Manage Remotes
+    .drawer-git-setupwarn.q-mt-sm(v-else)
+      q-icon.q-mr-sm(name='mdi-satellite-uplink')
+      span.text-orange-3 No remote configured!
+      q-space
+      q-btn(
+        outline
+        color='dark-4'
+        size='sm'
+        label='Manage'
+        padding='xs sm'
+        text-color='orange-4'
+        @click='manageRemotes'
+      )
     .drawer-git-branch.q-mt-sm
       q-icon.q-mr-sm(name='mdi-source-branch')
       span.text-grey-4 Branch: #[strong.text-white {{ editorStore.gitCurrentBranch }}]
@@ -320,7 +348,7 @@
 </template>
 
 <script setup>
-import { defineAsyncComponent, onActivated, reactive } from 'vue'
+import { defineAsyncComponent, onActivated, reactive, computed } from 'vue'
 import { useQuasar } from 'quasar'
 import { useEditorStore } from 'src/stores/editor'
 import { DateTime } from 'luxon'
@@ -342,6 +370,15 @@ const state = reactive({
   staged: [],
   changes: [],
   history: []
+})
+
+// COMPUTED
+
+const isGitSetupIncomplete = computed(() => {
+  return !editorStore.gitName || !editorStore.gitEmail
+})
+const hasGitRemotes = computed(() => {
+  return editorStore.gitRemotes?.length > 0
 })
 
 // METHODS
@@ -679,7 +716,19 @@ onActivated(async () => {
 </script>
 
 <style lang="scss">
+@use "sass:color";
+
 .drawer-git {
+  &-setupwarn {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    background-color: rgba($orange-5,.25);
+    color: $orange-5;
+    border-radius: 4px;
+    padding: 5px 8px;
+    border: 1px solid rgba($orange-5,.5);
+  }
   &-remote, &-branch {
     display: flex;
     align-items: center;

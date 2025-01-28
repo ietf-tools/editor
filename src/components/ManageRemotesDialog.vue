@@ -53,7 +53,7 @@ q-dialog(
               q-input(
                 autofocus
                 v-model.number='state.newRemoteName'
-                placeholder='e.g. upstream'
+                placeholder='e.g. upstream or origin'
                 outlined
                 dense
                 clearable
@@ -63,11 +63,11 @@ q-dialog(
           .row
             .col-5
               .text-body2 Repository URL
-              .text-caption.text-grey-5 The HTTPS Web URL of the repository
+              .text-caption.text-grey-5 The SSH or HTTPS URL of the repository
             .col-7
               q-input(
                 v-model.number='state.newRemoteUrl'
-                placeholder='e.g. https://github.com/rfc-editor/draft-abc-def-ghi.git'
+                placeholder='e.g. git@github.com/rfc-editor/draft-abc-def-ghi.git'
                 outlined
                 dense
                 clearable
@@ -94,6 +94,7 @@ q-dialog(
                 :loading='state.isLoading'
                 )
       .remotes-main
+        .q-pa-md.q-pt-lg.text-grey-6(v-if='!(editorStore.gitRemotes?.length > 0)'): em No remote configured yet.
         q-list(
           padding
           separator
