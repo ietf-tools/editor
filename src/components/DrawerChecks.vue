@@ -152,9 +152,10 @@ function hyphenationCheck (silent = false) {
 }
 
 function inclusiveLangCheck (silent = false) {
-  const warnings = checkInclusiveLanguage(modelStore[docsStore.activeDocument.id].getValue())
-  if (warnings < 1) {
+  const results = checkInclusiveLanguage(modelStore[docsStore.activeDocument.id].getValue())
+  if (results.count < 1) {
     editorStore.setValidationCheckState('inclusiveLanguage', 1)
+    editorStore.setValidationCheckDetails('inclusiveLanguage', [])
     if (!silent) {
       $q.notify({
         message: 'Looks good!',
@@ -165,6 +166,7 @@ function inclusiveLangCheck (silent = false) {
     }
   } else {
     editorStore.setValidationCheckState('inclusiveLanguage', -2)
+    editorStore.setValidationCheckDetails('inclusiveLanguage', results.details)
   }
 }
 

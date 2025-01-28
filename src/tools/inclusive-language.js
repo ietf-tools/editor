@@ -1,4 +1,4 @@
-import { find, flatten } from 'lodash-es'
+import { find, flatten, sortBy } from 'lodash-es'
 import { decorationsStore } from 'src/stores/models'
 
 const dictionnary = [
@@ -41,9 +41,16 @@ export function checkInclusiveLanguage (text) {
   const textLines = text.split('\n')
 
   const decorations = []
+  const occurences = []
+  const details = []
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(matchRgx)) {
-      const dictEntry = find(dictionnary, d => d.triggers.includes(match[1].toLowerCase()))
+      const term = match[1].toLowerCase()
+      const dictEntry = find(dictionnary, d => d.triggers.includes(term))
+      let occIdx = occurences.indexOf(term)
+      if (occIdx < 0) {
+        occIdx = occurences.push(term) - 1
+      }
       decorations.push({
         options: {
           hoverMessage: {
@@ -62,10 +69,24 @@ export function checkInclusiveLanguage (text) {
           endColumn: match.index + 1 + match[0].length
         }
       })
+      details.push({
+        key: crypto.randomUUID(),
+        group: occIdx + 1,
+        message: match[1].toLowerCase(),
+        range: {
+          startLineNumber: lineIdx + 1,
+          startColumn: match.index + 2,
+          endLineNumber: lineIdx + 1,
+          endColumn: match.index + 1 + match[0].length
+        }
+      })
     }
   }
 
   decorationsStore.get('inclusiveLanguage').set(decorations)
 
-  return decorations.length
+  return {
+    count: decorations.length,
+    details: sortBy(details, d => d.range.startLineNumber)
+  }
 }
