@@ -220,6 +220,7 @@ function runAllChecks () {
   hyphenationCheck(true)
   inclusiveLangCheck(true)
   nonAsciiCheck(true)
+  placeholdersCheck(true)
 
   if (editorStore.errors.length < 1) {
     $q.notify({
