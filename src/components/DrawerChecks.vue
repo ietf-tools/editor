@@ -69,6 +69,7 @@ import { checkArticles } from 'src/tools/articles'
 import { checkHyphenation } from 'src/tools/hyphenation'
 import { checkInclusiveLanguage } from 'src/tools/inclusive-language'
 import { checkNonAscii } from 'src/tools/non-ascii'
+import { checkCommonPlaceholders } from 'src/tools/placeholders'
 import { useDocsStore } from 'src/stores/docs'
 import { useEditorStore } from 'src/stores/editor'
 import { modelStore } from 'src/stores/models'
@@ -108,6 +109,13 @@ const valChecks = [
     description: 'Check for non-ASCII characters',
     icon: 'mdi-translate',
     click: () => nonAsciiCheck()
+  },
+  {
+    key: 'placeholders',
+    title: 'Placeholders Check',
+    description: 'Check for common placeholders',
+    icon: 'mdi-select-remove',
+    click: () => placeholdersCheck()
   }
 ]
 
@@ -184,6 +192,25 @@ function nonAsciiCheck (silent = false) {
     }
   } else {
     editorStore.setValidationCheckState('nonAscii', 2)
+  }
+}
+
+function placeholdersCheck (silent = false) {
+  const results = checkCommonPlaceholders(modelStore[docsStore.activeDocument.id].getValue())
+  if (results.count < 1) {
+    editorStore.setValidationCheckState('placeholders', 1)
+    editorStore.setValidationCheckDetails('placeholders', [])
+    if (!silent) {
+      $q.notify({
+        message: 'Looks good!',
+        caption: 'No common placeholders found.',
+        color: 'positive',
+        icon: 'mdi-select-remove'
+      })
+    }
+  } else {
+    editorStore.setValidationCheckState('placeholders', -2)
+    editorStore.setValidationCheckDetails('placeholders', results.details)
   }
 }
 

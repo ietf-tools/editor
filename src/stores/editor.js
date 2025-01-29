@@ -49,13 +49,15 @@ export const useEditorStore = defineStore('editor', {
       articles: 0,
       hyphenation: 0,
       inclusiveLanguage: 0,
-      nonAscii: 0
+      nonAscii: 0,
+      placeholders: 0
     },
     validationChecksDetails: {
       articles: [],
       hyphenation: [],
       inclusiveLanguage: [],
-      nonAscii: []
+      nonAscii: [],
+      placeholders: []
     },
     wordWrap: true,
     workingDirectory: '',
