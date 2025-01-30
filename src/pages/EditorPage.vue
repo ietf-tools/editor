@@ -191,7 +191,7 @@ watch(() => editorStore.errors, (newValue) => {
 
 // METHODS
 
-function docOpenFinished(doc) {
+function docOpenFinished (doc) {
   if (doc.language === 'xmlrfc') {
     window.ipcBridge.emit('lspSendNotification', {
       method: 'textDocument/didOpen',
@@ -205,17 +205,14 @@ function docOpenFinished(doc) {
       }
     })
   }
-  // const banner = document.createElement('div')
-  // banner.innerHTML = 'TEST!'
-  // editor.setBanner(banner, 50)
 }
 
-function handleEditorActions(evt, action) {
+function handleEditorActions (evt, action) {
   const properAction = action ?? evt
   handleEditorAction(editor, properAction)
 }
 
-async function handleLspNotification(evt, data) {
+async function handleLspNotification (evt, data) {
   switch (data.method) {
     case 'textDocument/publishDiagnostics': {
       const modelId = docsStore.getDocumentByURI(data.params.uri)?.id
@@ -242,7 +239,7 @@ async function handleLspNotification(evt, data) {
   }
 }
 
-function handleRevealPosition(pos) {
+function handleRevealPosition (pos) {
   if (editor) {
     editor.focus()
     editor.revealPositionNearTop(pos, monaco.editor.ScrollType.Smooth)

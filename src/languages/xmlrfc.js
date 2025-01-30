@@ -356,7 +356,7 @@ export function registerXMLRFCLanguage (monaco) {
         }
       })
       return {
-        actions: codeActionsInfo.map(c => ({
+        actions: codeActionsInfo?.map(c => ({
           diagnostics: c.diagnostics.map(d => ({
             code: d.code,
             message: d.message,
@@ -384,7 +384,7 @@ export function registerXMLRFCLanguage (monaco) {
           },
           kind: c.kind,
           title: c.title
-        })),
+        })) ?? [],
         dispose () { }
       }
     }

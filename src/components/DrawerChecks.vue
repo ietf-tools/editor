@@ -12,7 +12,7 @@
       no-caps
       flat
       color='light-blue-3'
-      @click='editorStore.clearErrors'
+      @click='clearErrors'
       )
       q-tooltip Clear Validation Checks
     q-btn(
@@ -43,10 +43,13 @@ q-list
         q-icon(v-else-if='editorStore.validationChecks[chk.key] === -2' name='mdi-alert-circle' size='xs' color='orange-5')
     q-expansion-item.bg-dark-5(
       v-if='editorStore.validationChecksDetails[chk.key].length > 0'
+      group='checks'
+      @show='setCurrentCheck(chk.key)'
       )
       template(#header)
-        q-item-section.q-pl-md
-          q-item-label.text-purple-2 └─ {{ editorStore.validationChecksDetails[chk.key].length }} issues
+        q-item-section.q-pl-sm
+          .flex.items-center
+            q-item-label.text-purple-2 └─ {{ editorStore.validationChecksDetails[chk.key].length }} issues
       .bg-dark-5.checkdetails
         q-list(dense, separator)
           q-item(
@@ -56,7 +59,7 @@ q-list
             @click='goToPosition(dtl.range)'
             )
             q-item-section(v-if='dtl.group', side)
-              q-badge(color='blue-9' text-color='white' :label='dtl.group')
+              q-badge(color='purple' text-color='white' :label='dtl.group')
             q-item-section.text-caption {{ dtl.message }}
             q-item-section(v-if='dtl.range', side)
               q-badge(color='dark-3' text-color='white' :label='dtl.range.startLineNumber + ":" + dtl.range.startColumn')
@@ -150,7 +153,7 @@ function hyphenationCheck (silent = false) {
         message: 'Looks good!',
         caption: 'Hyphenation is consistent.',
         color: 'positive',
-        icon: 'mdi-atom-variant'
+        icon: 'mdi-line-scan'
       })
     }
   } else {
@@ -236,6 +239,26 @@ function runAllChecks () {
   }
 }
 
+function runSelectedCheck (key) {
+  switch (key) {
+    case 'articles':
+      articlesCheck(true)
+      break
+    case 'hyphenation':
+      hyphenationCheck(true)
+      break
+    case 'inclusiveLang':
+      inclusiveLangCheck(true)
+      break
+    case 'nonAscii':
+      nonAsciiCheck(true)
+      break
+    case 'placeholders':
+      placeholdersCheck(true)
+      break
+  }
+}
+
 function goToPosition (range) {
   EVENT_BUS.emit('revealPosition', {
     lineNumber: range.startLineNumber,
@@ -243,12 +266,23 @@ function goToPosition (range) {
   })
 }
 
+function clearErrors () {
+  editorStore.clearErrors()
+  editorStore.validationChecksCurrent = null
+}
+
+function setCurrentCheck (key) {
+  editorStore.validationChecksCurrent = key
+}
+
 // MOUNTED
 
 onMounted(() => {
+  EVENT_BUS.on('runSelectedCheck', runSelectedCheck)
   EVENT_BUS.on('runAllChecks', runAllChecks)
 })
 onBeforeUnmount(() => {
+  EVENT_BUS.off('runSelectedCheck')
   EVENT_BUS.off('runAllChecks')
 })
 </script>

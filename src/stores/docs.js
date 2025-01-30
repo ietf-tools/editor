@@ -214,7 +214,12 @@ export const useDocsStore = defineStore('docs', {
 
       modelStore[id].onDidChangeContent(ev => {
         if (editorStore.errors.length > 0 || editorStore.validationChecksDirty) {
-          editorStore.clearErrors()
+          if (editorStore.drawerPane === 'DrawerChecks' && editorStore.validationChecksCurrent) {
+            editorStore.clearErrors(editorStore.validationChecksCurrent)
+            EVENT_BUS.emit('runSelectedCheck', editorStore.validationChecksCurrent)
+          } else {
+            editorStore.clearErrors()
+          }
         }
 
         this.activeDocument.isModified = this.activeDocument.lastSavedVersion !== modelStore[id].getAlternativeVersionId()

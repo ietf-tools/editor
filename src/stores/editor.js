@@ -44,6 +44,7 @@ export const useEditorStore = defineStore('editor', {
     telemetry: false,
     theme: 'ietf-dark',
     translucencyEffects: true,
+    validationChecksCurrent: null,
     validationChecksDirty: false,
     validationChecks: {
       articles: 0,
@@ -109,14 +110,19 @@ export const useEditorStore = defineStore('editor', {
     async fetchRemotes () {
       this.gitRemotes = await window.ipcBridge.gitListRemotes(this.workingDirectory)
     },
-    async clearErrors () {
+    async clearErrors (skipCheck) {
       this.errors = []
       for (const key in this.validationChecks) {
+        if (key === skipCheck) {
+          continue
+        }
         this.validationChecks[key] = 0
         this.validationChecksDetails[key] = []
         decorationsStore.get(key)?.clear()
       }
-      this.validationChecksDirty = false
+      if (!skipCheck) {
+        this.validationChecksDirty = false
+      }
     },
     setValidationCheckState (key, newState) {
       this.validationChecks[key] = newState
