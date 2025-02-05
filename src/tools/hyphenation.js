@@ -1,9 +1,15 @@
 import { decorationsStore } from 'src/stores/models'
-import { sortBy } from 'lodash-es'
+import { repeat, sortBy } from 'lodash-es'
+
+const hyphenTermRgx = /[a-z]+(?:-[a-z]+)+/gi
+const targetPropRgx = / target="([^"]+?)"/gi
 
 export function checkHyphenation (text) {
-  const hyphenTermRgx = /[a-z]+(?:-[a-z]+)+/gi
-  const textLines = text.split('\n')
+  const textLines = text.split('\n').map(line => {
+    return line.replaceAll(targetPropRgx, (m, val) => {
+      return ` target="${repeat(' ', val.length)}"`
+    })
+  })
 
   const decorations = []
   const details = []
