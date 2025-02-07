@@ -42,18 +42,52 @@ q-list
         q-icon(v-else-if='editorStore.validationChecks[chk.key] === -1' name='mdi-close-circle' size='xs' color='red-5')
         q-icon(v-else-if='editorStore.validationChecks[chk.key] === -2' name='mdi-alert-circle' size='xs' color='orange-5')
     q-expansion-item.bg-dark-5(
-      v-if='editorStore.validationChecksDetails[chk.key].length > 0'
+      v-if='editorStore.validationChecksDetails[chk.key].count > 0'
       group='checks'
+      dense
       @show='setCurrentCheck(chk.key)'
       )
       template(#header)
         q-item-section.q-pl-sm
           .flex.items-center
-            q-item-label.text-purple-2 └─ {{ editorStore.validationChecksDetails[chk.key].length }} issues
+            q-item-label.text-purple-2 └─ {{ editorStore.validationChecksDetails[chk.key].count }} issues
       .bg-dark-5.checkdetails
         q-list(dense, separator)
+          q-item
+            q-item-section
+              .flex
+                q-btn.q-mr-sm(
+                  label='Reset Ignores'
+                  padding='none xs'
+                  size='sm'
+                  no-caps
+                  outline
+                  color='purple-3'
+                  disabled
+                )
+                q-space
+                q-btn.q-mr-sm(
+                  label='Save to File'
+                  padding='none xs'
+                  size='sm'
+                  no-caps
+                  outline
+                  color='purple-3'
+                  @click='saveResultsToFile(chk.key)'
+                  :disabled='!editorStore.validationChecksDetails[chk.key].hasTextOutput'
+                )
+                q-btn(
+                  label='Copy to Clipboard'
+                  padding='none xs'
+                  size='sm'
+                  no-caps
+                  outline
+                  color='purple-3'
+                  @click='copyResultsToClipboard(chk.key)'
+                  :disabled='!editorStore.validationChecksDetails[chk.key].hasTextOutput'
+                )
           q-item(
-            v-for='dtl of editorStore.validationChecksDetails[chk.key]'
+            v-for='dtl of editorStore.validationChecksDetails[chk.key].details'
             :key='dtl.key'
             clickable
             @click='goToPosition(dtl.range)'
@@ -139,7 +173,7 @@ function articlesCheck (silent) {
     }
   } else {
     editorStore.setValidationCheckState('articles', -2)
-    editorStore.setValidationCheckDetails('articles', results.details)
+    editorStore.setValidationCheckDetails('articles', results)
   }
 }
 
@@ -158,7 +192,7 @@ function hyphenationCheck (silent = false) {
     }
   } else {
     editorStore.setValidationCheckState('hyphenation', -2)
-    editorStore.setValidationCheckDetails('hyphenation', results.details)
+    editorStore.setValidationCheckDetails('hyphenation', results)
   }
 }
 
@@ -177,7 +211,7 @@ function inclusiveLangCheck (silent = false) {
     }
   } else {
     editorStore.setValidationCheckState('inclusiveLanguage', -2)
-    editorStore.setValidationCheckDetails('inclusiveLanguage', results.details)
+    editorStore.setValidationCheckDetails('inclusiveLanguage', results)
   }
 }
 
@@ -213,7 +247,7 @@ function placeholdersCheck (silent = false) {
     }
   } else {
     editorStore.setValidationCheckState('placeholders', -2)
-    editorStore.setValidationCheckDetails('placeholders', results.details)
+    editorStore.setValidationCheckDetails('placeholders', results)
   }
 }
 
@@ -275,6 +309,30 @@ function setCurrentCheck (key) {
   editorStore.validationChecksCurrent = key
 }
 
+// Validation Results Output
+
+async function saveResultsToFile (key) {
+  if (await window.ipcBridge.saveValidationResults(editorStore.validationChecksDetails[key].getTextOutput())) {
+    $q.notify({
+      message: 'Results saved!',
+      caption: 'Results have been saved to file successfully.',
+      color: 'positive',
+      icon: 'mdi-content-save-check-outline'
+    })
+  }
+}
+
+function copyResultsToClipboard (key) {
+  window.ipcBridge.emit('writeToClipboard', {
+    text: editorStore.validationChecksDetails[key].getTextOutput()
+  })
+  $q.notify({
+    message: 'Results copied!',
+    caption: 'Results have been copied to the clipboard successfully.',
+    color: 'positive',
+    icon: 'mdi-clipboard'
+  })
+}
 // MOUNTED
 
 onMounted(() => {

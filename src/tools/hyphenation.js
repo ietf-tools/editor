@@ -16,14 +16,16 @@ export function checkHyphenation (text) {
   const occurences = []
   const hyphenTerms = []
   const hyphenTermsOccurences = []
+  const termCount = {}
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(hyphenTermRgx)) {
       if (match[0].length > 3) {
-        if (!hyphenTerms.includes(match[0])) {
-          hyphenTerms.push(match[0])
+        const termLower = match[0].toLowerCase()
+        if (!hyphenTerms.includes(termLower)) {
+          hyphenTerms.push(termLower)
         }
         hyphenTermsOccurences.push({
-          term: match[0],
+          term: termLower,
           range: {
             startLineNumber: lineIdx + 1,
             startColumn: match.index + 1,
@@ -39,8 +41,9 @@ export function checkHyphenation (text) {
     for (const [lineIdx, line] of textLines.entries()) {
       for (const term of hyphenTerms) {
         const altTerm = term.replaceAll('-', '')
-        const altTermRgx = new RegExp(`(?:^|[>" ])${altTerm}(?:[. "<]|$)`, 'gi')
+        const altTermRgx = new RegExp(`(?:^|[>" ])(${altTerm})(?:[. "<]|$)`, 'gi')
         for (const match of line.matchAll(altTermRgx)) {
+          const matchLower = match[1].toLowerCase()
           let occIdx = occurences.indexOf(term)
           if (occIdx < 0) {
             occIdx = occurences.push(term) - 1
@@ -48,7 +51,7 @@ export function checkHyphenation (text) {
               decorations.push({
                 options: {
                   hoverMessage: {
-                    value: `[${occIdx}] Inconsistent Hyphenation (Alternate of ${altTerm})`
+                    value: `[${occIdx + 1}] Inconsistent Hyphenation (Alternate of ${altTerm})`
                   },
                   className: 'dec-warning',
                   minimap: {
@@ -61,15 +64,20 @@ export function checkHyphenation (text) {
               details.push({
                 key: crypto.randomUUID(),
                 group: occIdx + 1,
-                message: `${term} is alternate of ${altTerm}`,
+                message: `${term} has alternate term(s)`,
                 range: termOcc.range
               })
+            }
+            if (termCount[term]) {
+              termCount[term]++
+            } else {
+              termCount[term] = 1
             }
           }
           decorations.push({
             options: {
               hoverMessage: {
-                value: `[${occIdx}] Inconsistent Hyphenation (Alternate of ${term})`
+                value: `[${occIdx + 1}] Inconsistent Hyphenation (Alternate of ${term})`
               },
               className: 'dec-warning',
               minimap: {
@@ -87,7 +95,7 @@ export function checkHyphenation (text) {
           details.push({
             key: crypto.randomUUID(),
             group: occIdx + 1,
-            message: `${term} has alternate term(s)`,
+            message: `${matchLower} is alternate of ${term}`,
             range: {
               startLineNumber: lineIdx + 1,
               startColumn: match.index + 2,
@@ -95,6 +103,11 @@ export function checkHyphenation (text) {
               endColumn: match.index + match[0].length
             }
           })
+          if (termCount[matchLower]) {
+            termCount[matchLower]++
+          } else {
+            termCount[matchLower] = 1
+          }
         }
       }
     }
@@ -103,7 +116,14 @@ export function checkHyphenation (text) {
   decorationsStore.get('hyphenation').set(decorations)
 
   return {
-    count: occurences.length,
-    details: sortBy(details, d => d.range.startLineNumber)
+    count: details.length,
+    details: sortBy(details, d => d.range.startLineNumber),
+    hasTextOutput: true,
+    getTextOutput: () => {
+      return `Hyphenation
+-------------
+${Object.entries(termCount).map(([k, v]) => `${k} (${v})`).join('\n')}
+`
+    }
   }
 }

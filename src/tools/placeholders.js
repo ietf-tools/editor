@@ -8,6 +8,7 @@ export function checkCommonPlaceholders (text) {
   const decorations = []
   const occurences = []
   const details = []
+  const termCount = {}
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(matchRgx)) {
       const term = match[1].toLowerCase()
@@ -45,6 +46,11 @@ export function checkCommonPlaceholders (text) {
           endColumn: match.index + termStartIndex + 1 + match[1].length
         }
       })
+      if (termCount[term]) {
+        termCount[term]++
+      } else {
+        termCount[term] = 1
+      }
     }
   }
 
@@ -52,6 +58,13 @@ export function checkCommonPlaceholders (text) {
 
   return {
     count: decorations.length,
-    details: sortBy(details, d => d.range.startLineNumber)
+    details: sortBy(details, d => d.range.startLineNumber),
+    hasTextOutput: true,
+    getTextOutput: () => {
+      return `Placeholders
+-------------
+${Object.entries(termCount).map(([k, v]) => `${k} (${v})`).join('\n')}
+`
+    }
   }
 }

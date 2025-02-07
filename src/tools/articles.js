@@ -11,6 +11,17 @@ export function checkArticles (text) {
 
   const decorations = []
   const details = []
+  const termCount = {}
+
+  function addToTermCount (term) {
+    const termSanitized = term.trim()
+    if (termCount[termSanitized]) {
+      termCount[termSanitized]++
+    } else {
+      termCount[termSanitized] = 1
+    }
+  }
+
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(partARgx)) {
       decorations.push({
@@ -41,6 +52,7 @@ export function checkArticles (text) {
           endColumn: match.index + match[0].length
         }
       })
+      addToTermCount(match[0])
     }
     for (const match of line.matchAll(partARRgx)) {
       decorations.push({
@@ -71,6 +83,7 @@ export function checkArticles (text) {
           endColumn: match.index + match[0].length
         }
       })
+      addToTermCount(match[0])
     }
     for (const match of line.matchAll(partBRgx)) {
       decorations.push({
@@ -101,6 +114,7 @@ export function checkArticles (text) {
           endColumn: match.index + match[0].length
         }
       })
+      addToTermCount(match[0])
     }
     for (const match of line.matchAll(partCRgx)) {
       decorations.push({
@@ -131,6 +145,7 @@ export function checkArticles (text) {
           endColumn: match.index + match[0].length
         }
       })
+      addToTermCount(match[0])
     }
     for (const match of line.matchAll(partCLFRgx)) {
       decorations.push({
@@ -161,6 +176,7 @@ export function checkArticles (text) {
           endColumn: match.index + match[0].length
         }
       })
+      addToTermCount(match[0])
     }
   }
 
@@ -168,6 +184,13 @@ export function checkArticles (text) {
 
   return {
     count: decorations.length,
-    details: sortBy(details, d => d.range.startLineNumber)
+    details: sortBy(details, d => d.range.startLineNumber),
+    hasTextOutput: true,
+    getTextOutput: () => {
+      return `Articles
+-------------
+${Object.entries(termCount).map(([k, v]) => `${k} (${v})`).join('\n')}
+`
+    }
   }
 }

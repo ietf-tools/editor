@@ -43,6 +43,7 @@ export function checkInclusiveLanguage (text) {
   const decorations = []
   const occurences = []
   const details = []
+  const termCount = {}
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(matchRgx)) {
       const term = match[1].toLowerCase()
@@ -80,6 +81,11 @@ export function checkInclusiveLanguage (text) {
           endColumn: match.index + 1 + match[0].length
         }
       })
+      if (termCount[term]) {
+        termCount[term]++
+      } else {
+        termCount[term] = 1
+      }
     }
   }
 
@@ -87,6 +93,13 @@ export function checkInclusiveLanguage (text) {
 
   return {
     count: decorations.length,
-    details: sortBy(details, d => d.range.startLineNumber)
+    details: sortBy(details, d => d.range.startLineNumber),
+    hasTextOutput: true,
+    getTextOutput: () => {
+      return `Inclusive Language
+-------------
+${Object.entries(termCount).map(([k, v]) => `${k} (${v})`).join('\n')}
+`
+    }
   }
 }

@@ -353,6 +353,30 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
     lsp.sendNotification(opts.method, opts.params)
   })
   // ----------------------------------------------------------
+  // VALIDATION CHECKS
+  // ----------------------------------------------------------
+  ipcMain.handle('saveValidationResults', async (ev, opts) => {
+    const saveOpts = await dialog.showSaveDialog(mainWindow, {
+      title: 'Save Validation Results As...',
+      defaultPath: path.join(app.getPath('desktop'), 'results.txt'),
+      filters: [{
+        name: 'Plain Text',
+        extensions: ['txt']
+      }],
+      properties: ['showOverwriteConfirmation', 'createDirectory']
+    })
+    if (!saveOpts.canceled) {
+      try {
+        await fs.writeFile(saveOpts.filePath, opts.output)
+        return true
+      } catch (err) {
+        console.error(err)
+        throw err
+      }
+    }
+    return false
+  })
+  // ----------------------------------------------------------
   // MISC
   // ----------------------------------------------------------
   ipcMain.on('setMenuItemCheckedState', (ev, opts) => {
