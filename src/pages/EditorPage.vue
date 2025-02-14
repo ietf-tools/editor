@@ -117,7 +117,7 @@ onBeforeUnmount(() => {
   }
 
   // -> Deregister handlers
-  window.ipcBridge.subscribe('editorAction', handleEditorActions)
+  window.ipcBridge.unsubscribe('editorAction', handleEditorActions)
   window.ipcBridge.unsubscribe('lspNotification', handleLspNotification)
   EVENT_BUS.off('editorAction', handleEditorActions)
   EVENT_BUS.off('revealPosition', handleRevealPosition)

@@ -11,6 +11,7 @@ import auth from './auth.js'
 import git from './git.js'
 import lsp from './lsp.js'
 import updater from './updater.js'
+import terminal from './terminal.js'
 import { createKeybindingsHandler } from './keyhandler.js'
 
 const currentDir = fileURLToPath(new URL('.', import.meta.url))
@@ -148,7 +149,7 @@ async function createWindow () {
   git.init()
   updater.init(mainWindow)
 
-  registerCallbacks(mainWindow, mainMenu, auth, git, lsp, tlm)
+  registerCallbacks(mainWindow, mainMenu, auth, git, lsp, tlm, terminal)
   span.end()
 }
 

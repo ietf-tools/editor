@@ -22,12 +22,26 @@
     :disable='mode.needDocument && !docsStore.active'
     )
     q-tooltip(anchor='center right' self='center left') {{ mode.label }} Mode
+  q-space
+  q-btn(
+    unelevated
+    dense
+    stack
+    label='Terminal'
+    icon-right='mdi-console'
+    no-caps
+    color='dark-1'
+    @click='toggleTerminal'
+  )
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, defineAsyncComponent } from 'vue'
 import { useDocsStore } from 'src/stores/docs'
 import { useRoute } from 'vue-router'
+import { useQuasar } from 'quasar'
+
+const $q = useQuasar()
 
 const docsStore = useDocsStore()
 
@@ -69,6 +83,22 @@ const modes = [
     target: { name: 'submit' }
   }
 ]
+
+// METHODS
+
+let terminalDialogHandle = null
+function toggleTerminal () {
+  if (terminalDialogHandle) {
+    terminalDialogHandle.hide()
+  } else {
+    terminalDialogHandle = $q.dialog({
+      component: defineAsyncComponent(() => import('components/TerminalDialog.vue')),
+    }).onDismiss(() => {
+      terminalDialogHandle = null
+    })
+  }
+}
+
 </script>
 
 <style lang="scss">
@@ -110,6 +140,10 @@ const modes = [
     }
     &:nth-child(4) {
       border-bottom: 2px solid $light-green;
+    }
+    &:last-child {
+      border-bottom: 2px solid $amber;
+      margin-bottom: 1px;
     }
 
     .q-btn__content {

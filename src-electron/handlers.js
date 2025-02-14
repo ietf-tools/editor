@@ -200,7 +200,7 @@ function getFiltersForType (type) {
  * @param {Object} git Git instance
  * @param {Object} lsp LSP instance
  */
-export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
+export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, terminal) {
   // ----------------------------------------------------------
   // FILE SYSTEM
   // ----------------------------------------------------------
@@ -375,6 +375,18 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm) {
       }
     }
     return false
+  })
+  // ----------------------------------------------------------
+  // TERMINAL
+  // ----------------------------------------------------------
+  ipcMain.on('terminalInit', (ev, opts) => {
+    terminal.initialize(mainWindow, opts.cwd)
+  })
+  ipcMain.on('terminalInput', (ev, data) => {
+    terminal.write(data)
+  })
+  ipcMain.on('terminalDestroy', (ev, opts) => {
+    terminal.destroy()
   })
   // ----------------------------------------------------------
   // MISC
