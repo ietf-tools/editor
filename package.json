@@ -21,6 +21,7 @@
   "dependencies": {
     "@electron/remote": "2.1.2",
     "@ietf-tools/idnits": "3.0.0-alpha.36",
+    "@lydell/node-pty": "1.1.0",
     "@msgpack/msgpack": "3.0.1",
     "@opentelemetry/api": "1.9.0",
     "@opentelemetry/auto-instrumentations-node": "0.56.0",

@@ -12,6 +12,10 @@ q-dialog(
       q-icon(name='mdi-console', left, size='sm')
       span Terminal
       q-space
+      //- q-banner.q-mr-md.text-white.bg-negative.q-px-md(rounded, dense)
+      //-   template(#avatar)
+      //-     q-icon(name='mdi-alert', size='xs')
+      //-   span TTY not supported yet.
       q-btn(
         unelevated
         icon='mdi-close'
