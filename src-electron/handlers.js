@@ -1,7 +1,7 @@
 import { app, clipboard, dialog, ipcMain, shell } from 'electron'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-import { orderBy } from 'lodash-es'
+import { pick, orderBy } from 'lodash-es'
 import { encode, decode } from '@msgpack/msgpack'
 
 /**
@@ -380,7 +380,7 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
   // TERMINAL
   // ----------------------------------------------------------
   ipcMain.on('terminalInit', (ev, opts) => {
-    terminal.initialize(mainWindow, opts.cwd)
+    terminal.initialize(mainWindow, pick(opts, ['cwd', 'shell', 'args']))
   })
   ipcMain.on('terminalInput', (ev, data) => {
     terminal.write(data)

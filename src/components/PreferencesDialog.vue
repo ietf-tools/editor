@@ -378,6 +378,31 @@ q-dialog(
                   @update:model-value='updateTelemetryState'
                 )
 
+        template(v-else-if='state.tab === `terminal`')
+          q-form.q-gutter-md.q-pa-lg
+            .row
+              .col-8
+                .text-body2 Shell Executable
+                .text-caption.text-grey-5 The shell to use for the terminal.
+              .col-4
+                q-input(
+                  v-model.number='editorStore.terminalShell'
+                  outlined
+                  dense
+                  color='light-blue-4'
+                )
+            .row
+              .col-8
+                .text-body2 Shell Arguments
+                .text-caption.text-grey-5 Additional arguments to supply to the shell executable.
+              .col-4
+                q-input(
+                  v-model.number='editorStore.terminalArgs'
+                  outlined
+                  dense
+                  color='light-blue-4'
+                )
+
         template(v-if='state.tab === `dev`')
           q-form.q-gutter-md.q-pa-lg
             .flex.items-center.text-red-5
@@ -475,6 +500,11 @@ const tabs = computed(() => ([
     key: 'telemetry',
     icon: 'mdi-broadcast',
     label: 'Telemetry'
+  },
+  {
+    key: 'terminal',
+    icon: 'mdi-console',
+    label: 'Terminal'
   },
   {
     key: 'dev',

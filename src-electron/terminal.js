@@ -1,29 +1,33 @@
 import os from 'node:os'
-// import { spawn } from 'node:child_process'
 import * as pty from '@lydell/node-pty'
 
-const shell = os.platform() === 'win32'
-  ? {
-      cmd: 'powershell.exe',
-      args: ['-NoLogo']
-    }
-  : {
-      cmd: 'bash',
-      args: []
-    }
+const defaultShell = {
+  cmd: 'bash',
+  args: ''
+}
+switch (os.platform()) {
+  case 'darwin':
+    defaultShell.cmd = 'zsh'
+    defaultShell.args = ''
+    break
+  case 'win32':
+    defaultShell.cmd = 'pwsh.exe'
+    defaultShell.args = '-NoLogo -NoProfile'
+    break
+}
 
 export default {
   term: null,
   /**
    * Initialize PTY
    */
-  initialize (mainWindow, cwd) {
+  initialize (mainWindow, opts = {}) {
     if (this.term) { return }
-    this.term = pty.spawn(shell.cmd, shell.args, {
+    this.term = pty.spawn(opts.shell || defaultShell.cmd, (opts.args ?? defaultShell.args).split(' '), {
       name: 'draftforge-terminal',
       cols: 80,
       rows: 30,
-      cwd,
+      cwd: opts.cwd,
       env: process.env
     })
     this.term.onData(data => {
@@ -32,23 +36,12 @@ export default {
     this.term.onExit(() => {
       this.term = null
     })
-    // this.term = spawn(shell, [], {
-    //   windowsHide: true,
-    //   cwd
-    // })
-    // this.term.stdout.on('data', data => {
-    //   mainWindow.webContents.send('terminal.incomingData', data)
-    // })
-    // this.term.stderr.on('data', data => {
-    //   mainWindow.webContents.send('terminal.incomingData', data)
-    // })
-    // this.term.on('exit', () => {
-    //   this.term = null
-    // })
   },
+  /**
+   * Stdin
+   */
   write (data) {
     if (this.term) {
-      // this.term.stdin.write(data)
       this.term.write(data)
     }
   },

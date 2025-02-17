@@ -1,6 +1,25 @@
 import { defineStore } from 'pinia'
 import { decorationsStore } from 'src/stores/models'
 
+// -> Default Values
+
+const defaultShell = {
+  cmd: 'bash',
+  args: ''
+}
+switch (process.env.OS_PLATFORM) {
+  case 'darwin':
+    defaultShell.cmd = 'zsh'
+    defaultShell.args = ''
+    break
+  case 'win32':
+    defaultShell.cmd = 'pwsh.exe'
+    defaultShell.args = '-NoLogo -NoProfile'
+    break
+}
+
+// -> Editor Store
+
 export const useEditorStore = defineStore('editor', {
   state: () => ({
     animationEffects: true,
@@ -42,6 +61,8 @@ export const useEditorStore = defineStore('editor', {
     symbols: [],
     tabSize: 2,
     telemetry: false,
+    terminalShell: defaultShell.cmd,
+    terminalArgs: defaultShell.args,
     theme: 'ietf-dark',
     translucencyEffects: true,
     validationChecksCurrent: null,
@@ -147,6 +168,8 @@ export const useEditorStore = defineStore('editor', {
       'previewPaneShown',
       'tabSize',
       'telemetry',
+      'terminalShell',
+      'terminalArgs',
       'theme',
       'translucencyEffects',
       'wordWrap',

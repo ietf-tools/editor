@@ -12,24 +12,42 @@ q-dialog(
       q-icon(name='mdi-console', left, size='sm')
       span Terminal
       q-space
-      //- q-banner.q-mr-md.text-white.bg-negative.q-px-md(rounded, dense)
-      //-   template(#avatar)
-      //-     q-icon(name='mdi-alert', size='xs')
-      //-   span TTY not supported yet.
+      q-btn.q-mr-md(
+        unelevated
+        icon='mdi-restart-alert'
+        color='primary'
+        padding='xs md'
+        @click='resetTerminal'
+        label='Reset'
+        no-caps
+        :loading='state.resetLoading'
+        )
+        q-tooltip Kill active terminal and launch new one
+      q-btn.q-mr-md(
+        unelevated
+        icon='mdi-cog-outline'
+        color='primary'
+        padding='xs md'
+        @click='openTerminalSettings'
+        label='Settings'
+        no-caps
+        )
+        q-tooltip Configure Terminal
       q-btn(
         unelevated
         icon='mdi-close'
         color='primary'
         padding='xs'
         @click='onDialogCancel'
-      )
+        )
+        q-tooltip Close Terminal
     q-card-section.card-border.q-pa-md.bg-black
       div(ref='terminal', style='height: 500px;')
 </template>
 
 <script setup>
 import { useDialogPluginComponent, useQuasar } from 'quasar'
-import { onBeforeUnmount, onMounted, reactive, useTemplateRef } from 'vue'
+import { defineAsyncComponent, onBeforeUnmount, onMounted, reactive, useTemplateRef } from 'vue'
 import { useEditorStore } from 'src/stores/editor'
 import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
@@ -53,7 +71,7 @@ const { dialogRef, onDialogCancel, onDialogHide } = useDialogPluginComponent()
 // STATE
 
 const state = reactive({
-  isLoading: false
+  resetLoading: false
 })
 let term = null
 
@@ -61,20 +79,39 @@ const terminalElm = useTemplateRef('terminal')
 
 // METHODS
 
+function resetTerminal () {
+  state.resetLoading = true
+  window.ipcBridge.emit('terminalDestroy')
+  term.reset()
+  setTimeout(() => {
+    window.ipcBridge.emit('terminalInit', {
+      cwd: editorStore.workingDirectory,
+      shell: editorStore.terminalShell,
+      args: editorStore.terminalArgs
+    })
+    state.resetLoading = false
+  }, 2000)
+}
+
+function openTerminalSettings () {
+  $q.dialog({
+    component: defineAsyncComponent(() => import('components/PreferencesDialog.vue')),
+    componentProps: {
+      tab: 'terminal'
+    }
+  })
+}
+
 function handleTerminalOutput (evt, data) {
   term.write(data)
 }
 
-onMounted(async () => {
+function initTerminal () {
   term = new Terminal({
     cursorBlink: true
   })
   const fitAddon = new FitAddon()
   term.loadAddon(fitAddon)
-
-  window.ipcBridge.emit('terminalInit', {
-    cwd: editorStore.workingDirectory
-  })
 
   setTimeout(() => {
     term.open(terminalElm.value)
@@ -84,13 +121,26 @@ onMounted(async () => {
     term.onData(ev => {
       window.ipcBridge.emit('terminalInput', ev)
     })
-  })
-})
 
-onBeforeUnmount(() => {
+    setTimeout(() => {
+      window.ipcBridge.emit('terminalInit', {
+        cwd: editorStore.workingDirectory,
+        shell: editorStore.terminalShell,
+        args: editorStore.terminalArgs
+      })
+    })
+  })
+}
+
+function killTerminal () {
   window.ipcBridge.unsubscribe('terminal.incomingData', handleTerminalOutput)
   window.ipcBridge.emit('terminalDestroy')
-})
+}
+
+// HOOKS
+
+onMounted(initTerminal)
+onBeforeUnmount(killTerminal)
 
 </script>
 
