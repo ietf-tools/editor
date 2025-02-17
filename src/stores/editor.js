@@ -5,12 +5,12 @@ import { decorationsStore } from 'src/stores/models'
 
 const defaultShell = {
   cmd: 'bash',
-  args: ''
+  args: '-i'
 }
 switch (process.env.OS_PLATFORM) {
   case 'darwin':
     defaultShell.cmd = 'zsh'
-    defaultShell.args = ''
+    defaultShell.args = '-i'
     break
   case 'win32':
     defaultShell.cmd = 'pwsh.exe'

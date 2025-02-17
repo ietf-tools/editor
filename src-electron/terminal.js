@@ -8,7 +8,7 @@ const defaultShell = {
 switch (os.platform()) {
   case 'darwin':
     defaultShell.cmd = 'zsh'
-    defaultShell.args = ''
+    defaultShell.args = '-i'
     break
   case 'win32':
     defaultShell.cmd = 'pwsh.exe'
@@ -23,7 +23,7 @@ export default {
    */
   initialize (mainWindow, opts = {}) {
     if (this.term) { return }
-    this.term = pty.spawn(opts.shell || defaultShell.cmd, (opts.args ?? defaultShell.args).split(' '), {
+    this.term = pty.spawn(opts.shell || defaultShell.cmd, (opts.args ?? defaultShell.args).split(' ').filter(a => a), {
       name: 'draftforge-terminal',
       cols: 80,
       rows: 30,
