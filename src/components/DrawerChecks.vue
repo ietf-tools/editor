@@ -103,6 +103,7 @@ q-list
 import { onBeforeUnmount, onMounted } from 'vue'
 import { useQuasar } from 'quasar'
 import { checkArticles } from 'src/tools/articles'
+import { checkRepeatedWords } from 'src/tools/repeated-words'
 import { checkHyphenation } from 'src/tools/hyphenation'
 import { checkInclusiveLanguage } from 'src/tools/inclusive-language'
 import { checkNonAscii } from 'src/tools/non-ascii'
@@ -153,6 +154,13 @@ const valChecks = [
     description: 'Check for common placeholders',
     icon: 'mdi-select-remove',
     click: () => placeholdersCheck()
+  },
+  {
+    key: 'repeatedWords',
+    title: 'Repeated Words Check',
+    description: 'Check for accidental repeated terms',
+    icon: 'mdi-repeat',
+    click: () => repeatedWordsCheck()
   }
 ]
 
@@ -251,6 +259,25 @@ function placeholdersCheck (silent = false) {
   }
 }
 
+function repeatedWordsCheck (silent) {
+  const results = checkRepeatedWords(modelStore[docsStore.activeDocument.id].getValue())
+  if (results.count < 1) {
+    editorStore.setValidationCheckState('repeatedWords', 1)
+    editorStore.setValidationCheckDetails('repeatedWords', [])
+    if (!silent) {
+      $q.notify({
+        message: 'Looks good!',
+        caption: 'No repeated terms found.',
+        color: 'positive',
+        icon: 'mdi-repeat'
+      })
+    }
+  } else {
+    editorStore.setValidationCheckState('repeatedWords', -2)
+    editorStore.setValidationCheckDetails('repeatedWords', results)
+  }
+}
+
 function runAllChecks () {
   editorStore.clearErrors()
   articlesCheck(true)
@@ -258,6 +285,7 @@ function runAllChecks () {
   inclusiveLangCheck(true)
   nonAsciiCheck(true)
   placeholdersCheck(true)
+  repeatedWordsCheck(true)
 
   if (editorStore.errors.length < 1) {
     $q.notify({
@@ -289,6 +317,9 @@ function runSelectedCheck (key) {
       break
     case 'placeholders':
       placeholdersCheck(true)
+      break
+    case 'repeatedWords':
+      repeatedWordsCheck(true)
       break
   }
 }

@@ -72,14 +72,16 @@ export const useEditorStore = defineStore('editor', {
       hyphenation: 0,
       inclusiveLanguage: 0,
       nonAscii: 0,
-      placeholders: 0
+      placeholders: 0,
+      repeatedWords: 0
     },
     validationChecksDetails: {
       articles: [],
       hyphenation: [],
       inclusiveLanguage: [],
       nonAscii: [],
-      placeholders: []
+      placeholders: [],
+      repeatedWords: []
     },
     wordWrap: true,
     workingDirectory: '',
