@@ -312,7 +312,15 @@ function setCurrentCheck (key) {
 // Validation Results Output
 
 async function saveResultsToFile (key) {
-  if (await window.ipcBridge.saveValidationResults(editorStore.validationChecksDetails[key].getTextOutput())) {
+  // -> Build file path from current document + key of the validation check
+  let filePath = docsStore.activeDocument.path
+  const extPosition = filePath.lastIndexOf('.')
+  if (extPosition >= 0) {
+    filePath = filePath.slice(0, extPosition)
+  }
+  filePath = `${filePath}-${key}.txt`
+
+  if (await window.ipcBridge.saveValidationResults(editorStore.validationChecksDetails[key].getTextOutput(), filePath)) {
     $q.notify({
       message: 'Results saved!',
       caption: 'Results have been saved to file successfully.',

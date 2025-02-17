@@ -42,7 +42,7 @@ contextBridge.exposeInMainWorld('ipcBridge', {
   gitDiscardChanges: (files) => ipcRenderer.invoke('gitDiscardChanges', { files }),
   gitCommit: (message) => ipcRenderer.invoke('gitCommit', { message }),
   lspSendRequest: (method, params) => ipcRenderer.invoke('lspSendRequest', { method, params }),
-  saveValidationResults: (output) => ipcRenderer.invoke('saveValidationResults', { output }),
+  saveValidationResults: (output, filePath) => ipcRenderer.invoke('saveValidationResults', { output, filePath }),
   persistSession: (data) => ipcRenderer.invoke('persistSession', data),
   restoreSession: () => ipcRenderer.invoke('restoreSession')
 })

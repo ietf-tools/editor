@@ -358,7 +358,7 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
   ipcMain.handle('saveValidationResults', async (ev, opts) => {
     const saveOpts = await dialog.showSaveDialog(mainWindow, {
       title: 'Save Validation Results As...',
-      defaultPath: path.join(app.getPath('desktop'), 'results.txt'),
+      defaultPath: opts.filePath || path.join(app.getPath('desktop'), 'results.txt'),
       filters: [{
         name: 'Plain Text',
         extensions: ['txt']
