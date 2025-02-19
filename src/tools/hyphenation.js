@@ -4,7 +4,7 @@ import { repeat, sortBy } from 'lodash-es'
 const hyphenTermRgx = /[a-z]+(?:-[a-z]+)+/gi
 const targetPropRgx = / target="([^"]+?)"/gi
 
-export function checkHyphenation (text) {
+export function checkHyphenation (text, ignores = []) {
   const textLines = text.split('\n').map(line => {
     return line.replaceAll(targetPropRgx, (m, val) => {
       return ` target="${repeat(' ', val.length)}"`
@@ -21,6 +21,9 @@ export function checkHyphenation (text) {
     for (const match of line.matchAll(hyphenTermRgx)) {
       if (match[0].length > 3) {
         const termLower = match[0].toLowerCase()
+        if (ignores.includes(termLower)) {
+          continue
+        }
         if (!hyphenTerms.includes(termLower)) {
           hyphenTerms.push(termLower)
         }
@@ -65,7 +68,8 @@ export function checkHyphenation (text) {
                 key: crypto.randomUUID(),
                 group: occIdx + 1,
                 message: `${term} has alternate term(s)`,
-                range: termOcc.range
+                range: termOcc.range,
+                value: term
               })
             }
             if (termCount[term]) {
@@ -101,7 +105,8 @@ export function checkHyphenation (text) {
               startColumn: match.index + 2,
               endLineNumber: lineIdx + 1,
               endColumn: match.index + match[0].length
-            }
+            },
+            value: matchLower
           })
           if (termCount[matchLower]) {
             termCount[matchLower]++

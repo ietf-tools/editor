@@ -36,7 +36,7 @@ const dictionnary = [
   }
 ]
 
-export function checkInclusiveLanguage (text) {
+export function checkInclusiveLanguage (text, ignores = []) {
   const matchRgx = new RegExp(`[<> "'.:;=([{-](${flatten(dictionnary.map(d => d.triggers)).join('|')})`, 'gi')
   const textLines = text.split('\n')
 
@@ -47,6 +47,9 @@ export function checkInclusiveLanguage (text) {
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(matchRgx)) {
       const term = match[1].toLowerCase()
+      if (ignores.includes(term)) {
+        continue
+      }
       const dictEntry = find(dictionnary, d => d.triggers.includes(term))
       let occIdx = occurences.indexOf(term)
       if (occIdx < 0) {
@@ -79,7 +82,8 @@ export function checkInclusiveLanguage (text) {
           startColumn: match.index + 2,
           endLineNumber: lineIdx + 1,
           endColumn: match.index + 1 + match[0].length
-        }
+        },
+        value: term
       })
       if (termCount[term]) {
         termCount[term]++

@@ -1,7 +1,7 @@
 import { sortBy } from 'lodash-es'
 import { decorationsStore } from 'src/stores/models'
 
-export function checkCommonPlaceholders (text) {
+export function checkCommonPlaceholders (text, ignores = []) {
   const matchRgx = /(?:[^a-z0-9]|RFC)(?<term>TBD|TBA|XX|YY|NN|MM|0000|TODO)(?:[^a-z0-9])/gi
   const textLines = text.split('\n')
 
@@ -12,6 +12,9 @@ export function checkCommonPlaceholders (text) {
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(matchRgx)) {
       const term = match[1].toLowerCase()
+      if (ignores.includes(term)) {
+        continue
+      }
       const termStartIndex = match[0].indexOf(match[1])
       let occIdx = occurences.indexOf(term)
       if (occIdx < 0) {
@@ -44,7 +47,8 @@ export function checkCommonPlaceholders (text) {
           startColumn: match.index + termStartIndex + 1,
           endLineNumber: lineIdx + 1,
           endColumn: match.index + termStartIndex + 1 + match[1].length
-        }
+        },
+        value: term
       })
       if (termCount[term]) {
         termCount[term]++

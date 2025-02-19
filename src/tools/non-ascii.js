@@ -1,6 +1,6 @@
 import { decorationsStore } from 'src/stores/models'
 
-export function checkNonAscii (text) {
+export function checkNonAscii (text, ignores = []) {
   // eslint-disable-next-line no-control-regex
   const matchRgx = /[^\x00-\x7F]+/gi
   const textLines = text.split('\n')

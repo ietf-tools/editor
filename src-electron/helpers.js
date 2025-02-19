@@ -13,3 +13,12 @@ export function mergeWithHeaders (headers = {}, key, value) {
     headers[key] = value
   }
 }
+
+/**
+ * Get the file path for the extra _draftforge.json file based on a document file path
+ *
+ * @param {string} filePath Document file path
+ */
+export function getExtraFilePath (filePath) {
+  return filePath.substring(0, filePath.lastIndexOf('.')) + '_draftforge.json'
+}

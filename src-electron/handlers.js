@@ -3,6 +3,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { pick, orderBy } from 'lodash-es'
 import { encode, decode } from '@msgpack/msgpack'
+import { getExtraFilePath } from './helpers'
 
 /**
  * Show the Open Dialog
@@ -11,10 +12,10 @@ import { encode, decode } from '@msgpack/msgpack'
  */
 export async function openDocument (mainWindow) {
   const files = await dialog.showOpenDialog(mainWindow, {
-    title: 'Open RFC / Internet Draft...',
+    title: 'Open Internet Draft / RFC...',
     filters: [
       {
-        name: 'RFC/Internet Draft',
+        name: 'Internet Draft/RFC',
         extensions: ['md', 'txt', 'xml']
       }
     ],
@@ -35,12 +36,19 @@ export async function openDocument (mainWindow) {
  */
 export async function loadDocument (mainWindow, filePath) {
   const fileContents = await fs.readFile(filePath, 'utf8')
+  let fileExtra = {}
+  try {
+    fileExtra = JSON.parse(await fs.readFile(getExtraFilePath(filePath), 'utf8'))
+  } catch (err) {
+    console.info(`No _draftforge.json extra file found or invalid format for ${filePath}.`)
+  }
   const pathInfo = path.parse(filePath)
   mainWindow.webContents.send('openDocument', {
     type: pathInfo.ext.slice(1),
     path: filePath,
     fileName: pathInfo.base,
-    data: fileContents
+    data: fileContents,
+    extra: fileExtra
   })
   app.addRecentDocument(filePath)
 }
@@ -52,9 +60,12 @@ export async function loadDocument (mainWindow, filePath) {
  * @param {string} filePath Path where to save the document
  * @param {string} contents Contents of the file
  */
-export async function saveDocument (mainWindow, filePath, contents) {
+export async function saveDocument (mainWindow, filePath, contents, extra) {
   try {
     await fs.writeFile(filePath, contents, 'utf8')
+    if (extra && Object.keys(extra).length > 0) {
+      await fs.writeFile(getExtraFilePath(filePath), JSON.stringify(extra, null, 2), 'utf8')
+    }
     mainWindow.webContents.send('notify', {
       message: 'Saved successfully.',
       color: 'positive',
@@ -211,7 +222,7 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
     openDocument(mainWindow)
   })
   ipcMain.on('save', (ev, opts) => {
-    saveDocument(mainWindow, opts.path, opts.data)
+    saveDocument(mainWindow, opts.path, opts.data, opts.extra)
   })
   ipcMain.handle('promptSave', async (ev, opts) => {
     return git.performFetch({ dir: opts.dir, remote: opts.remote })

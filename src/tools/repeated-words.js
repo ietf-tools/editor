@@ -1,7 +1,7 @@
 import { sortBy } from 'lodash-es'
 import { decorationsStore } from 'src/stores/models'
 
-export function checkRepeatedWords (text) {
+export function checkRepeatedWords (text, ignores = []) {
   const matchRgx = /\b(\w+)\s+\1\b/gi
   const textLines = text.split('\n')
 
@@ -12,6 +12,9 @@ export function checkRepeatedWords (text) {
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(matchRgx)) {
       const term = match[1].toLowerCase()
+      if (ignores.includes(term)) {
+        continue
+      }
       let occIdx = occurences.indexOf(term)
       if (occIdx < 0) {
         occIdx = occurences.push(term) - 1
@@ -43,7 +46,8 @@ export function checkRepeatedWords (text) {
           startColumn: match.index + 1,
           endLineNumber: lineIdx + 1,
           endColumn: match.index + 1 + match[0].length
-        }
+        },
+        value: term
       })
       if (termCount[term]) {
         termCount[term]++

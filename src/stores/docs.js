@@ -57,6 +57,7 @@ export const useDocsStore = defineStore('docs', {
         path: doc.path ?? '',
         fileName: doc.fileName ?? 'untitled-draft.xml',
         data: doc.data ?? '',
+        extra: doc.extra ?? {},
         isModified: false,
         lastModifiedAt: DateTime.utc(),
         lastSavedVersion: modelStore[docId].getAlternativeVersionId(),
@@ -144,7 +145,8 @@ export const useDocsStore = defineStore('docs', {
       } else {
         window.ipcBridge.emit('save', {
           path: this.activeDocument.path,
-          data: modelStore[this.activeDocument.id].getValue()
+          data: modelStore[this.activeDocument.id].getValue(),
+          extra: cloneDeep(this.activeDocument.extra),
         })
         this.activeDocument.data = modelStore[this.activeDocument.id].getValue()
         this.activeDocument.isModified = false

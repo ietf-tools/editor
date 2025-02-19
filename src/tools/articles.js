@@ -1,7 +1,7 @@
 import { decorationsStore } from 'src/stores/models'
 import { sortBy } from 'lodash-es'
 
-export function checkArticles (text) {
+export function checkArticles (text, ignores = []) {
   const partARgx = /(?<!(?:[aA]ppendix|[cC]onnection|[lL]ink|[nN]ode|Operator)) (?!(?:[aA] (?:AAA|Europe|[oO]ne|U[A-Z]|U-label|[uU]biquitous|[uU]nicast|[uU]nicode|[uU]nidir|[uU]nif|[uU]nion|[uU]nique|[uU]nit|[uU]nivers|[uU]sable|[uU]sability|[uU]sage|[uU]se|[uU]tility)|a uCDN|A and))[aA] [aeiouAEIOU]/g
   const partARRgx = /(?!(?:[aA] (?:RADIUS|RECEIVE|RECOMMENDED|REFER|RELOAD|RST|REALM|RESERVATION|REQUEST|RESET|ROUTE|RPL)))[aA] R[A-Z]/g
   const partBRgx = / (?!(?:[aA]n (?:hour|honest|honor|Mtrace|x-coordinate|x coordinate|A[A-Z]|E[A-Z]|F[A-Z]|H[A-Z]|I[A-Z]|L[A-Z]|L[0-9][A-Z]|M[A-Z]|N[A-Z]|O[A-Z]|R[A-Z]|R[0-9]|S[A-Z]|X[A-Z]|X\.509|xTR)))[aA]n [b-df-hj-np-tv-zB-DF-HJ-NP-TV-Z]/g
@@ -24,6 +24,9 @@ export function checkArticles (text) {
 
   for (const [lineIdx, line] of textLines.entries()) {
     for (const match of line.matchAll(partARgx)) {
+      if (ignores.includes(match[0])) {
+        continue
+      }
       decorations.push({
         options: {
           hoverMessage: {
@@ -50,11 +53,15 @@ export function checkArticles (text) {
           startColumn: match.index + 2,
           endLineNumber: lineIdx + 1,
           endColumn: match.index + match[0].length
-        }
+        },
+        value: match[0]
       })
       addToTermCount(match[0])
     }
     for (const match of line.matchAll(partARRgx)) {
+      if (ignores.includes(match[0])) {
+        continue
+      }
       decorations.push({
         options: {
           hoverMessage: {
@@ -81,11 +88,15 @@ export function checkArticles (text) {
           startColumn: match.index + 2,
           endLineNumber: lineIdx + 1,
           endColumn: match.index + match[0].length
-        }
+        },
+        value: match[0]
       })
       addToTermCount(match[0])
     }
     for (const match of line.matchAll(partBRgx)) {
+      if (ignores.includes(match[0])) {
+        continue
+      }
       decorations.push({
         options: {
           hoverMessage: {
@@ -112,11 +123,15 @@ export function checkArticles (text) {
           startColumn: match.index + 2,
           endLineNumber: lineIdx + 1,
           endColumn: match.index + match[0].length
-        }
+        },
+        value: match[0]
       })
       addToTermCount(match[0])
     }
     for (const match of line.matchAll(partCRgx)) {
+      if (ignores.includes(match[0])) {
+        continue
+      }
       decorations.push({
         options: {
           hoverMessage: {
@@ -143,11 +158,15 @@ export function checkArticles (text) {
           startColumn: match.index + 2,
           endLineNumber: lineIdx + 1,
           endColumn: match.index + match[0].length
-        }
+        },
+        value: match[0]
       })
       addToTermCount(match[0])
     }
     for (const match of line.matchAll(partCLFRgx)) {
+      if (ignores.includes(match[0])) {
+        continue
+      }
       decorations.push({
         options: {
           hoverMessage: {
@@ -174,7 +193,8 @@ export function checkArticles (text) {
           startColumn: match.index + 2,
           endLineNumber: lineIdx + 1,
           endColumn: match.index + match[0].length
-        }
+        },
+        value: match[0]
       })
       addToTermCount(match[0])
     }
