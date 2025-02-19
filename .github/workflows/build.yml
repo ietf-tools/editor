@@ -145,6 +145,7 @@ jobs:
         npx quasar build -m electron -T ${{ matrix.platform }} -P always
 
     - name: Linux/Windows - Build package
+      if: ${{ matrix.platform != 'darwin' }}
       run: |
         npx quasar build -m electron -T ${{ matrix.platform }} -P always
 
