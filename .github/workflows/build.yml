@@ -77,10 +77,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - os: ubuntu-latest
-          #   platform: linux
-          #   arch: x64
-          #   artifacts: "dist/electron/Packaged/*.+(deb|rpm|tar.gz),dist/electron/Packaged/latest*.yml"
+          - os: ubuntu-latest
+            platform: linux
+            arch: x64
+            artifacts: "dist/electron/Packaged/*.+(deb|rpm|tar.gz),dist/electron/Packaged/latest*.yml"
           - os: macos-latest
             platform: darwin
             arch: arm64
@@ -89,10 +89,10 @@ jobs:
             platform: darwin
             arch: x64
             artifacts: "dist/electron/Packaged/*-x64-*.+(dmg|zip)"
-          # - os: windows-latest
-          #   platform: win32
-          #   arch: x64
-          #   artifacts: "signed-build/*.exe,dist/electron/Packaged/latest.yml"
+          - os: windows-latest
+            platform: win32
+            arch: x64
+            artifacts: "signed-build/*.exe,dist/electron/Packaged/latest.yml"
     env:
       PKG_VERSION: ${{needs.prepare.outputs.pkg_version}}
 
