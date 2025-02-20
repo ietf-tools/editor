@@ -30,3 +30,7 @@ yarn-error.log*
 
 # Lemminx
 lemminx-*
+
+# Build files
+/build/mac/artifacts
+/build/mac/latest-mac.yml
