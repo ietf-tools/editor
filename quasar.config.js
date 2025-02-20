@@ -11,6 +11,7 @@
 import { configure } from 'quasar/wrappers'
 import { readFileSync } from 'node:fs'
 import path from 'node:path'
+import { arch } from 'node:process'
 import { mergeConfig } from 'vite'
 import { flipFuses, FuseVersion, FuseV1Options } from '@electron/fuses'
 
@@ -266,7 +267,7 @@ export default configure((/* ctx */) => {
           target: [
             {
               target: 'default',
-              arch: ['x64', 'arm64']
+              arch: [arch]
             }
           ],
           publish: [
