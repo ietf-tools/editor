@@ -364,12 +364,12 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
     lsp.sendNotification(opts.method, opts.params)
   })
   // ----------------------------------------------------------
-  // VALIDATION CHECKS
+  // SAVE GENERIC CONTENT TO FILE
   // ----------------------------------------------------------
-  ipcMain.handle('saveValidationResults', async (ev, opts) => {
+  ipcMain.handle('saveContentToFile', async (ev, opts) => {
     const saveOpts = await dialog.showSaveDialog(mainWindow, {
-      title: 'Save Validation Results As...',
-      defaultPath: opts.filePath || path.join(app.getPath('desktop'), 'results.txt'),
+      title: opts.title ?? 'Save As...',
+      defaultPath: opts.filePath || path.join(app.getPath('desktop'), 'output.txt'),
       filters: [{
         name: 'Plain Text',
         extensions: ['txt']

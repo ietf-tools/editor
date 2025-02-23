@@ -410,7 +410,7 @@ async function saveResultsToFile (key) {
   }
   filePath = `${filePath}-${key}.txt`
 
-  if (await window.ipcBridge.saveValidationResults(editorStore.validationChecksDetails[key].getTextOutput(), filePath)) {
+  if (await window.ipcBridge.saveContentToFile(editorStore.validationChecksDetails[key].getTextOutput(), filePath, 'Save Validation Results As...')) {
     $q.notify({
       message: 'Results saved!',
       caption: 'Results have been saved to file successfully.',
