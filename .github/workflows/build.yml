@@ -80,7 +80,11 @@ jobs:
           - os: ubuntu-latest
             platform: linux
             arch: x64
-            artifacts: "dist/electron/Packaged/*.+(deb|rpm|tar.gz),dist/electron/Packaged/latest*.yml"
+            artifacts: "dist/electron/Packaged/*.+(deb|rpm|tar.gz),dist/electron/Packaged/latest-linux.yml"
+          - os: ubuntu-24.04-arm
+            platform: linux
+            arch: arm64
+            artifacts: "dist/electron/Packaged/*.+(deb|rpm|tar.gz),dist/electron/Packaged/latest-linux-arm64.yml"
           - os: macos-latest
             platform: darwin
             arch: arm64

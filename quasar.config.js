@@ -303,15 +303,15 @@ export default configure((/* ctx */) => {
           target: [
             {
               target: 'deb',
-              arch: ['x64', 'arm64']
+              arch: [arch]
             },
             {
               target: 'rpm',
-              arch: ['x64', 'arm64']
+              arch: [arch]
             },
             {
               target: 'tar.gz',
-              arch: ['x64', 'arm64']
+              arch: [arch]
             }
           ],
           publish: [
