@@ -26,6 +26,7 @@ export default [
       sourceType: 'module',
       parser: vueParser,
       globals: {
+        DFG: 'readonly',
         __statics: 'readonly',
         __QUASAR_SSR__: 'readonly',
         __QUASAR_SSR_SERVER__: 'readonly',

@@ -21,7 +21,7 @@ export default {
   /**
    * Initialize PTY
    */
-  initialize (mainWindow, opts = {}) {
+  initialize (opts = {}) {
     if (this.term) { return }
     this.term = pty.spawn(opts.shell || defaultShell.cmd, (opts.args ?? defaultShell.args).split(' ').filter(a => a), {
       name: 'draftforge-terminal',
@@ -31,7 +31,7 @@ export default {
       env: process.env
     })
     this.term.onData(data => {
-      mainWindow.webContents.send('terminal.incomingData', data)
+      DFG.mainWindow.webContents.send('terminal.incomingData', data)
     })
     this.term.onExit(() => {
       this.term = null

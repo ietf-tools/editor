@@ -256,8 +256,6 @@ export default {
     const localBranches = await this.git.branchLocal()
     const remoteBranches = await this.git.branch()
 
-    console.info(localBranches)
-
     return {
       current: localBranches.current,
       local: localBranches.all.filter(br => !['list', 'remotes'].includes(br)),

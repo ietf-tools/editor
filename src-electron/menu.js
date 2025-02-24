@@ -3,7 +3,7 @@ import os from 'node:os'
 
 import { openDocument, selectDirectory } from './handlers'
 
-export function registerMenu (mainWindow, updater) {
+export function registerMenu () {
   const platform = process.platform || os.platform()
   const isMac = platform === 'darwin'
 
@@ -19,20 +19,20 @@ export function registerMenu (mainWindow, updater) {
           label: 'New Draft...',
           accelerator: 'CommandOrControl+N',
           click () {
-            mainWindow.webContents.send('dialogAction', 'newDraft')
+            DFG.mainWindow.webContents.send('dialogAction', 'newDraft')
           }
         },
         {
           label: 'Open...',
           accelerator: 'CommandOrControl+O',
           click () {
-            openDocument(mainWindow)
+            openDocument(DFG.mainWindow)
           }
         },
         {
           label: 'Open from URL...',
           click () {
-            mainWindow.webContents.send('dialogAction', 'openFromURL')
+            DFG.mainWindow.webContents.send('dialogAction', 'openFromURL')
           }
         },
         {
@@ -54,9 +54,9 @@ export function registerMenu (mainWindow, updater) {
         {
           label: 'Set Working Directory...',
           async click () {
-            const wdPath = await selectDirectory(mainWindow, null, 'Select Working Directory...')
+            const wdPath = await selectDirectory(DFG.mainWindow, null, 'Select Working Directory...')
             if (wdPath) {
-              mainWindow.webContents.send('setWorkingDirectory', wdPath)
+              DFG.mainWindow.webContents.send('setWorkingDirectory', wdPath)
             }
           }
         },
@@ -67,14 +67,14 @@ export function registerMenu (mainWindow, updater) {
           label: 'Save',
           accelerator: 'CommandOrControl+S',
           click () {
-            mainWindow.webContents.send('save')
+            DFG.mainWindow.webContents.send('save')
           }
         },
         {
           label: 'Save As...',
           accelerator: 'CommandOrControl+Shift+S',
           async click () {
-            mainWindow.webContents.send('saveAs')
+            DFG.mainWindow.webContents.send('saveAs')
           }
         },
         {
@@ -112,7 +112,7 @@ export function registerMenu (mainWindow, updater) {
         {
           label: 'Preferences',
           click () {
-            mainWindow.webContents.send('dialogAction', 'preferences')
+            DFG.mainWindow.webContents.send('dialogAction', 'preferences')
           }
         },
         {
@@ -130,13 +130,13 @@ export function registerMenu (mainWindow, updater) {
         {
           role: 'undo',
           click () {
-            mainWindow.webContents.send('editorAction', 'undo')
+            DFG.mainWindow.webContents.send('editorAction', 'undo')
           }
         },
         {
           role: 'redo',
           click () {
-            mainWindow.webContents.send('editorAction', 'redo')
+            DFG.mainWindow.webContents.send('editorAction', 'redo')
           }
         },
         { type: 'separator' },
@@ -151,26 +151,26 @@ export function registerMenu (mainWindow, updater) {
               label: 'Find',
               accelerator: 'CommandOrControl+F',
               click () {
-                mainWindow.webContents.send('editorAction', 'find')
+                DFG.mainWindow.webContents.send('editorAction', 'find')
               }
             },
             {
               label: 'Find and Replace',
               accelerator: 'CommandOrControl+H',
               click () {
-                mainWindow.webContents.send('editorAction', 'findAndReplace')
+                DFG.mainWindow.webContents.send('editorAction', 'findAndReplace')
               }
             },
             {
               label: 'Find Next',
               click () {
-                mainWindow.webContents.send('editorAction', 'findNext')
+                DFG.mainWindow.webContents.send('editorAction', 'findNext')
               }
             },
             {
               label: 'Find Previous',
               click () {
-                mainWindow.webContents.send('editorAction', 'findPrevious')
+                DFG.mainWindow.webContents.send('editorAction', 'findPrevious')
               }
             },
             {
@@ -208,21 +208,21 @@ export function registerMenu (mainWindow, updater) {
           label: 'Select All',
           accelerator: 'CommandOrControl+A',
           click () {
-            mainWindow.webContents.send('editorAction', 'selectAll')
+            DFG.mainWindow.webContents.send('editorAction', 'selectAll')
           }
         },
         {
           label: 'Expand Selection',
           accelerator: 'Shift+Alt+Right',
           click () {
-            mainWindow.webContents.send('editorAction', 'expandSelection')
+            DFG.mainWindow.webContents.send('editorAction', 'expandSelection')
           }
         },
         {
           label: 'Shrink Selection',
           accelerator: 'Shift+Alt+Left',
           click () {
-            mainWindow.webContents.send('editorAction', 'shrinkSelection')
+            DFG.mainWindow.webContents.send('editorAction', 'shrinkSelection')
           }
         },
         { type: 'separator' },
@@ -230,34 +230,34 @@ export function registerMenu (mainWindow, updater) {
           label: 'Copy Line Up',
           accelerator: 'Shift+Alt+Up',
           click () {
-            mainWindow.webContents.send('editorAction', 'copyLineUp')
+            DFG.mainWindow.webContents.send('editorAction', 'copyLineUp')
           }
         },
         {
           label: 'Copy Line Down',
           accelerator: 'Shift+Alt+Down',
           click () {
-            mainWindow.webContents.send('editorAction', 'copyLineDown')
+            DFG.mainWindow.webContents.send('editorAction', 'copyLineDown')
           }
         },
         {
           label: 'Move Line Up',
           accelerator: 'Alt+Up',
           click () {
-            mainWindow.webContents.send('editorAction', 'moveLineUp')
+            DFG.mainWindow.webContents.send('editorAction', 'moveLineUp')
           }
         },
         {
           label: 'Move Line Down',
           accelerator: 'Alt+Down',
           click () {
-            mainWindow.webContents.send('editorAction', 'moveLineDown')
+            DFG.mainWindow.webContents.send('editorAction', 'moveLineDown')
           }
         },
         {
           label: 'Duplicate Selection',
           click () {
-            mainWindow.webContents.send('editorAction', 'duplicateSelection')
+            DFG.mainWindow.webContents.send('editorAction', 'duplicateSelection')
           }
         },
         { type: 'separator' },
@@ -265,41 +265,41 @@ export function registerMenu (mainWindow, updater) {
           label: 'Add Cursor Above',
           accelerator: 'CommandOrControl+Alt+Up',
           click () {
-            mainWindow.webContents.send('editorAction', 'addCursorAbove')
+            DFG.mainWindow.webContents.send('editorAction', 'addCursorAbove')
           }
         },
         {
           label: 'Add Cursor Below',
           accelerator: 'CommandOrControl+Alt+Down',
           click () {
-            mainWindow.webContents.send('editorAction', 'addCursorBelow')
+            DFG.mainWindow.webContents.send('editorAction', 'addCursorBelow')
           }
         },
         {
           label: 'Add Cursors to Line Ends',
           accelerator: 'Shift+Alt+I',
           click () {
-            mainWindow.webContents.send('editorAction', 'addCursorsToLineEnds')
+            DFG.mainWindow.webContents.send('editorAction', 'addCursorsToLineEnds')
           }
         },
         {
           label: 'Add Next Occurence',
           accelerator: 'CommandOrControl+D',
           click () {
-            mainWindow.webContents.send('editorAction', 'addNextOccurence')
+            DFG.mainWindow.webContents.send('editorAction', 'addNextOccurence')
           }
         },
         {
           label: 'Add Previous Occurence',
           click () {
-            mainWindow.webContents.send('editorAction', 'addPreviousOccurence')
+            DFG.mainWindow.webContents.send('editorAction', 'addPreviousOccurence')
           }
         },
         {
           label: 'Select All Occurences',
           accelerator: 'CommandOrControl+Shift+L',
           click () {
-            mainWindow.webContents.send('editorAction', 'selectAllOccurences')
+            DFG.mainWindow.webContents.send('editorAction', 'selectAllOccurences')
           }
         }
       ]
@@ -311,7 +311,7 @@ export function registerMenu (mainWindow, updater) {
           label: 'Command Palette...',
           accelerator: 'F1',
           click () {
-            mainWindow.webContents.send('editorAction', 'commandPalette')
+            DFG.mainWindow.webContents.send('editorAction', 'commandPalette')
           }
         },
         { type: 'separator' },
@@ -319,21 +319,21 @@ export function registerMenu (mainWindow, updater) {
           label: 'Zoom In',
           accelerator: 'CommandOrControl+=',
           click () {
-            mainWindow.webContents.send('editorAction', 'zoomIn')
+            DFG.mainWindow.webContents.send('editorAction', 'zoomIn')
           }
         },
         {
           label: 'Zoom Out',
           accelerator: 'CommandOrControl+-',
           click () {
-            mainWindow.webContents.send('editorAction', 'zoomOut')
+            DFG.mainWindow.webContents.send('editorAction', 'zoomOut')
           }
         },
         {
           label: 'Reset Zoom',
           accelerator: 'CommandOrControl+0',
           click () {
-            mainWindow.webContents.send('editorAction', 'zoomReset')
+            DFG.mainWindow.webContents.send('editorAction', 'zoomReset')
           }
         },
         { type: 'separator' },
@@ -343,7 +343,7 @@ export function registerMenu (mainWindow, updater) {
           type: 'checkbox',
           checked: true,
           click () {
-            mainWindow.webContents.send('editorAction', 'previewPane')
+            DFG.mainWindow.webContents.send('editorAction', 'previewPane')
           }
         },
         {
@@ -368,7 +368,7 @@ export function registerMenu (mainWindow, updater) {
           checked: true,
           accelerator: 'Alt+Z',
           click () {
-            mainWindow.webContents.send('editorAction', 'wordWrap')
+            DFG.mainWindow.webContents.send('editorAction', 'wordWrap')
           }
         }
       ]
@@ -396,7 +396,7 @@ export function registerMenu (mainWindow, updater) {
     //     {
     //       label: 'Check ID Nits',
     //       click () {
-    //         mainWindow.webContents.send('editorAction', 'checkIdNits')
+    //         DFG.mainWindow.webContents.send('editorAction', 'checkIdNits')
     //       }
     //     },
     //     {
@@ -449,14 +449,14 @@ export function registerMenu (mainWindow, updater) {
           label: 'Check for Updates...',
           click () {
             if (process.env.DEV) {
-              mainWindow.webContents.send('notify', {
+              DFG.mainWindow.webContents.send('notify', {
                 message: 'Function Unavailable',
                 caption: 'Checking for updates is not available in dev mode.',
                 color: 'amber-9',
                 icon: 'mdi-car-traction-control'
               })
             } else {
-              updater.checkForUpdates()
+              DFG.updater.checkForUpdates()
             }
           }
         },
@@ -467,13 +467,13 @@ export function registerMenu (mainWindow, updater) {
             {
               label: 'Clear HTTP Cache',
               click () {
-                mainWindow.webContents.session.clearCache()
+                DFG.mainWindow.webContents.session.clearCache()
               }
             },
             {
               label: 'Clear Session Data',
               click () {
-                mainWindow.webContents.session.clearStorageData()
+                DFG.mainWindow.webContents.session.clearStorageData()
               }
             },
             {
@@ -491,7 +491,7 @@ export function registerMenu (mainWindow, updater) {
         {
           label: 'About',
           click () {
-            mainWindow.webContents.send('dialogAction', 'helpAbout')
+            DFG.mainWindow.webContents.send('dialogAction', 'helpAbout')
           }
         }
       ]

@@ -15,7 +15,6 @@ export default {
   refreshToken: null,
   jwt: null,
   expireAt: Math.floor(Date.now() / 1000) - 1,
-  refMainWindow: null,
   profile: {},
   /**
    * Checks if the user is logged in.
@@ -36,8 +35,7 @@ export default {
   /**
    * Initialize
    */
-  async init (mainWindow) {
-    this.refMainWindow = mainWindow
+  async init () {
     await this.load()
     if (this.isLoggedIn()) {
       if (this.isExpired()) {
@@ -59,7 +57,6 @@ export default {
   /**
    * Logs in the user by showing a login modal and performing the OIDC token exchange.
    *
-   * @param {BrowserWindow} mainWindow - The main window of the application.
    * @returns {Promise<void>} - A promise that resolves when the login process is complete.
    */
   async login () {
@@ -67,7 +64,7 @@ export default {
 
     // -> Show login modal
     const loginWindow = new BrowserWindow({
-      parent: this.refMainWindow,
+      parent: DFG.mainWindow,
       modal: true,
       width: 1024,
       height: 768,
@@ -138,7 +135,7 @@ export default {
 
     // -> Logout from oidc provider
     const logoutWindow = new BrowserWindow({
-      parent: this.refMainWindow,
+      parent: DFG.mainWindow,
       modal: true,
       width: 1024,
       height: 768,
@@ -162,7 +159,7 @@ export default {
     logoutWindow.loadURL(`${this.logoutUrl}?id_token_hint=${endSessionJWT}&post_logout_redirect_uri=${encodeURIComponent(this.redirectUrl)}`)
 
     // -> Success message
-    this.refMainWindow.webContents.send('notify', {
+    DFG.mainWindow.webContents.send('notify', {
       message: 'You are now logged out.',
       color: 'positive',
       icon: 'mdi-logout'
@@ -264,7 +261,7 @@ export default {
    * Send current user info to the renderer
    */
   notify () {
-    this.refMainWindow.webContents.send('authUpdate', {
+    DFG.mainWindow.webContents.send('authUpdate', {
       ...this.profile,
       expireAt: this.expireAt,
       isLoggedIn: this.isLoggedIn()

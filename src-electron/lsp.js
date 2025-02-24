@@ -52,10 +52,11 @@ export default {
   responseRemainingBytes: 0,
   responseChunk: '',
   isReady: deferred(),
+  isInstalled: false,
   /**
    * Initialize the LSP
    */
-  async init (mainWindow) {
+  async init () {
     console.info('Initializing LSP...')
     const platformOpts = platform[process.platform]
     if (!platformOpts) {
@@ -64,24 +65,24 @@ export default {
       return
     }
 
-    let isInstalled = false
+    this.isInstalled = false
     try {
       await fs.access(platformOpts.execPath, fs.constants.X_OK)
-      isInstalled = true
+      this.isInstalled = true
     } catch (err) {
       console.warn('LSP server executable missing. Will download...')
     }
 
-    if (isInstalled) {
+    if (this.isInstalled) {
       try {
-        this.startServer(mainWindow)
+        this.startServer(DFG.mainWindow)
       } catch (err) {
         dialog.showErrorBox('LSP Server Initialization Failed', err.message)
       }
     } else {
       try {
-        await this.downloadServer(mainWindow)
-        this.startServer(mainWindow)
+        await this.downloadServer(DFG.mainWindow)
+        this.startServer(DFG.mainWindow)
       } catch (err) {
         dialog.showErrorBox('LSP Server Download Failed', err.message)
       }
@@ -90,13 +91,12 @@ export default {
   /**
    * Downloads and installs the XML Language Server.
    *
-   * @param {Electron.BrowserWindow} mainWindow - The main browser window.
    * @returns {Promise<void>} - A promise that resolves when the server is downloaded and installed.
    * @throws {Error} - If there is an error during the download or installation process.
    */
-  async downloadServer (mainWindow) {
+  async downloadServer () {
     const platformOpts = platform[process.platform]
-    mainWindow.webContents.send('setProgressDialog', {
+    DFG.mainWindow.webContents.send('setProgressDialog', {
       isShown: true,
       message: 'Installing XML Language Server',
       caption: 'Downloading LemMinX executable...'
@@ -117,30 +117,29 @@ export default {
       await fs.access(platformOpts.execPath, fs.constants.X_OK)
     } catch (err) {
       console.warn(err)
-      mainWindow.webContents.send('setProgressDialog', { isShown: false })
+      DFG.mainWindow.webContents.send('setProgressDialog', { isShown: false })
       try {
         await fs.unlink(platformOpts.execPath)
       } catch (err) {}
       throw new Error(`${err.message}: ${err.options?.url?.href}`)
     }
     (async () => {
-      mainWindow.webContents.send('setProgressDialog', {
+      DFG.mainWindow.webContents.send('setProgressDialog', {
         isShown: true,
         message: 'Installing XML Language Server',
         caption: 'Starting the LSP server...'
       })
       await setTimeout(2000)
-      mainWindow.webContents.send('setProgressDialog', { isShown: false })
+      DFG.mainWindow.webContents.send('setProgressDialog', { isShown: false })
     })()
   },
   /**
    * Starts the LSP (Language Server Protocol) server.
    *
-   * @param {Electron.BrowserWindow} mainWindow - The main Electron browser window.
    * @returns {Promise<void>} - A promise that resolves when the server is started successfully.
    * @throws {Error} - If there is an error during server initialization.
    */
-  async startServer (mainWindow) {
+  async startServer () {
     const platformOpts = platform[process.platform]
 
     // Download RNC files
@@ -214,7 +213,7 @@ export default {
           console.log(JSON.stringify(params, null, 2))
         }
       }
-      mainWindow.webContents.send('lspNotification', { method, params })
+      DFG.mainWindow.webContents.send('lspNotification', { method, params })
     })
 
     this.connection.listen()

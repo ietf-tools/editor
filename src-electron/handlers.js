@@ -7,11 +7,9 @@ import { getExtraFilePath } from './helpers'
 
 /**
  * Show the Open Dialog
- *
- * @param {Object} mainWindow MainWindow instance
  */
-export async function openDocument (mainWindow) {
-  const files = await dialog.showOpenDialog(mainWindow, {
+export async function openDocument () {
+  const files = await dialog.showOpenDialog(DFG.mainWindow, {
     title: 'Open Internet Draft / RFC...',
     filters: [
       {
@@ -23,7 +21,7 @@ export async function openDocument (mainWindow) {
   })
   if (!files.canceled) {
     for (const fl of files.filePaths) {
-      await loadDocument(mainWindow, fl)
+      await loadDocument(DFG.mainWindow, fl)
     }
   }
 }
@@ -31,10 +29,9 @@ export async function openDocument (mainWindow) {
 /**
  * Load a document from the file system
  *
- * @param {Object} mainWindow MainWindow instance
  * @param {*} filePath Path of the document to load
  */
-export async function loadDocument (mainWindow, filePath) {
+export async function loadDocument (filePath) {
   const fileContents = await fs.readFile(filePath, 'utf8')
   let fileExtra = {}
   try {
@@ -43,7 +40,7 @@ export async function loadDocument (mainWindow, filePath) {
     console.info(`No _draftforge.json extra file found or invalid format for ${filePath}.`)
   }
   const pathInfo = path.parse(filePath)
-  mainWindow.webContents.send('openDocument', {
+  DFG.mainWindow.webContents.send('openDocument', {
     type: pathInfo.ext.slice(1),
     path: filePath,
     fileName: pathInfo.base,
@@ -56,24 +53,23 @@ export async function loadDocument (mainWindow, filePath) {
 /**
  * Save a document to the file system
  *
- * @param {Object} mainWindow MainWindow instance
  * @param {string} filePath Path where to save the document
  * @param {string} contents Contents of the file
  */
-export async function saveDocument (mainWindow, filePath, contents, extra) {
+export async function saveDocument (filePath, contents, extra) {
   try {
     await fs.writeFile(filePath, contents, 'utf8')
     if (extra && Object.keys(extra).length > 0) {
       await fs.writeFile(getExtraFilePath(filePath), JSON.stringify(extra, null, 2), 'utf8')
     }
-    mainWindow.webContents.send('notify', {
+    DFG.mainWindow.webContents.send('notify', {
       message: 'Saved successfully.',
       color: 'positive',
       icon: 'mdi-check'
     })
   } catch (err) {
     console.warn(err)
-    mainWindow.webContents.send('notify', {
+    DFG.mainWindow.webContents.send('notify', {
       message: 'Failed to save',
       caption: err.message,
       color: 'negative',
@@ -85,31 +81,29 @@ export async function saveDocument (mainWindow, filePath, contents, extra) {
 /**
  * Save a document as a new file (Save As)
  *
- * @param {Object} mainWindow MainWindow instance
  * @param {string} type File Type
  * @param {string} defaultFileName Default filename
  */
-export async function saveDocumentAs (mainWindow, type, defaultFileName) {
-  const saveOpts = await dialog.showSaveDialog(mainWindow, {
+export async function saveDocumentAs (type, defaultFileName) {
+  const saveOpts = await dialog.showSaveDialog(DFG.mainWindow, {
     title: 'Save As...',
     defaultPath: defaultFileName,
     filters: getFiltersForType(type),
     properties: ['showOverwriteConfirmation', 'createDirectory']
   })
   if (!saveOpts.canceled) {
-    mainWindow.webContents.send('save', saveOpts.filePath)
+    DFG.mainWindow.webContents.send('save', saveOpts.filePath)
   }
 }
 
 /**
  * Create new document
  *
- * @param {Object} mainWindow MainWindow instance
  * @param {string} type File Type
  * @param {string} defaultFileName Default filename
  */
-export async function createNewDocument (mainWindow, type, defaultFileName, contents) {
-  const saveOpts = await dialog.showSaveDialog(mainWindow, {
+export async function createNewDocument (type, defaultFileName, contents) {
+  const saveOpts = await dialog.showSaveDialog(DFG.mainWindow, {
     title: 'New Document',
     defaultPath: defaultFileName,
     filters: getFiltersForType(type),
@@ -130,13 +124,12 @@ export async function createNewDocument (mainWindow, type, defaultFileName, cont
 /**
  * Show the Select Directory dialog
  *
- * @param {Object} mainWindow MainWindow instance
  * @param {string} [current] Initial path
  * @param {string} title Dialog title
  * @returns {Promise<string>} Selected directory path
  */
-export async function selectDirectory (mainWindow, current, title) {
-  const setWdOpts = await dialog.showOpenDialog(mainWindow, {
+export async function selectDirectory (current, title) {
+  const setWdOpts = await dialog.showOpenDialog(DFG.mainWindow, {
     title,
     ...(current && { defaultPath: current }),
     properties: ['openDirectory', 'createDirectory', 'dontAddToRecent']
@@ -205,36 +198,35 @@ function getFiltersForType (type) {
 /**
  * Register callback handlers
  *
- * @param {Object} mainWindow MainWindow instance
  * @param {Object} mainMenu MainMenu instance
  * @param {Object} auth Auth instance
  * @param {Object} git Git instance
  * @param {Object} lsp LSP instance
  */
-export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, terminal) {
+export function registerCallbacks () {
   // ----------------------------------------------------------
   // FILE SYSTEM
   // ----------------------------------------------------------
   ipcMain.handle('createNewDocument', (ev, opts) => {
-    return createNewDocument(mainWindow, opts.type, opts.filename, opts.data)
+    return createNewDocument(opts.type, opts.filename, opts.data)
   })
   ipcMain.on('open', (ev) => {
-    openDocument(mainWindow)
+    openDocument()
   })
   ipcMain.on('save', (ev, opts) => {
-    saveDocument(mainWindow, opts.path, opts.data, opts.extra)
+    saveDocument(opts.path, opts.data, opts.extra)
   })
   ipcMain.handle('promptSave', async (ev, opts) => {
-    return git.performFetch({ dir: opts.dir, remote: opts.remote })
+    return DFG.git.performFetch({ dir: opts.dir, remote: opts.remote })
   })
   ipcMain.on('promptSaveAs', (ev, opts) => {
-    saveDocumentAs(mainWindow, opts.type, opts.fileName)
+    saveDocumentAs(opts.type, opts.fileName)
   })
   ipcMain.on('openFromPath', (ev, opts) => {
-    loadDocument(mainWindow, opts.path)
+    loadDocument(opts.path)
   })
   ipcMain.handle('promptSelectDirectory', async (ev, opts) => {
-    return selectDirectory(mainWindow, opts.current, opts.title ?? 'Select Directory...')
+    return selectDirectory(opts.current, opts.title ?? 'Select Directory...')
   })
   ipcMain.handle('readDirectory', async (ev, opts) => {
     return readDirectory(opts.dirPath)
@@ -244,21 +236,21 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
   // ----------------------------------------------------------
   ipcMain.handle('fetchGitConfig', async (ev) => {
     return {
-      ...git.conf,
-      pgpKey: Boolean(git.conf.publicKey)
+      ...DFG.git.conf,
+      pgpKey: Boolean(DFG.git.conf.publicKey)
     }
   })
   ipcMain.on('updateGitConfig', async (ev, conf) => {
-    git.conf = {
-      ...git.conf,
+    DFG.git.conf = {
+      ...DFG.git.conf,
       ...conf
     }
     try {
-      await git.saveConfig()
-      if (git.conf.safeStorageEnabled) {
-        await git.saveAuthConfig()
-      } else if (git.conf.password || git.conf.publicKey) {
-        mainWindow.webContents.send('notify', {
+      await DFG.git.saveConfig()
+      if (DFG.git.conf.safeStorageEnabled) {
+        await DFG.git.saveAuthConfig()
+      } else if (DFG.git.conf.password || DFG.git.conf.publicKey) {
+        DFG.mainWindow.webContents.send('notify', {
           message: 'Cannot save git auth settings',
           caption: 'Encrypted safe storage is not available on this system.',
           color: 'negative',
@@ -267,7 +259,7 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
       }
     } catch (err) {
       console.warn(err)
-      mainWindow.webContents.send('notify', {
+      DFG.mainWindow.webContents.send('notify', {
         message: 'Failed to save git config',
         caption: err.message,
         color: 'negative',
@@ -276,70 +268,70 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
     }
   })
   ipcMain.on('copyGitPublicKey', async (ev) => {
-    clipboard.writeText(git.conf.publicKey)
+    clipboard.writeText(DFG.git.conf.publicKey)
   })
   ipcMain.handle('clearGitKey', async (ev) => {
-    return git.clearSigningKey()
+    return DFG.git.clearSigningKey()
   })
   ipcMain.handle('gitSetWorkingDirectory', async (ev, opts) => {
-    return git.setWorkingDirectory({ dir: opts.dir })
+    return DFG.git.setWorkingDirectory({ dir: opts.dir })
   })
   ipcMain.handle('gitPerformFetch', async (ev, opts) => {
-    return git.performFetch({ remote: opts.remote })
+    return DFG.git.performFetch({ remote: opts.remote })
   })
   ipcMain.handle('gitListRemotes', async (ev, opts) => {
-    return git.listRemotes()
+    return DFG.git.listRemotes()
   })
   ipcMain.handle('gitAddRemote', async (ev, opts) => {
-    return git.addRemote({ remote: opts.remote, url: opts.url })
+    return DFG.git.addRemote({ remote: opts.remote, url: opts.url })
   })
   ipcMain.handle('gitDeleteRemote', async (ev, opts) => {
-    return git.deleteRemote({ remote: opts.remote })
+    return DFG.git.deleteRemote({ remote: opts.remote })
   })
   ipcMain.handle('gitPull', async (ev, opts = {}) => {
-    return git.pull({ remote: opts.remote, branch: opts.branch, mode: opts.mode })
+    return DFG.git.pull({ remote: opts.remote, branch: opts.branch, mode: opts.mode })
   })
   ipcMain.handle('gitPush', async (ev, opts) => {
-    return git.push({ remote: opts.remote, branch: opts.branch })
+    return DFG.git.push({ remote: opts.remote, branch: opts.branch })
   })
   ipcMain.handle('gitListBranches', async (ev, opts) => {
-    return git.listBranches({ remote: opts.remote })
+    return DFG.git.listBranches({ remote: opts.remote })
   })
   ipcMain.handle('gitNewBranch', async (ev, opts) => {
-    return git.newBranch({ branchName: opts.branchName, source: opts.source, tracking: opts.tracking })
+    return DFG.git.newBranch({ branchName: opts.branchName, source: opts.source, tracking: opts.tracking })
   })
   ipcMain.handle('gitDeleteBranch', async (ev, opts) => {
-    return git.deleteBranch({ branch: opts.branch })
+    return DFG.git.deleteBranch({ branch: opts.branch })
   })
   ipcMain.handle('gitDeleteRemoteBranch', async (ev, opts) => {
-    return git.deleteRemoteBranch({ branch: opts.branch, remote: opts.remote })
+    return DFG.git.deleteRemoteBranch({ branch: opts.branch, remote: opts.remote })
   })
   ipcMain.handle('gitSetBranchTracking', async (ev, opts) => {
-    return git.setBranchTracking({ branch: opts.branch, tracking: opts.tracking })
+    return DFG.git.setBranchTracking({ branch: opts.branch, tracking: opts.tracking })
   })
   ipcMain.handle('gitCheckoutBranch', async (ev, opts) => {
-    return git.checkoutBranch({ branch: opts.branch, tracking: opts.tracking })
+    return DFG.git.checkoutBranch({ branch: opts.branch, tracking: opts.tracking })
   })
   ipcMain.handle('gitCommitsLog', async (ev, opts) => {
-    return git.commitsLog()
+    return DFG.git.commitsLog()
   })
   ipcMain.handle('gitStatusMatrix', async (ev, opts) => {
-    return git.statusMatrix()
+    return DFG.git.statusMatrix()
   })
   ipcMain.handle('gitStageFiles', async (ev, opts) => {
-    return git.stageFiles({ files: opts.files })
+    return DFG.git.stageFiles({ files: opts.files })
   })
   ipcMain.handle('gitUnstageFiles', async (ev, opts) => {
-    return git.unstageFiles({ files: opts.files })
+    return DFG.git.unstageFiles({ files: opts.files })
   })
   ipcMain.handle('gitDiscardChanges', async (ev, opts) => {
-    return git.discardChanges({ files: opts.files })
+    return DFG.git.discardChanges({ files: opts.files })
   })
   ipcMain.handle('gitCommit', async (ev, opts) => {
-    return git.commit({ message: opts.message })
+    return DFG.git.commit({ message: opts.message })
   })
   ipcMain.handle('gitCloneRepository', async (ev, opts) => {
-    return git.repoClone({
+    return DFG.git.repoClone({
       dir: opts.target,
       url: opts.url,
       upstreamUrl: opts.upstreamUrl,
@@ -347,7 +339,7 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
     })
   })
   ipcMain.handle('gitInitRepository', async (ev, opts) => {
-    return git.repoInit({
+    return DFG.git.repoInit({
       dir: opts.target
     })
   })
@@ -355,19 +347,19 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
   // LSP
   // ----------------------------------------------------------
   ipcMain.on('lspInitialize', (ev) => {
-    lsp.init(mainWindow)
+    DFG.lsp.init()
   })
   ipcMain.handle('lspSendRequest', async (ev, opts) => {
-    return lsp.sendRequest(opts.method, opts.params)
+    return DFG.lsp.sendRequest(opts.method, opts.params)
   })
   ipcMain.on('lspSendNotification', (ev, opts) => {
-    lsp.sendNotification(opts.method, opts.params)
+    DFG.lsp.sendNotification(opts.method, opts.params)
   })
   // ----------------------------------------------------------
   // SAVE GENERIC CONTENT TO FILE
   // ----------------------------------------------------------
   ipcMain.handle('saveContentToFile', async (ev, opts) => {
-    const saveOpts = await dialog.showSaveDialog(mainWindow, {
+    const saveOpts = await dialog.showSaveDialog(DFG.mainWindow, {
       title: opts.title ?? 'Save As...',
       defaultPath: opts.filePath || path.join(app.getPath('desktop'), 'output.txt'),
       filters: [{
@@ -391,19 +383,19 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
   // TERMINAL
   // ----------------------------------------------------------
   ipcMain.on('terminalInit', (ev, opts) => {
-    terminal.initialize(mainWindow, pick(opts, ['cwd', 'shell', 'args']))
+    DFG.terminal.initialize(pick(opts, ['cwd', 'shell', 'args']))
   })
   ipcMain.on('terminalInput', (ev, data) => {
-    terminal.write(data)
+    DFG.terminal.write(data)
   })
   ipcMain.on('terminalDestroy', (ev, opts) => {
-    terminal.destroy()
+    DFG.terminal.destroy()
   })
   // ----------------------------------------------------------
   // MISC
   // ----------------------------------------------------------
   ipcMain.on('setMenuItemCheckedState', (ev, opts) => {
-    const mItem = mainMenu.getMenuItemById(opts.id)
+    const mItem = DFG.mainMenu.getMenuItemById(opts.id)
     if (mItem) {
       mItem.checked = opts.value
     } else {
@@ -440,24 +432,24 @@ export function registerCallbacks (mainWindow, mainMenu, auth, git, lsp, tlm, te
     }
   })
   ipcMain.on('setTelemetryState', (ev, opts) => {
-    tlm.conf.enabled = (opts.enabled === true)
-    if (tlm.conf.enabled) {
-      tlm.start()
+    DFG.tlm.conf.enabled = (opts.enabled === true)
+    if (DFG.tlm.conf.enabled) {
+      DFG.tlm.start()
     } else {
-      tlm.stop()
+      DFG.tlm.stop()
     }
-    tlm.saveConfig()
+    DFG.tlm.saveConfig()
   })
   // ----------------------------------------------------------
   // AUTH
   // ----------------------------------------------------------
   ipcMain.on('login', () => {
-    auth.login()
+    DFG.auth.login()
   })
   ipcMain.on('logout', () => {
-    auth.logout()
+    DFG.auth.logout()
   })
   ipcMain.on('authFetchInfo', () => {
-    auth.notify()
+    DFG.auth.notify()
   })
 }

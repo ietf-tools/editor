@@ -14,14 +14,22 @@ import updater from './updater.js'
 import terminal from './terminal.js'
 import { createKeybindingsHandler } from './keyhandler.js'
 
-const currentDir = fileURLToPath(new URL('.', import.meta.url))
+const DFG = {
+  currentDir: fileURLToPath(new URL('.', import.meta.url)),
+  mainWindow: null,
+  mainMenu: null,
+  auth,
+  git,
+  lsp,
+  updater,
+  terminal,
+  tlm
+}
+global.DFG = DFG
 
 // Initialize Instrumentation
-tlm.initialize()
+DFG.tlm.initialize()
 const tracer = trace.getTracer('draftforge', app.getVersion())
-
-// needed in case process is undefined under Linux
-// const platform = process.platform || os.platform()
 
 // ensure only 1 instance of the app is running
 const instanceLock = app.requestSingleInstanceLock()
@@ -30,8 +38,6 @@ const instanceLock = app.requestSingleInstanceLock()
 Menu.setApplicationMenu(null)
 
 let splashWindow
-let mainWindow
-let mainMenu
 
 const menuHandlers = createKeybindingsHandler({
   'Escape d': () => {
@@ -69,13 +75,12 @@ async function createWindow () {
   }
 
   // -> Get primary screen dimensions
-  const primaryDisplay = screen.getPrimaryDisplay()
-  const { width, height } = primaryDisplay.workAreaSize
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize
 
   // -> Initial window options
-  mainWindow = new BrowserWindow({
+  DFG.mainWindow = new BrowserWindow({
     show: false,
-    icon: path.resolve(currentDir, 'icons/icon.png'), // tray icon
+    icon: path.resolve(DFG.currentDir, 'icons/icon.png'), // tray icon
     width: Math.round(width * 0.9),
     height: Math.round(height * 0.9),
     minWidth: 1400,
@@ -90,35 +95,35 @@ async function createWindow () {
     webPreferences: {
       contextIsolation: true,
       // More info: https://v2.quasar.dev/quasar-cli-vite/developing-electron-apps/electron-preload-script
-      preload: path.resolve(currentDir, path.join(process.env.QUASAR_ELECTRON_PRELOAD_FOLDER, 'electron-preload' + process.env.QUASAR_ELECTRON_PRELOAD_EXTENSION)),
+      preload: path.resolve(DFG.currentDir, path.join(process.env.QUASAR_ELECTRON_PRELOAD_FOLDER, 'electron-preload' + process.env.QUASAR_ELECTRON_PRELOAD_EXTENSION)),
       sandbox: false,
       spellcheck: true
     }
   })
 
   // -> Set application menu
-  mainMenu = registerMenu(mainWindow, updater)
+  DFG.mainMenu = registerMenu()
 
   // -> Disable CORS
-  mainWindow.webContents.session.webRequest.onBeforeSendHeaders(({ requestHeaders }, clb) => {
+  DFG.mainWindow.webContents.session.webRequest.onBeforeSendHeaders(({ requestHeaders }, clb) => {
     mergeWithHeaders(requestHeaders, 'Access-Control-Allow-Origin', ['*'])
     clb({ requestHeaders })
   })
-  mainWindow.webContents.session.webRequest.onHeadersReceived(({ responseHeaders }, clb) => {
+  DFG.mainWindow.webContents.session.webRequest.onHeadersReceived(({ responseHeaders }, clb) => {
     mergeWithHeaders(responseHeaders, 'Access-Control-Allow-Headers', ['*'])
     mergeWithHeaders(responseHeaders, 'Access-Control-Allow-Origin', ['*'])
     clb({ responseHeaders })
   })
 
   // -> Set spellchecker language
-  mainWindow.webContents.session.setSpellCheckerLanguages(['en-US'])
+  DFG.mainWindow.webContents.session.setSpellCheckerLanguages(['en-US'])
 
-  mainWindow.webContents.once('did-finish-load', () => {
+  DFG.mainWindow.webContents.once('did-finish-load', () => {
     splashWindow.destroy()
-    mainWindow.show()
-    mainWindow.moveTop()
+    DFG.mainWindow.show()
+    DFG.mainWindow.moveTop()
 
-    mainWindow.webContents.on('before-input-event', (evt, input) => {
+    DFG.mainWindow.webContents.on('before-input-event', (evt, input) => {
       if (input?.type === 'keyDown') {
         menuHandlers(evt, input)
       }
@@ -127,29 +132,29 @@ async function createWindow () {
 
   // -> Load start URL
   if (process.env.DEV) {
-    mainWindow.loadURL(process.env.APP_URL)
+    DFG.mainWindow.loadURL(process.env.APP_URL)
   } else {
-    mainWindow.loadFile('index.html')
+    DFG.mainWindow.loadFile('index.html')
   }
 
   if (process.env.DEBUGGING) {
     // if on DEV or Production with debug enabled
-    mainWindow.webContents.openDevTools({
+    DFG.mainWindow.webContents.openDevTools({
       activate: false,
       mode: 'detach',
       title: 'DraftForge DevTools'
     })
   }
 
-  mainWindow.on('closed', () => {
-    mainWindow = null
+  DFG.mainWindow.on('closed', () => {
+    DFG.mainWindow = null
   })
 
-  auth.init(mainWindow)
-  git.init()
-  updater.init(mainWindow)
+  DFG.auth.init()
+  DFG.git.init()
+  DFG.updater.init()
 
-  registerCallbacks(mainWindow, mainMenu, auth, git, lsp, tlm, terminal)
+  registerCallbacks()
   span.end()
 }
 
@@ -161,27 +166,27 @@ if (!instanceLock) {
   // Handle open document from Recent Files / drop onto macOS dock
   app.on('open-file', (ev, filePath) => {
     ev.preventDefault()
-    loadDocument(mainWindow, filePath)
+    loadDocument(filePath)
   })
 
   app.on('window-all-closed', async () => {
-    // if (platform !== 'darwin') {
-    await lsp.shutdown()
+    await DFG.lsp.shutdown()
     app.quit()
-    // }
   })
 
   app.on('activate', () => {
-    if (mainWindow === null) {
+    if (DFG.mainWindow === null) {
       createWindow()
     }
   })
 
   app.on('second-instance', (event, commandLine, workingDirectory, additionalData) => {
     // Someone tried to run a second instance, we should focus our window.
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) mainWindow.restore()
-      mainWindow.focus()
+    if (DFG.mainWindow) {
+      if (DFG.mainWindow.isMinimized()) {
+        DFG.mainWindow.restore()
+      }
+      DFG.mainWindow.focus()
     }
   })
 }
